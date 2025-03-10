@@ -410,22 +410,22 @@ add_executable(enigma
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lua-display.cc
     COMMAND tolua -o ${CMAKE_CURRENT_BINARY_DIR}/lua-display.cc -H lua-display.hh -n display ${CMAKE_CURRENT_SOURCE_DIR}/display-lua.pkg
-    DEPENDS tolua
+    DEPENDS tolua display-lua.pkg
     )
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lua-enigma.cc
     COMMAND tolua -o ${CMAKE_CURRENT_BINARY_DIR}/lua-enigma.cc -H lua-enigma.hh -n enigma ${CMAKE_CURRENT_SOURCE_DIR}/enigma-lua.pkg
-    DEPENDS tolua
+    DEPENDS tolua enigma-lua.pkg
     )
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lua-global.cc
     COMMAND tolua -o ${CMAKE_CURRENT_BINARY_DIR}/lua-global.cc -H lua-global.hh -n global ${CMAKE_CURRENT_SOURCE_DIR}/global-lua.pkg
-    DEPENDS tolua
+    DEPENDS tolua global-lua.pkg
     )
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lua-ecl.cc
     COMMAND tolua -o ${CMAKE_CURRENT_BINARY_DIR}/lua-ecl.cc -H lua-ecl.hh -n px ${CMAKE_CURRENT_SOURCE_DIR}/ecl-lua.pkg
-    DEPENDS tolua
+    DEPENDS tolua ecl-lua.pkg
     )
 target_sources(enigma PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/lua-display.cc
@@ -442,7 +442,6 @@ target_include_directories(enigma
 target_link_libraries(enigma
     ${Intl_LIBRARIES}
     SDL2::Core
-#    SDL2::Main
     SDL2::Image
     SDL2::Mixer
     SDL2::TTF
@@ -455,6 +454,6 @@ target_link_libraries(enigma
     lua
     oxydlib
     zipios++
-    )
+)
 
 install(TARGETS enigma DESTINATION bin)
