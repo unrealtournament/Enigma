@@ -49,8 +49,7 @@ do
     DefShModel("ac_marble_white", "ac_marble_white1", "sh_marble")
     DefShModel("ac_marble_white-shine", "ac_marble_white2", "sh_marble")
 
-    -- Normal glass marble
-    shadows = SpriteImage("sh_marble_glass", 0.4, 0.29)
+    -- Normal glass marble (using the same shadows as black and white marbles)
     images = SpriteImages("ac_marble_glass", 2, 0.5, 0.31)
     DefShModel("ac_marble_glass", "ac_marble_glass1", "sh_marble")
     DefShModel("ac_marble_glass-shine", "ac_marble_glass2", "sh_marble")
@@ -189,6 +188,12 @@ do
     DefShModel("ac_pearl_white", "ac_pearl_white", "sh_pearl")
     DefAlias("ac_pearl_white-shine", "ac_pearl_white")
 
+    -- Normal glass pearl
+    -- Use shadow from black pearl
+    SpriteImage("ac_pearl_glass", 0.5, 0.43)
+    DefShModel("ac_pearl_glass", "ac_pearl_glass", "sh_pearl")
+    DefAlias("ac_pearl_glass-shine", "ac_pearl_glass")
+
     -- Falling black pearl
     images = SpriteImages("ac_pearl_black_fall", 5, 0.5, 0.43)
     shadows = SpriteImages("sh_pearl_fall", 5, 0.4, 0.43)
@@ -224,6 +229,23 @@ do
     DefAnim("ac_pearl_white-appear", ReverseFrames(BuildFrames(frames, 25)))
     DefAnim("ac_pearl_white-disappear", BuildFrames(frames, 25))
 
+    -- Falling glass pearl
+    -- Use shadows from falling black pearl
+    images = SpriteImages("ac_pearl_glass_fall", 5, 0.5, 0.43)
+    table.insert(images, "invisible")
+    frames = {}
+    for i=1,table.getn(images) do
+        DefShModel("ac_pearl_glass-fall"..(i-1), images[i], shadows[i])
+        frames[i] = "ac_pearl_glass-fall"..(i-1)
+    end
+    DefAnim("ac_pearl_glass-fall", ComposeFrames(frames,{70,65,60,55,50,30}))
+    DefAlias("ac_pearl_glass-fallen", "invisible")
+
+    -- Appearing / disappearing glass pearl
+    -- use the images from falling glass pearl
+    DefAnim("ac_pearl_glass-appear", ReverseFrames(BuildFrames(frames, 25)))
+    DefAnim("ac_pearl_glass-disappear", BuildFrames(frames, 25))
+
     -- Jumping black pearl
     images  = SpriteImages("ac_pearl_black_jump", 4)
     shadows = SpriteImages("sh_pearl_jump", 4, 0.4)
@@ -243,6 +265,16 @@ do
         table.insert(frames, "sb-jump"..i)
     end
     DefAnim("ac_pearl_white-jump", PingPong(BuildFrames(frames, 70)))
+
+    -- Jumping glass pearl
+    -- Use shadow from black pearl
+    images = SpriteImages("ac_pearl_glass_jump", 4)
+    frames = {}
+    for i=1,4 do
+        DefShModel("sb-jump"..i, images[i], shadows[i])
+        table.insert(frames, "sb-jump"..i)
+    end
+    DefAnim("ac_pearl_glass-jump", PingPong(BuildFrames(frames, 70)))
 
     -- Sinking black pearl
     -- TODO: extra sink animation for pearls?
@@ -265,6 +297,16 @@ do
     DefAlias("ac_pearl_white-sink6", "ac_pearl_white_fall5")
     DefAlias("ac_pearl_white-sunk", "invisible")
 
+    -- Sinking glass pearl
+    DefAlias("ac_pearl_glass-sink0", "ac_pearl_glass_fall1")
+    DefAlias("ac_pearl_glass-sink1", "ac_pearl_glass_fall2")
+    DefAlias("ac_pearl_glass-sink2", "ac_pearl_glass_fall3")
+    DefAlias("ac_pearl_glass-sink3", "ac_pearl_glass_fall3")
+    DefAlias("ac_pearl_glass-sink4", "ac_pearl_glass_fall4")
+    DefAlias("ac_pearl_glass-sink5", "ac_pearl_glass_fall4")
+    DefAlias("ac_pearl_glass-sink6", "ac_pearl_glass_fall5")
+    DefAlias("ac_pearl_glass-sunk", "invisible")
+
     -- Shattering black pearl
     Sprite({name="ac_pearl_black_shatter", nimages=5, framelen=60})
     DefAlias("ac_pearl_black-shatter", "ac_pearl_black_shatter")
@@ -274,6 +316,11 @@ do
     Sprite({name="ac_pearl_white_shatter", nimages=5, framelen=60})
     DefAlias("ac_pearl_white-shatter", "ac_pearl_white_shatter")
     DefAlias("ac_pearl_white-shattered", "ac_pearl_white_shatter5")
+
+    -- Shattering glass pearl
+    Sprite({name="ac_pearl_glass_shatter", nimages=5, framelen=60})
+    DefAlias("ac_pearl_glass-shatter", "ac_pearl_glass_shatter")
+    DefAlias("ac_pearl_glass-shattered", "ac_pearl_glass_shatter5")
 end
 
 -- ac-killerball --
@@ -611,11 +658,12 @@ end
 --------------------------------------------------------------------------------
 Progress(25, "Loading item models")
 ------------------------------------------------------
--- Single-Image-Items, non animated, e.g. it-banana --
+-- Single-Image-Items, non animated, e.g. it_banana --
 ------------------------------------------------------
 
 do
     itemlist = {
+        "it_axe",
         "it_bag",
         "it_banana",
         "it_bottle_idle",
@@ -664,6 +712,8 @@ do
     DefImage("it_meditation_bump", {filename="it_meditation_bump"})
     DefImage("it_meditation_volcano", {filename="it_meditation_volcano"})
     DefImage("it_meditation_caldera", {filename="it_meditation_caldera"})
+
+    DefImage("it_remote", {filename="it_odometer"})
 end
 
 -------------------------
@@ -672,6 +722,7 @@ end
 
 -- necessary for barrier stone
 DefAlias("it_bottle", "it_bottle_idle")
+DefAlias("it_coffee", "it_coffee_drop")
 
 --------------------------------------------------------------
 -- Multiple-Image-Items, non animated, e.g. it-burnable-oil --
@@ -789,7 +840,10 @@ end
 do
     local images = DefSubimages("it_coffee", {h=4})
     local frames = BuildFrames(images,150)
-    DefAnim("it_coffee", frames, true)
+    DefAnim("it_coffee_drop", frames, true)
+    local images = DefSubimages("it_coffee_teatime", {h=4})
+    local frames = BuildFrames(images,150)
+    DefAnim("it_coffee_teatime", frames, true)
 end
 
 -- Cracks --
@@ -926,6 +980,7 @@ do
     DefImage("sh_passage_frame")
     DefImage("sh_passage_slash")
     DefImage("sh_passage_cross")
+    DefImage("sh_passage_backslash")
     DefImage("sh_puzzle_hollow")
     DefImage("sh_brake")
     DefImage("sh_floating")
@@ -943,6 +998,7 @@ do
     DefStone("st_passage_black_slash", "sh_passage_slash")
     DefStone("st_passage_black_cross", "sh_passage_cross")
     DefStone("st_passage_black_frame", "sh_passage_frame")
+    DefStone("st_passage_black_backslash", "sh_passage_backslash")
     DefStone("st_jamb_black", "sh_jamb")
     DefStone("st_plop_slate")
     DefStone("st_bluegray", "sh_round")
@@ -985,6 +1041,7 @@ do
     DefStone("st_passage_white_slash", "sh_passage_slash")
     DefStone("st_passage_white_cross", "sh_passage_cross")
     DefStone("st_passage_white_frame", "sh_passage_frame")
+    DefStone("st_passage_white_backslash", "sh_passage_backslash")
     DefStone("st_jamb_white", "sh_jamb")
     DefStone("st_woven")
     DefStone("st_yellow")
@@ -1144,6 +1201,7 @@ do
         DefAnim(name.."_breaking", BuildFrames(images,50))
     end
 
+    make_dispenser("st_dispenser_axe")
     make_dispenser("st_dispenser_bombblack")
     make_dispenser("st_dispenser_dynamite")
     make_dispenser("st_dispenser_bombwhite")
@@ -1514,6 +1572,12 @@ do
         DefAnim("st_box_wood_growing_fg", BuildFrames(images, 130))
         DefAnim("st_box_wood_growing_bg", BuildFrames(shadows, 130))
         DefShModel("st_box_wood_growing", "st_box_wood_growing_fg", "st_box_wood_growing_bg")
+
+        local n=DefSubimages("st_box_breaking", {h=4, w=2})
+        DefAnim("st_box_wood1_breaking-fg", BuildFrames({n[1],n[2],n[3],n[4]},100))
+        DefRoundStone("st_box_wood1_breaking", "st_box_wood1_breaking-fg")
+        DefAnim("st_box_wood2_breaking-fg", BuildFrames({n[5],n[6],n[7],n[8]},100))
+        DefRoundStone("st_box_wood2_breaking", "st_box_wood2_breaking-fg")
     end
 
     -- Greenbrown stone --
@@ -2083,9 +2147,10 @@ end
 
 -- Barrier stone --
 do
-    local items = {"it_bag", "it_banana", "it_bottle", "it_brake",
-                   "it_brush", "it_cherry", "it_coffee", "it_coin", "it_coin_s", "it_coin_m",
-                   "it_coin_l", "it_document", "it_drop", "it_dynamite", "it_extinguisher",
+    local items = {"it_axe", "it_bag", "it_banana", "it_bottle", "it_brake",
+                   "it_brush", "it_cherry", "it_coffee", "it_coffee_drop", "it_coffee_teatime",
+                   "it_coin", "it_coin_s", "it_coin_m", "it_coin_l",
+                   "it_document", "it_drop", "it_dynamite", "it_extinguisher",
                    "it_extinguisher_empty", "it_extinguisher_full", "it_extinguisher_medium",
                    "it_extralife", "it_flag", "it_flag_black", "it_flag_white",
                    "it_floppy", "it_glasses", "it_glasses_broken", "it_hammer", "it_key",

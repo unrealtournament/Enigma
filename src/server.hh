@@ -63,6 +63,7 @@ extern bool IsLevelRestart;
 extern bool ProvideExtralifes;
 extern bool InfiniteReincarnation;  // do not remove extralife on respawn
 extern bool SurviveFinish;
+extern int AddSecondsToScore;
 extern bool TwoPlayerGame;
 
 extern bool SingleComputerGame;
@@ -201,6 +202,8 @@ void Msg_RestartGame();
 void Msg_Command(const std::string &command);
 
 void Msg_Pause(bool onoff);
+
+void Msg_Teatime(bool onoff);
 
 void Msg_Panic(bool onoff);
 

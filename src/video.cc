@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2002,2004 Daniel Heck
  * Copyright (C) 2007 Ronald Lamprecht
+ * Copyright (C) 2020-2022 Andreas Lochmann
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,149 +32,11 @@
 #include "options.hh"
 #include "resource_cache.hh"
 #include "display.hh"
+#include "MouseCursor.hh"
 #include "gui/LevelPreviewCache.hh"
 
 using namespace ecl;
 using namespace enigma;
-
-/* -------------------- MouseCursor -------------------- */
-
-namespace {
-
-class MouseCursor {
-public:
-    MouseCursor(ecl::Screen *screen) : screen(screen) { SDL_AddEventWatch(event_filter, this); }
-    ~MouseCursor() { SDL_DelEventWatch(event_filter, this); }
-
-    void set_image(ecl::Surface *s, int hotx_, int hoty_);
-    void move(int newx, int newy);
-    void redraw();  // Redraw if position/image changed
-    void draw();    // Draw cursor if visible
-    void show();
-    void hide();
-    Rect get_rect() const;
-    Rect get_oldrect() const;
-
-    bool has_changed() { return changed; }
-    int get_x() const { return x; }
-    int get_y() const { return y; }
-
-private:
-    // This function is installed as an event watch by the constructor. It
-    // tracks mouse events to keep the position of the mouse cursor updated.
-    static int event_filter(void *data, SDL_Event *e) {
-        MouseCursor *cursor = static_cast<MouseCursor *>(data);
-        if (e->type == SDL_MOUSEMOTION) {
-            cursor->move(e->motion.x, e->motion.y);
-            cursor->redraw();
-        }
-        return 1;
-    }
-
-    // Private methods
-    void grab_bg();
-    void init_bg();
-    void restore_bg();
-
-    // Variables
-    ecl::Screen *screen;
-    std::unique_ptr<Surface> background;  // Copy of screen contents behind cursor
-    std::unique_ptr<Surface> cursor;      // Pixmap of the cursor
-
-    int x = 0, y = 0;
-    int oldx = 0, oldy = 0;
-
-    // Coordinates of hotspot inside cursor image
-    int hotx = 0, hoty = 0;
-    int visible = 0;
-    bool changed = true;
-};
-
-void MouseCursor::set_image(ecl::Surface *s, int hx, int hy) {
-    cursor.reset(s);
-    hotx = hx;
-    hoty = hy;
-
-    if (visible > 0)
-        init_bg();
-}
-
-void MouseCursor::draw() {
-    if (visible > 0) {
-        grab_bg();
-
-        GC gc(screen->get_surface());
-        blit(gc, x - hotx, y - hoty, cursor.get());
-        screen->update_rect(get_rect());
-
-        changed = false;
-    }
-}
-
-void MouseCursor::redraw() {
-    if (visible > 0 && changed) {
-        restore_bg();
-        draw();
-    }
-}
-
-void MouseCursor::move(int newx, int newy) {
-    x = (int)((double) (newx * screen->size().w) / screen->window_size().w + 0.5);
-    y = (int)((double) (newy * screen->size().h) / screen->window_size().h + 0.5);
-    changed = true;
-}
-
-void MouseCursor::show() {
-    if (++visible == 1) {
-        init_bg();
-        changed = true;
-    }
-}
-
-void MouseCursor::hide() {
-    if (--visible == 0) {
-        changed = true;
-        restore_bg();
-        background.reset(nullptr);
-    }
-}
-
-Rect MouseCursor::get_rect() const {
-    return Rect(x - hotx, y - hoty, cursor->width(), cursor->height());
-}
-
-Rect MouseCursor::get_oldrect() const {
-    return Rect(oldx - hotx, oldy - hoty, cursor->width(), cursor->height());
-}
-
-void MouseCursor::init_bg() {
-    assert(visible > 0);
-    assert(cursor != 0);
-
-    background.reset(ecl::MakeSurface(cursor->width(), cursor->height()));
-    assert(background);
-    grab_bg();
-}
-
-void MouseCursor::grab_bg() {
-    assert(background != 0);
-
-    GC gc(background.get());
-    blit(gc, 0, 0, screen->get_surface(), get_rect());
-
-    oldx = x;
-    oldy = y;
-}
-
-void MouseCursor::restore_bg() {
-    if (background) {
-        GC gc(screen->get_surface());
-        blit(gc, oldx - hotx, oldy - hoty, background.get());
-        screen->update_rect(get_oldrect());
-    }
-}
-
-}  // namespace
 
 /* -------------------- Local Variables -------------------- */
 
@@ -380,10 +243,10 @@ VMInfo video_modes[] = {
      "-9-0-"                        // fallback modes fullscreen
     },
     {
-     VM_1920x1080, 6, 1920, 1080,     // id, preffilenr, w, h
+     VM_1920x1080, 11, 1920, 1080,  // id, preffilenr, w, h
      64, VTS_64,                    // tilesize, tiletype
-     "1920x1080", "FHD", "16:9", // name, fsname, fs only
-     Rect(0, 0, 1920, 1080),         // display area
+     "1920x1080", "FHD", "16:9",    // name, fsname, fs only
+     Rect(0, 0, 1920, 1080),        // display area
      -400, -90,                     // menu background image offsets
      {160, 104, 5, "-160x104"},     // thumbnail size/extension
      Rect(0, 0, 1920, 832),         // game area
@@ -395,13 +258,13 @@ VMInfo video_modes[] = {
      Rect(360, 884, 888, 53),       // text area //TODO
      1,                             // statusbar coffsety
      true,                          // available fullscreen
-     "-6-4-2-0-"                    // fallback modes fullscreen
+     "-11-6-4-2-0-"                 // fallback modes fullscreen
     },
     {
-     VM_2560x1440, 6, 2560, 1440,     // id, preffilenr, w, h
+     VM_2560x1440, 12, 2560, 1440,  // id, preffilenr, w, h
      64, VTS_64,                    // tilesize, tiletype
-     "2560x1440", "WQHD", "16:9", // name, fsname, fs only
-     Rect(0, 0, 2560, 1440),         // display area
+     "2560x1440", "WQHD", "16:9",   // name, fsname, fs only
+     Rect(0, 0, 2560, 1440),        // display area
      -400, -90,                     // menu background image offsets
      {160, 104, 5, "-160x104"},     // thumbnail size/extension
      Rect(0, 0, 2560, 832),         // game area
@@ -413,13 +276,13 @@ VMInfo video_modes[] = {
      Rect(360, 884, 888, 53),       // text area //TODO
      1,                             // statusbar coffsety
      true,                          // available fullscreen
-     "-6-4-2-0-"                    // fallback modes fullscreen
+     "-12-6-4-2-0-"                 // fallback modes fullscreen
     },
     {
-     VM_3840x2160, 6, 3840, 2160,     // id, preffilenr, w, h
+     VM_3840x2160, 13, 3840, 2160,  // id, preffilenr, w, h
      64, VTS_64,                    // tilesize, tiletype
-     "3840x2160", "UHD", "16:9", // name, fsname, fs only
-     Rect(0, 0, 3840, 2160),         // display area
+     "3840x2160", "UHD", "16:9",    // name, fsname, fs only
+     Rect(0, 0, 3840, 2160),        // display area
      -400, -90,                     // menu background image offsets
      {160, 104, 5, "-160x104"},     // thumbnail size/extension
      Rect(0, 0, 3840, 832),         // game area
@@ -431,7 +294,7 @@ VMInfo video_modes[] = {
      Rect(360, 884, 888, 53),       // text area //TODO
      1,                             // statusbar coffsety
      true,                          // available fullscreen
-     "-6-4-2-0-"                    // fallback modes fullscreen
+     "-13-6-4-2-0-"                 // fallback modes fullscreen
     }
 };
 
@@ -521,6 +384,8 @@ private:
     std::string window_caption;
     VideoTileset *video_tileset;
     VideoTilesetId video_tileset_id;
+
+    bool nominal_inputgrab_status;
 };
 
 VideoEngineImpl::VideoEngineImpl() :
@@ -528,7 +393,8 @@ VideoEngineImpl::VideoEngineImpl() :
     window(NULL),
     renderer(NULL),
     video_tileset(nullptr),
-    video_tileset_id(VTS_NONE)
+    video_tileset_id(VTS_NONE),
+    nominal_inputgrab_status(false)
 {}
 
 VideoEngineImpl::~VideoEngineImpl() {
@@ -620,7 +486,7 @@ void VideoEngineImpl::Init() {
         app.selectedFullscreenMode = FindFullscreenMode(ActiveWindowSize());
         app.selectedFullscreenTilesetId = GetTilesetId();
     } else {
-        app.selectedWindowTilesetId == GetTilesetId();
+        app.selectedWindowTilesetId = GetTilesetId();
     }
     // Set window brightness according to options.
     UpdateBrightness();
@@ -820,6 +686,7 @@ void VideoEngineImpl::SaveWindowSizePreferences() {
 void VideoEngineImpl::Resize(Sint32 width, Sint32 height) {
     SDL_SetWindowSize(window, width, height);
     SDL_RenderSetLogicalSize(renderer, width, height);
+    screen->reinitScaler();
 }
 
 const VMInfo *VideoEngineImpl::GetInfo() {
@@ -1013,9 +880,14 @@ bool VideoEngineImpl::SetInputGrab(bool enabled) {
     // uses only one window, we use both SDL_Set... commands in parallel,
     // but only SDL_GetWindowGrab to retrieve the current state. When
     // Enigma starts using several windows, this needs to be adapted.
-    bool old_state = GetInputGrab();
+    bool old_state = nominal_inputgrab_status;
     SDL_SetWindowGrab(window, enabled ? SDL_TRUE : SDL_FALSE);
     SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE);
+    nominal_inputgrab_status = enabled;
+    // We are not returning the actual state (this would be GetInputGrab()),
+    // but what we expected should have been set: A loss of window focus
+    // would change GetInputGrab to false instead of true, but we might
+    // want to reset to the state before losing window focus.
     return old_state;
 }
 

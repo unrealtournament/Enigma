@@ -11,8 +11,6 @@ EXTRA_DIST = \
 CXXFLAGS = @CXXFLAGS@\
 	-DSYSTEM_DATA_DIR=\"$(datadir)/enigma\" \
 	-DDOCDIR=\"$(docdir)\" \
-	-I$(top_srcdir)/lib-src/zipios++  \
-	-I$(top_builddir)/lib-src/zipios++ \
 	-I$(top_srcdir)/lib-src/lua \
 	-I$(top_srcdir)/lib-src/tinygettext \
 	-I$(top_srcdir)/lib-src/enigma-core
@@ -27,8 +25,7 @@ if MINGW32
 CXXFLAGS += -static-libgcc -static-libstdc++ -DWIN32
 endif
 
-CXXFLAGS += -I$(top_srcdir)/lib-src \
-	-I$(top_builddir)/intl @SDL_CFLAGS@
+CXXFLAGS += -I$(top_srcdir)/lib-src @SDL_CFLAGS@
 
 
 enigma_SOURCES = 		\
@@ -90,6 +87,8 @@ enigma_SOURCES = 		\
 	main.hh			\
 	MessageDescriptor.cc	\
 	MessageDescriptor.hh	\
+	MouseCursor.cc		\
+	MouseCursor.hh		\
 	netgame.cc 		\
 	netgame.hh 		\
 	network.cc		\
@@ -469,7 +468,6 @@ else # not MACOSX
 endif
 
 enigma_LDADD = \
-	@LIBINTL@ \
 	$(top_builddir)/lib-src/enigma-core/libecl.a \
 	$(top_builddir)/lib-src/lua/liblua.a
 
@@ -480,7 +478,6 @@ enigma_LDADD += $(top_builddir)/lib-src/enet/libenet.a
 endif
 
 enigma_LDADD += $(top_builddir)/lib-src/oxydlib/liboxyd.a \
-	$(top_builddir)/lib-src/zipios++/src/libzipios.a \
 	$(top_builddir)/lib-src/tinygettext/libtinygettext.a \
 	-lz \
 	$(mingw_ldadd) \

@@ -16,6 +16,7 @@ SIMPLEPNG = \
 	ac_marble_glass.png \
 	ac_pearl_black.png \
 	ac_pearl_white.png \
+	ac_pearl_glass.png \
 	ac_rotor.png \
 	ac_top.png \
 	fl_abyss.png \
@@ -42,9 +43,10 @@ SIMPLEPNG = \
 	fl_swamp.png \
 	fl_water.png \
 	fl_wood.png fl_wood_3.png \
-	fl_wood_framed.png fl_wood_framed_2.png \
+	fl_wood_framed_1.png fl_wood_framed_2.png \
 	fl_yinyang_yang.png \
 	fl_yinyang_yin.png \
+	it_axe.png \
 	it_bag.png \
 	it_banana.png \
 	it_bomb.png it_bomb_b.png \
@@ -57,6 +59,7 @@ SIMPLEPNG = \
 	it_burnable_oil.png \
 	it_cherry.png \
 	it_coffee.png \
+	it_coffee_teatime.png \
 	it_coin_s.png \
 	it_coin_m.png \
 	it_coin_l.png \
@@ -163,6 +166,7 @@ SIMPLEPNG = \
 	st_death.png \
 	st_death_light.png \
 	st_disco.png st_disco_2.png st_disco_3.png \
+	st_dispenser_axe.png \
 	st_dispenser_bombblack.png \
 	st_dispenser_bombwhite.png \
 	st_dispenser_dynamite.png \
@@ -234,10 +238,12 @@ SIMPLEPNG = \
 	st_passage_black_frame.png \
 	st_passage_black_slash.png \
 	st_passage_black_square.png \
+	st_passage_black_backslash.png \
 	st_passage_white_cross.png \
 	st_passage_white_frame.png \
 	st_passage_white_slash.png \
 	st_passage_white_square.png \
+	st_passage_white_backslash.png \
 	st_pebble.png \
 	st_pinkbumps.png \
 	st_plaster.png \
@@ -321,7 +327,7 @@ FRAMABLEFLOORS = \
 	fl_himalaya.png \
 	fl_ivory.png \
 	fl_marble.png \
-	fl_metal.png \
+	fl_metal.png fl_metal_2.png fl_metal_3.png fl_metal_4.png fl_metal_5.png fl_metal_6.png fl_metal_7.png \
 	fl_mortar.png \
 	fl_pinkbumps.png \
 	fl_plank.png \
@@ -331,7 +337,7 @@ FRAMABLEFLOORS = \
 	fl_rock.png \
 	fl_rough.png \
 	fl_sahara.png \
-	fl_samba.png \
+	fl_samba.png fl_samba_2.png \
 	fl_sand.png \
 	fl_stone.png \
 	fl_tigris.png \
@@ -373,7 +379,25 @@ png_DATA = $(PNG) $(PNGLIST)
 all: $(PNGLIST)
 
 %_framed.png: $(GFXDIR)/%.png $(GFXDIR)/floor_frame.png
-	$(CONVERT) $(CONVERTOPT) -crop 48x48+0+0 -composite $< $(GFXDIR)/floor_frame.png $@
+	$(CONVERT) $(CONVERTOPT) $< -crop 48x48+0+0 $(GFXDIR)/floor_frame.png -composite $@
+
+%_2_framed.png: $(GFXDIR)/%.png $(GFXDIR)/floor_frame.png
+	$(CONVERT) $(CONVERTOPT) $< -crop 48x48+0+48 $(GFXDIR)/floor_frame.png -composite $@
+
+%_3_framed.png: $(GFXDIR)/%.png $(GFXDIR)/floor_frame.png
+	$(CONVERT) $(CONVERTOPT) $< -crop 48x48+0+96 $(GFXDIR)/floor_frame.png -composite $@
+
+%_4_framed.png: $(GFXDIR)/%.png $(GFXDIR)/floor_frame.png
+	$(CONVERT) $(CONVERTOPT) $< -crop 48x48+0+144 $(GFXDIR)/floor_frame.png -composite $@
+
+%_5_framed.png: $(GFXDIR)/%.png $(GFXDIR)/floor_frame.png
+	$(CONVERT) $(CONVERTOPT) $< -crop 48x48+0+192 $(GFXDIR)/floor_frame.png -composite $@
+
+%_6_framed.png: $(GFXDIR)/%.png $(GFXDIR)/floor_frame.png
+	$(CONVERT) $(CONVERTOPT) $< -crop 48x48+0+240 $(GFXDIR)/floor_frame.png -composite $@
+
+%_7_framed.png: $(GFXDIR)/%.png $(GFXDIR)/floor_frame.png
+	$(CONVERT) $(CONVERTOPT) $< -crop 48x48+0+288 $(GFXDIR)/floor_frame.png -composite $@
 
 fl_scales_%.png: $(GFXDIR)/fl_%.png $(GFXDIR)/fl_scales.png
 	$(CONVERT) $(CONVERTOPT) -crop 48x48+0+0 -composite $< $(GFXDIR)/fl_scales.png  $@
@@ -422,6 +446,9 @@ fl_forward_d_%.png: $(GFXDIR)/fl_%.png $(GFXDIR)/fl_forward.png
 
 ac_%.png: $(GFXDIR)/ac_%.png
 	$(CONVERT) $(CONVERTOPT) -crop 60x60+0+0 $< $@
+
+%_1.png: $(GFXDIR)/%.png
+	$(CONVERT) $(CONVERTOPT) -crop 48x48+0+0 $< $@
 
 %_2.png: $(GFXDIR)/%.png
 	$(CONVERT) $(CONVERTOPT) -crop 48x48+0+48 $< $@

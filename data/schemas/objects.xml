@@ -71,7 +71,7 @@
     <attr name="noshuffle" type="bool" default="false" rw="rw"/>
     <attr name="orientation" type="int" default="0" min="0" max="3" rw="rw"/>
     <attr name="owner" type="int" default="nil" min="0" max="1" rw="rw"/>
-    <attr name="oxydcolor" type="int" default="-1" min="-4" max="7" rw="rw"/>
+    <attr name="oxydcolor" type="int" default="-1" min="-4" max="11" rw="rw"/>
     <attr name="portable" type="bool" default="false" rw="r"/>
     <attr name="prefercurrent" type="double" default="0.0" rw="rw"/>
     <attr name="push_directions" type="string" default="nil" rw="rw"/>
@@ -279,6 +279,9 @@
     </object>
     <object name="ac_pearl_white">
       <attr name="color" value="1"/>
+    </object>
+    <object name="ac_pearl_glass">
+      <attr name="color" value="2"/>
     </object>
     <object name="ac_rotor">
       <attr name="range" default="5.0"/>
@@ -896,6 +899,7 @@
       <attr name="freezable"/>
       <msg name="_freeze"/>
     </object>
+    <object name="it_axe"/>
     <object name="it_bag">
       <attr name="mass" default="0.0" rw="r"/>
     </object>
@@ -965,6 +969,12 @@
     </object>
     <object name="it_cherry"/>
     <object name="it_coffee"/>
+    <object name="it_coffee_drop">
+      <attr name="state" value="0"/>
+    </object>
+    <object name="it_coffee_teatime">
+      <attr name="state" value="1"/>
+    </object>
     <object name="it_coin">
       <attr name="coin_value" default="3"/>
       <attr name="state" rw="r"/>
@@ -1494,6 +1504,7 @@
     <object name="st_box">
       <attr name="flavor" default="wood" rw="r"/>
       <attr name="secure"/>
+      <attr name="selection"/>
       <msg name="heat"/>
       <msg name="_fall"/>
       <msg name="_fire"/>
@@ -1697,6 +1708,9 @@
     </object>
     <object name="st_dispenser_extralife">
       <attr name="flavor" value="extralife"/>
+    </object>
+    <object name="st_dispenser_axe">
+      <attr name="flavor" value="axe"/>
     </object>
     <object name="st_document">
       <attr name="text"/>

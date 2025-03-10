@@ -237,7 +237,7 @@ World::~World() {
     }
     // reset the fields
     fields = FieldArray(0, 0);
-    for_each(actorlist.begin(), actorlist.end(), mem_fun(&Actor::dispose));
+    for_each(actorlist.begin(), actorlist.end(), std::mem_fn(&Actor::dispose));
 }
 
 bool World::is_border(const GridPos &p) {
@@ -520,7 +520,7 @@ void World::scramble_puzzles() {
             }
         }
 
-        scrambles.remove_if(mem_fun_ref(&Scramble::expired));
+        scrambles.remove_if(std::mem_fn(&Scramble::expired));
     }
 }
 
@@ -1658,6 +1658,7 @@ void World::stone_change(GridPos p) {
 /* -------------------- Functions -------------------- */
 
 void Resize(int w, int h) {
+    // The following is not quite clean; see GitHub Issue #78.
     level.reset(new World(w, h));
     display::NewWorld(w, h);
     server::WorldSized = true;
@@ -2125,6 +2126,17 @@ void SetFloor(GridPos p, Floor *fl) {
             st->on_floor_change();
 }
 
+void CoverFloor(const GridPos &p, std::string kind) {
+    Floor *fl = GetFloor(p);
+    Item *it = GetItem(p);
+    if (fl == NULL || !fl->isKind("fl_abyss"))
+        SetFloor(p, MakeFloor(kind.c_str()));
+    if (it != NULL && (it->isKind("it_meditation_hollow") || it->isKind("it_meditation_dent")
+            || it->isKind("it_meditation_caldera") || it->isKind("it_crack")
+            || it->isKind("it_burnable_ash")))
+        KillItem(p);
+}
+
 /* -------------------- Stone manipulation -------------------- */
 
 Stone *GetStone(GridPos p) {
@@ -2375,7 +2387,8 @@ void InitWorld() {
 }
 
 void ShutdownWorld() {
-    level.reset();
+    // The following is not quite clean; see GitHub Issue #78.
+    level.reset(new World(1,1));
     player::PlayerShutdown();
     Repos_Shutdown();
     WorldProxy::shutdown();

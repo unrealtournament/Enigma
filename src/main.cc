@@ -52,7 +52,6 @@
 
 #include "tinygettext/include/tinygettext/log.hpp"
 
-#include <locale.h>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -352,7 +351,7 @@ void Application::init(int argc, char **argv)
 
     // initialize preferences -- needs LUA, XML
     if (!options::Load()) {
-        fprintf(stderr, _("Error in configuration file.\n"));
+        fprintf(stderr, "%s", _("Error in configuration file.\n"));
       	fprintf(stderr, "%s\n", lua::LastError (lua::GlobalState()).c_str());
     }
     prefs = PreferenceManager::instance();
@@ -593,7 +592,7 @@ void Application::initSysDatapaths(const std::string &prefFilename)
         if (!ecl::FolderExists(prefPath))
             // may happen on Windows
             if(!ecl::FolderCreate(prefPath)) {
-                fprintf(stderr, _("Error: Home directory does not exist.\n"));
+                fprintf(stderr, "%s", _("Error: Home directory does not exist.\n"));
                 exit(1);
             }
 #ifdef MACOSX
@@ -608,7 +607,7 @@ void Application::initSysDatapaths(const std::string &prefFilename)
         if (!ecl::FolderExists(winAppDataPath))
             // may happen on Windows
             if(!ecl::FolderCreate(winAppDataPath)) {
-                fprintf(stderr, _("Error: Application Data directory does not exist.\n"));
+                fprintf(stderr, "%s", _("Error: Application Data directory does not exist.\n"));
                 exit(1);
             }
 //        Log << "winAppDataPath " << winAppDataPath << "\n";
@@ -616,7 +615,7 @@ void Application::initSysDatapaths(const std::string &prefFilename)
         prefPath = winAppDataPath + ecl::PathSeparator + "." + prefFilename;
 #endif
     } else {
-        fprintf(stderr, _("Error: Home directory does not exist.\n"));
+        fprintf(stderr, "%s", _("Error: Home directory does not exist.\n"));
         exit(1);
     }
 }
@@ -635,7 +634,7 @@ void Application::initXerces() {
                 makeNewTranscoderFor(XMLRecognizer::UTF_8, initResult,
                 4096); // the block size is irrelevant for utf-8
         if (initResult != XMLTransService::Ok) {
-            fprintf(stderr, _("Error in XML initialization.\n"));
+            fprintf(stderr, "%s", _("Error in XML initialization.\n"));
             exit(1);
         }
 
@@ -660,6 +659,11 @@ void Application::initXerces() {
         config->setParameter(XMLUni::fgDOMDatatypeNormalization, true);
         config->setParameter(XMLUni::fgDOMErrorHandler, domParserErrorHandler);
         config->setParameter(XMLUni::fgDOMResourceResolver, domParserSchemaResolver);
+        //The following line fixes a crash where Xerces and Enigma both release
+        //the same document and it is deleted twice. Adopting documents
+        //prevents Xerces from releasing them, as they will be released by
+        //Enigma in the destructors anyway.
+        config->setParameter(XMLUni::fgXercesUserAdoptsDOMDocument, true);
 
         domSer = domImplementationLS->createLSSerializer();
         config = domSer->getDomConfig();
@@ -675,6 +679,8 @@ void Application::initXerces() {
         domParser->setFeature(XMLUni::fgXercesSchemaFullChecking, true);
         domParser->setFeature(XMLUni::fgDOMValidation, true);
         domParser->setFeature(XMLUni::fgDOMDatatypeNormalization, true);
+        // See above comment for why we adopt the document.
+        domParser->setFeature(XMLUni::fgXercesUserAdoptsDOMDocument, true);
         domParser->setErrorHandler(domParserErrorHandler);
         domParser->setEntityResolver(domParserSchemaResolver);
 
@@ -684,7 +690,7 @@ void Application::initXerces() {
 #endif
     }
     catch (...) {
-        fprintf(stderr, _("Error in XML initialization.\n"));
+        fprintf(stderr, "%s", _("Error in XML initialization.\n"));
         exit(1);
     }
 }
@@ -874,8 +880,6 @@ void Application::init_i18n()
         }
     }
 
-#if defined(ENABLE_NLS)
-
     l10nFS = new GameFS();
     l10nFS->append_dir(l10nPath);
     nls::theDictionaryManager.reset(new tinygettext::DictionaryManager(std::make_unique<nls::TinyGetTextFileSystem>(), "UTF-8"));
@@ -886,16 +890,6 @@ void Application::init_i18n()
     tinygettext::Log::set_log_error_callback(&nls::tinygettext_error_callback);
 
     nls::SetMessageLocale (app.language);
-
-    // TODO: Make sure that bindtextdomain accepts UTF-8, then replace
-    // by XMLtoUtf8(LocalToXML(app.l10nPath.c_str()).x_str()).c_str().
-    // bindtextdomain (PACKAGE_NAME, app.l10nPath.c_str());
-
-    // SDL_ttf does not handle arbitrary encodings, so use UTF-8
-    // bind_textdomain_codeset (PACKAGE_NAME, "utf-8");
-    // textdomain (PACKAGE_NAME);
-#endif
-
 }
 
 void Application::setLanguage(std::string newLanguage)
@@ -976,6 +970,10 @@ void Application::shutdown()
     enet_deinitialize();
     enigma::ShutdownCurl();
     lua::ShutdownGlobal();
+    lev::PersistentIndex::shutdown();
+    lev::Proxy::shutdown();
+    ObjectValidator::instance()->shutdown();
+    domParser->release();
     XMLPlatformUtils::Terminate();
 #ifdef SDL_IMG_INIT
     IMG_Quit();

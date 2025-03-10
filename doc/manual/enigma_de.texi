@@ -1638,6 +1638,7 @@ F@"ur verschiedene kleinere Beitr@"age danken wir:
 @item Hypocrite (Finnische @"Ubersetzung)
 @item Icewing (Landschaftsdesign)
 @item ItTheIt (Landschaftsdesign)
+@item jokker87 (Korrektur des urspr@"unglichen Oxyd-Shuffle)
 @item M@'at@'e Lehel Juh@'asz (Ungarische @"Ubersetzung)
 @item Stian J@o{}rgensrud (Norwegische @"Ubersetzung)
 @item Samuele Kaplun (Italienische @"Ubersetzung)
@@ -1752,9 +1753,6 @@ F@"ur verschiedene kleinere Beitr@"age danken wir:
 
 @item toLua++
 @uref{http://www.codenix.com/~tolua}
-
-@item zipios
-@uref{http://zipios.sourceforge.net}
 
 @item Xerces C++
 @uref{http://xml.apache.org/xerces-c}

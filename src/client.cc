@@ -105,7 +105,9 @@ const char HSEP = '^';  // history separator (use character that user cannot use
 /* -------------------- Client class -------------------- */
 
 Client::Client()
-: m_state(cls_idle), m_levelname(), m_hunt_against_time(0), m_cheater(false), m_user_input() {
+: m_state(cls_idle), m_state_before_teatime(cls_idle), m_levelname(),
+  m_hunt_against_time(0), m_cheater(false), m_user_input() {
+    m_ignore_mouse_movement = false;
     m_network_host = 0;
 }
 
@@ -201,6 +203,8 @@ void Client::handle_events() {
         //       we need to add SDL_TEXTINPUT and SDL_TEXTEDITING here.
         case SDL_KEYDOWN: on_keydown(e); break;
         case SDL_MOUSEMOTION:
+            if (m_ignore_mouse_movement)
+                break;
             if (abs(e.motion.xrel) > 300 || abs(e.motion.yrel) > 300) {
                 fprintf(stderr, "mouse event with %i, %i\n", e.motion.xrel, e.motion.yrel);
             } else
@@ -211,10 +215,41 @@ void Client::handle_events() {
         case SDL_MOUSEBUTTONUP: on_mousebutton(e); break;
         case SDL_MOUSEWHEEL:
             if (e.wheel.y < 0) // mousewheel down: rotate inventory
-                rotate_inventory(+1);
+                rotate_inventory(-1);
             if (e.wheel.y > 0) // mousewheel up: inverse rotate inventory
                 rotate_inventory(+1);
             break;
+        case SDL_WINDOWEVENT: {
+            update_mouse_button_state();
+            if (e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+                // TODO(SDL2): is this sthe right event? The old code had
+                // !video::IsFullScreen() as an additional check - necessary?
+                show_menu(false);
+            } else if (e.window.event == SDL_WINDOWEVENT_EXPOSED) {
+                display::RedrawAll(video_engine->GetScreen());
+            }
+            break;
+        }
+        case SDL_QUIT:
+            client::Msg_Command("abort");
+            app.bossKeyPressed = true;
+            break;
+        }
+    }
+}
+
+void Client::handle_events_teatime() {
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        switch (e.type) {
+        case SDL_KEYDOWN:
+        case SDL_MOUSEBUTTONDOWN: {
+            client::Msg_Teatime(false);
+            server::Msg_Teatime(false);
+            display::Redraw(video_engine->GetScreen());
+            update_mouse_button_state();
+            break;
+        }
         case SDL_WINDOWEVENT: {
             update_mouse_button_state();
             if (e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
@@ -263,12 +298,23 @@ void Client::on_mousebutton(SDL_Event &e) {
                 server::Msg_Command("restart");
                 break;
             }
+            case options::MIDDLEMOUSEBUTTON_IgnoreMovement: {
+                m_ignore_mouse_movement = true;
+                break;
+            }
             default: {
                 // Unknown option from the future.
                 // Interpret as default (shouldn't hurt).
                 show_menu(true);
                 break;
             }}
+        }
+    }
+    if (e.type == SDL_MOUSEBUTTONUP) {
+        if (e.button.button == SDL_BUTTON_MIDDLE) {
+            if (options::GetInt("MiddleMouseButtonMode") == options::MIDDLEMOUSEBUTTON_IgnoreMovement) {
+                m_ignore_mouse_movement = false;
+            }
         }
     }
     update_mouse_button_state();
@@ -705,6 +751,11 @@ void Client::tick(double dtime) {
         handle_events();
         break;
     }
+    case cls_teatime: {
+        display::Redraw(video_engine->GetScreen());
+        handle_events_teatime();
+        break;
+    }
 
     case cls_gamemenu: break;
     case cls_gamehelp: break;
@@ -733,7 +784,9 @@ void Client::level_finished() {
     int best_user_time = scm->getBestUserScore(curProxy, difficulty);
     int par_time = ratingMgr->getParScore(curProxy, difficulty);
 
-    int level_time = ecl::round_nearest<int>(m_total_game_time);
+    // Work around int overflow
+    double level_time_dbl = (double)(m_total_game_time) + (double)(server::AddSecondsToScore);
+    int level_time = ecl::round_nearest<int>(level_time_dbl);
 
     std::string text;
     bool timehunt_restart = false;
@@ -880,6 +933,15 @@ void Client::finishedText() {
     consoleIndex = 0;
 }
 
+void Client::teatime(bool onoff) {
+    if (onoff) {
+        m_state_before_teatime = m_state;
+        m_state = cls_teatime;
+    } else {
+        m_state = m_state_before_teatime;
+    }
+}
+
 /* -------------------- Functions -------------------- */
 
 void ClientInit() {
@@ -974,6 +1036,14 @@ void Msg_ShowDocument(const std::string &text, bool scrolling, double duration) 
 
 void Msg_FinishedText() {
     client_instance.finishedText();
+}
+
+void Msg_Teatime(bool onoff) {
+    if (onoff)
+        Msg_ShowText(_("Teatime!"), false, 0.1);
+    // Note that client's time does not tick during teatime,
+    // so the duration of 0.1s happens after tea break.
+    client_instance.teatime(onoff);
 }
 
 void Msg_Error(const std::string &text) {

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<el:level xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://enigma-game.org/schema/level/1 level.xsd" xmlns:el="http://enigma-game.org/schema/level/1">
+  <el:protected>
+    <el:info el:type="level">
+      <el:identity el:title="Frogger" el:subtitle="" el:id="luc20"/>
+      <el:version el:score="1" el:release="2" el:revision="1" el:status="released"/>
+      <el:author  el:name="Lukas Schüller" el:email="" el:homepage=""/>
+      <el:copyright>Copyright © 2005 Lukas Schüller</el:copyright>
+      <el:license el:type="GPL v2.0 or above" el:open="true"/>
+      <el:compatibility el:enigma="1.30">
+      </el:compatibility>
+      <el:modes el:easy="false" el:single="true" el:network="false"/>
+      <el:comments>
+        <el:code>Lua 5.1 and XML converted by Leveladministrators; New API version by Andreas, March 2023</el:code>
+      </el:comments>
+      <el:score el:easy="-" el:difficult="-"/>
+    </el:info>
+    <el:luamain><![CDATA[
+
+-- VARS
+timetillnewcar_a = 1
+timetillnewcar_b = 1
+timetillnewcar_c = 1
+timetillnewcar_d = 1
+timetillnewcar_e = 1
+trees_a = {1,6,11,16}
+trees_b = {2,8,14}
+trees_c = {3,13}
+trees_d = {4,11,18}
+trees_e = {1,7,13}
+timetilltreemove = 3
+
+function regenerate_environment()
+  if(timetillnewcar_a > 0) then
+    timetillnewcar_a = timetillnewcar_a-1
+  else
+    wo[po(0,15)] = {"st_boulder_e"}
+    timetillnewcar_a = 6
+  end
+  if(timetillnewcar_b > 0) then
+    timetillnewcar_b = timetillnewcar_b-1
+  else
+    wo[po(19,14)] = {"st_boulder_w"}
+    timetillnewcar_b = 7
+  end
+  if(timetillnewcar_c > 0) then
+    timetillnewcar_c = timetillnewcar_c-1
+  else
+    wo[po(0,13)] = {"st_boulder_e"}
+    timetillnewcar_c = 7
+  end
+  if(timetillnewcar_d > 0) then
+    timetillnewcar_d = timetillnewcar_d-1
+  else
+    wo[po(19,12)] = {"st_boulder_w"}
+    timetillnewcar_d = 9
+  end
+  if(timetillnewcar_e > 0) then
+    timetillnewcar_e = timetillnewcar_e-1
+  else
+    wo[po(0,11)] = {"st_boulder_e"}
+    timetillnewcar_e = 8
+  end
+  if(timetilltreemove > 0) then
+    timetilltreemove = timetilltreemove-1
+  else
+    for i=1, #trees_a do
+      trees_a[i] = trees_a[i]+1
+      behindaa = trees_a[i]-1
+      if(behindaa <= 0) then
+        behindaa = behindaa+20
+      end
+      behindab = trees_a[i]-2
+      if(behindab <= 0) then
+        behindab = behindab+20
+      end
+      behindac = trees_a[i]-3
+      if(behindac <= 0) then
+        behindac = behindac+20
+      end
+      wo[po(trees_a[i],9)] = {"fl_wood"}
+      wo[po(behindaa,9)] = {"fl_wood"}
+      wo[po(behindab,9)] = {"fl_wood"}
+      wo[po(behindac,9)] = {"fl_water"}
+      if(trees_a[i] == 20) then
+        trees_a[i] = 0
+      end
+    end
+    for i=1, #trees_b do
+      trees_b[i] = trees_b[i]-1
+      behindba = trees_b[i]+1
+      if(behindba >= 19) then
+        behindba = behindba-18
+      end
+      behindbb = trees_b[i]+2
+      if(behindbb >= 19) then
+        behindbb = behindbb-18
+      end
+      behindbc = trees_b[i]+3
+      if(behindbc >= 19) then
+        behindbc = behindbc-18
+      end
+      behindbd = trees_b[i]+4
+      if(behindbd >= 19) then
+        behindbd = behindbd-18
+      end
+      wo[po(trees_b[i],8)] = {"fl_wood"}
+      wo[po(behindba,8)] = {"fl_wood"}
+      wo[po(behindbb,8)] = {"fl_wood"}
+      wo[po(behindbc,8)] = {"fl_wood"}
+      wo[po(behindbd,8)] = {"fl_water"}
+      if(trees_b[i] == 1) then
+        trees_b[i] = 19
+      end
+    end
+    for i=1, #trees_c do
+      trees_c[i] = trees_c[i]+1
+      behindca = trees_c[i]-1
+      if(behindca <= 0) then
+        behindca = behindca+20
+      end
+      behindcb = trees_c[i]-2
+      if(behindcb <= 0) then
+        behindcb = behindcb+20
+      end
+      behindcc = trees_c[i]-3
+      if(behindcc <= 0) then
+        behindcc = behindcc+20
+      end
+      wo[po(trees_c[i],7)] = {"fl_wood"}
+      wo[po(behindca,7)] = {"fl_wood"}
+      wo[po(behindcb,7)] = {"fl_wood"}
+      wo[po(behindcc,7)] = {"fl_water"}
+      if(trees_c[i] == 20) then
+        trees_c[i] = 0
+      end
+    end
+    for i=1, #trees_d do
+      trees_d[i] = trees_d[i]-1
+      behindda = trees_d[i]+1
+      if(behindda >= 22) then
+        behindda = behindda-21
+      end
+      behinddb = trees_d[i]+2
+      if(behinddb >= 22) then
+        behinddb = behinddb-21
+      end
+      behinddc = trees_d[i]+3
+      if(behinddc >= 22) then
+        behinddc = behinddc-21
+      end
+      wo[po(trees_d[i],6)] = {"fl_wood"}
+      wo[po(behindda,6)] = {"fl_wood"}
+      wo[po(behinddb,6)] = {"fl_wood"}
+      wo[po(behinddc,6)] = {"fl_water"}
+      if(trees_d[i] == 1) then
+        trees_d[i] = 22
+      end
+    end
+    for i=1, #trees_e do
+      trees_e[i] = trees_e[i]+1
+      behindea = trees_e[i]-1
+      if(behindca <= 0) then
+        behindea = behindea+18
+      end
+      behindeb = trees_e[i]-2
+      if(behindeb <= 0) then
+        behindeb = behindeb+18
+      end
+      wo[po(trees_e[i],5)] = {"fl_wood"}
+      wo[po(behindea,5)] = {"fl_wood"}
+      wo[po(behindeb,5)] = {"fl_water"}
+      if(trees_e[i] == 18) then
+        trees_e[i] = 0
+      end
+    end
+  end
+end
+
+function kill_stone_above(onoff, sender)
+  if onoff then
+    wo[po(sender)] = {"st_nil"}
+  end
+end
+
+wo["ConserveLevel"] = true
+wo["FollowGrid"] = false
+wo["FollowMethod"] = FOLLOW_SCROLL
+
+ti[" "] = {"fl_lawn_a"}
+ti["~"] = {"fl_water"}
+ti["-"] = {"fl_metal_7n"}
+ti["#"] = {"st_yellow"}
+ti["@"] = {"ac_marble_black", 0.0, 0.5}
+ti["O"] = {"st_oxyd", flavor = "a"}
+ti["T"] = {"st_timer", interval = 0.2, target = "regenerate_environment"}
+ti["e"] = {"it_extralife"}
+ti["w"] = {"it_wormhole", destination = po(10.0, 16.5), range = 0.5}
+ti["^"] = {"st_oneway_n"}
+ti["k"] = ti["-"] .. {"it_trigger", invisible = true, safeaction = true, target = "kill_stone_above"}
+
+w, h = wo(ti, " ", {
+ -- 01234567890123456789
+   "T###################",
+   "##O##O##O##O##O##O##",
+   "##ew#ew#ew#ew#ew#ew#",
+   "##^##^##^##^##^##^##",
+   "#                  #",
+   "#~~~~~~~~~~~~~~~~~~#",
+   "#~~~~~~~~~~~~~~~~~~#",
+   "#~~~~~~~~~~~~~~~~~~#",
+   "#~~~~~~~~~~~~~~~~~~#",
+   "#~~~~~~~~~~~~~~~~~~#",
+   "#                  #",
+   "-------------------k",
+   "k-------------------",
+   "-------------------k",
+   "k-------------------",
+   "-------------------k",
+   "#         @        #",
+   "####################",
+})
+
+wo:shuffleOxyd()
+
+
+    ]]></el:luamain>
+    <el:i18n>
+      <el:string el:key="title">
+        <el:english el:translate="false"/>
+      </el:string>
+    </el:i18n>
+  </el:protected>
+</el:level>

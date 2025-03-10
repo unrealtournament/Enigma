@@ -1,4 +1,6 @@
-#! /bin/sh
+#! /bin/bash
+set -o errexit -o nounset -o pipefail
+IFS=$'\n'
 
 bstrap ()
 {
@@ -11,8 +13,6 @@ bstrap ()
     fi
 }
 
-echo ""
-bstrap "./lib-src/zipios++"
 bstrap "./lib-src/enet"
 
 echo -n "Bootstrapping ./    "

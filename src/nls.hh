@@ -2,16 +2,10 @@
 #define NLS_HH_INCLUDED
 #include "config.h"
 
-#if defined(ENABLE_NLS)
-#  include <libintl.h>
-#  define _(String) nls::translate(String).c_str()
-//#  define _(String) gettext(String)
-#  define gettext_noop(String) (String)
-#  define N_(String) gettext_noop(String)
-#else // !defined(ENABLE_NLS) 
-#  define _(String) (String)
-#  define N_(String) (String)
-#endif
+/* Use N_(...) for strings that should be included in pot, but are not
+   translated at that particular point in the source (but maybe later). */
+#define _(String) nls::translate(String).c_str()
+#define N_(String) (String)
 
 #include <string>
 #include "tinygettext/include/tinygettext/tinygettext.hpp"
@@ -28,54 +22,52 @@ namespace nls
     struct Language {
         const char *name;
         const char *localename;
-        const char *flagimage;
+        bool        replaceApostrophe;
     };
     
     const Language languages[] = {
-        { "default",     "",      "par" },
-        { "беларуская",  "be_BY", "flags25x15/by" },
-        { "Bosanski",    "bs_BA", "" },
-        { "Česky",       "cs_CZ", "flags25x15/cz" },
-        { "Dansk",       "da_DK", "flags25x15/dk" },
-        { "Deutsch",     "de_DE", "flags25x15/de" },
-        { "Ελληνικά",    "el_GR", "flags25x15/gr" },
-        { "English",     "en_GB", "flags25x15/gb" },
-        { "Español",     "es_ES", "flags25x15/es" },
-        { "Français",    "fr_FR", "flags25x15/fr" },
-        { "Gàidhlig",    "gd_GB", "flags25x15/gb-sct" },
-        { "Hrvatski",    "hr_HR", "flags25x15/hr" },
-        { "Italiano",    "it_IT", "flags25x15/it" },
-        { "Magyar",      "hu_HU", "flags25x15/hu" },
-        { "Nederlands",  "nl_NL", "flags25x15/nl" },
-        { "Norsk",       "no_NO", "" },
-        { "Polski",      "pl_PL", "flags25x15/pl" },
-        { "Português",   "pt_BR", "flags25x15/pt" },
-        { "Русский",     "ru_RU", "flags25x15/ru" },
-        { "Slovenčina",  "sk_SK", "flags25x15/sk" },
-        { "Slovenščina", "sl_SI", "" },
-        { "Suomi",       "fi_FI", "flags25x15/fi" },
-        { "Svenska",     "sv_SE", "flags25x15/se" },
-        { "українська",  "uk_UA", "flags25x15/ua" },
-        { "中文",         "zh_CN", "flags25x15/zh-cn" },
-        { "日本語",       "ja_JP", "" },
+        { "default",     "",      true },
+        { "беларуская",  "be_BY", true },
+        { "Bosanski",    "bs_BA", true },
+        { "Česky",       "cs_CZ", true },
+        { "Dansk",       "da_DK", true },
+        { "Deutsch",     "de_DE", true },
+        { "Ελληνικά",    "el_GR", true },
+        { "English",     "en_GB", true },
+        { "Español",     "es_ES", true },
+        { "Français",    "fr_FR", true },
+        { "Gàidhlig",    "gd_GB", true },
+        { "Hrvatski",    "hr_HR", true },
+        { "Italiano",    "it_IT", true },
+        { "Magyar",      "hu_HU", true },
+        { "Nederlands",  "nl_NL", true },
+        { "Norsk",       "no_NO", true },
+        { "Polski",      "pl_PL", true },
+        { "Português",   "pt_BR", true },
+        { "Русский",     "ru_RU", true },
+        { "Slovenčina",  "sk_SK", true },
+        { "Slovenščina", "sl_SI", true },
+        { "Suomi",       "fi_FI", true },
+        { "Svenska",     "sv_SE", true },
+        { "українська",  "uk_UA", true },
+        { "中文",         "zh_CN", false },
+        { "日本語",       "ja_JP", false },
      };
 
+    std::string replaceApostrophe(std::string text);
+
     static inline std::string translate(const std::string& msg) {
-    #if defined(ENABLE_NLS)
         if (theDictionaryManager)
-            return theDictionaryManager->get_dictionary().translate(msg);
-    #endif
+            return replaceApostrophe(theDictionaryManager->get_dictionary().translate(msg));
         return msg;
     }
 
     static inline std::string ntranslate(const std::string& msg, const std::string& msg_plural, int num) {
-    #if defined(ENABLE_NLS)
         if (theDictionaryManager) {
             std::string msgt = theDictionaryManager->get_dictionary().translate(msg);
             std::string msgt_plural = theDictionaryManager->get_dictionary().translate(msg_plural);
-            return theDictionaryManager->get_dictionary().translate_plural(msgt, msgt_plural, num);
+            return replaceApostrophe(theDictionaryManager->get_dictionary().translate_plural(msgt, msgt_plural, num));
         }
-    #endif
         if (num == 1)
             return msg;
         else

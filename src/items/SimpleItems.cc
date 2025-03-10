@@ -24,8 +24,17 @@
 #include "player.hh"
 #include "SoundEffectManager.hh"
 #include "world.hh"
+#include "client.hh"
 
 namespace enigma {
+
+/* -------------------- Axe -------------------- */
+
+    Axe::Axe() {
+    }
+
+    DEF_ITEMTRAITSF(Axe, "it_axe", it_axe, itf_portable | itf_freezable);
+
 
 /* -------------------- Banana -------------------- */
 
@@ -79,6 +88,36 @@ namespace enigma {
     }
 
     DEF_ITEMTRAITS(Cherry, "it_cherry", it_cherry);
+
+/* -------------------- Coffee -------------------- */
+    Coffee::Coffee(int type) {
+        state = type;
+    }
+
+    std::string Coffee::getClass() const {
+        return "it_coffee";
+    }
+    void Coffee::setState(int extState) {
+        // block all write attempts
+    }
+
+    ItemAction Coffee::activate(Actor *a, GridPos p) {
+        if (state == TEATIME || server::GameCompatibility != GAMET_ENIGMA) {
+            server::Msg_Teatime(true);
+            client::Msg_Teatime(true);
+            return ITEM_KILL;
+        } else
+            return ITEM_DROP;
+    }
+
+    int Coffee::traitsIdx() const {
+        return ecl::Clamp<int>(state, 0, 1);
+    }
+
+    ItemTraits Coffee::traits[2] = {
+        {"it_coffee_drop",    it_coffee_drop,    itf_animation | itf_portable | itf_freezable, 0.0},
+        {"it_coffee_teatime", it_coffee_teatime, itf_animation | itf_portable | itf_freezable, 0.0},
+    };
 
 /* -------------------- Death Item  -------------------- */
 
@@ -295,6 +334,7 @@ namespace enigma {
     DEF_ITEMTRAITS(Pencil, "it_pencil", it_pencil);
 
 /* -------------------- Pin -------------------- */
+
     Pin::Pin() {
     }
 
@@ -308,7 +348,28 @@ namespace enigma {
             BroadcastMessage("_update_pin", player, GRID_NONE_BIT, true);
         }
     }
+
     DEF_ITEMTRAITS(Pin, "it_pin", it_pin);
+
+/* -------------------- Remote Control -------------------- */
+
+    RemoteControl::RemoteControl() {
+    }
+
+    ItemAction RemoteControl::activate(Actor *a, GridPos p) {
+        sound::EmitSoundEvent("triggerdown", p.center());
+        performAction(true);
+        if (Value v = getAttr("text")) {
+            std::string txt(v);
+            // translate text
+            txt = server::LoadedProxy->getLocalizedString(txt);
+            client::Msg_ShowDocument(txt, true);
+        }
+        return ITEM_KEEP;
+    }
+
+    DEF_ITEMTRAITS(RemoteControl, "it_remote", it_remote);
+
 /* -------------------- Ring -------------------- */
 
     Ring::Ring() {
@@ -525,10 +586,13 @@ namespace enigma {
 
 
     BOOT_REGISTER_START
+        BootRegister(new Axe(), "it_axe");
         BootRegister(new Banana(), "it_banana");
         BootRegister(new Brush(), "it_brush");
         BootRegister(new Cherry(), "it_cherry");
-        BootRegister(new Coffee(), "it_coffee");
+        BootRegister(new Coffee(0), "it_coffee");
+        BootRegister(new Coffee(0), "it_coffee_drop");
+        BootRegister(new Coffee(1), "it_coffee_teatime");
         BootRegister(new DeathItem(), "it_death");
         BootRegister(new Debris(0), "it_debris");
         BootRegister(new Debris(1), "it_debris_water");
@@ -545,6 +609,7 @@ namespace enigma {
         BootRegister(new Key(), "it_key");
         BootRegister(new Pencil(), "it_pencil");
         BootRegister(new Pin(), "it_pin");
+        BootRegister(new RemoteControl(), "it_remote");
         BootRegister(new Ring(), "it_ring");
         BootRegister(new Spade(), "it_spade");
         BootRegister(new Spoon(), "it_spoon");

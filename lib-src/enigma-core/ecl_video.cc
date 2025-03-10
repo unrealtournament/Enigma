@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2002,2003,2004,2005 Daniel Heck
+ * Copyright (C) 2022 Andreas Lochmann
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,11 +20,11 @@
 #include "ecl_video.hh"
 #include "ecl_error.hh"
 #include "ecl_sdl.hh"
+#include "ecl_util.hh"
 
 #include "SDL_image.h"
 #include "SDL_syswm.h"
 #include "SDL_gfxPrimitives.h"
-#include "SDL_rotozoom.h"
 
 #include <cassert>
 #include <memory>
@@ -235,6 +236,7 @@ Surface::Surface(SDL_Surface *surface, bool _has_alpha) {
     }
     assert(surface);
     m_surface = SDL_ConvertSurface(surface, pixel_format, 0);
+    SDL_FreeSurface(surface);
     assert(m_surface);
 }
 
@@ -323,9 +325,9 @@ void Surface::set_brightness(int a) {
 }
 
 Surface *Surface::zoom(int w, int h) {
-    SDL_Surface *s_new;
-    s_new = zoomSurface(get_surface(), (double)w / width(), (double)h / height(), true);
-    return Surface::make_surface(s_new);
+    Surface *s_new = MakeSurface(w, h);
+    BlitScaled(get_surface(), NULL, s_new->get_surface(), NULL);
+    return s_new;
 }
 
 Surface *Surface::make_surface(SDL_Surface *sdls, bool _has_alpha) {
@@ -354,8 +356,6 @@ ecl::Screen *ecl::Screen::get_instance() {
 
 ecl::Screen::Screen(SDL_Window *window, int surface_w, int surface_h)
 : m_window(window),
-  //m_surface(Surface::make_surface(SDL_GetWindowSurface(window))),
-  //m_sdlsurface(SDL_GetWindowSurface(window)),
   m_surface(Surface::make_surface(
       SDL_CreateRGBSurface(0, surface_w, surface_h, 32, 0xff0000, 0xff00, 0xff, 0xff000000),
       NO_ALPHA)),
@@ -365,6 +365,7 @@ ecl::Screen::Screen(SDL_Window *window, int surface_w, int surface_h)
     assert(m_surface);
     assert(m_instance == 0);
     m_instance = this;
+    m_scaler = new ecl::Scaler(m_surface->get_surface(), NULL, SDL_GetWindowSurface(m_window));
 }
 
 ecl::Screen::~Screen() {
@@ -384,29 +385,37 @@ void ecl::Screen::update_rect(const Rect &r) {
 
 void ecl::Screen::flush_updates() {
     if (update_all_p) {
-        SDL_BlitScaled(m_sdlsurface, NULL, SDL_GetWindowSurface(m_window), NULL);
+        m_scaler->blit_scaled(m_sdlsurface, NULL, SDL_GetWindowSurface(m_window), NULL);
         SDL_UpdateWindowSurface(m_window);
         update_all_p = false;
     } else if (!m_dirtyrects.empty()) {
         m_dirtyrects.intersect(size());
-
         std::vector<SDL_Rect> rects(m_dirtyrects.size());
         RectList::iterator j = m_dirtyrects.begin();
+        SDL_Surface* window = SDL_GetWindowSurface(m_window);
         for (unsigned i = 0; i < rects.size(); ++i, ++j)
         {
-            SDL_Rect sdlrect;
-            sdl::copy_rect(sdlrect, *j);
-            int nx = (int)((double) (j->x * window_size().w) / size().w + 0.5);
-            int ny = (int)((double) (j->y * window_size().h) / size().h + 0.5);
-            int nw = (int)((double) (j->w * window_size().w) / size().w + 0.5);
-            int nh = (int)((double) (j->h * window_size().h) / size().h + 0.5);
+            SDL_Rect srcrect;
+            sdl::copy_rect(srcrect, *j);
+            int nx = (int)((double) (j->x * window_size().w) / size().w - 0.5);
+            int ny = (int)((double) (j->y * window_size().h) / size().h - 0.5);
+            int nw = (int)((double) (j->w * window_size().w) / size().w + 3.0);
+            int nh = (int)((double) (j->h * window_size().h) / size().h + 3.0);
+            nx = Clamp(nx, 0, window->w);
+            ny = Clamp(ny, 0, window->h);
+            nw = Clamp(nw, 0, window->w - nx);
+            nh = Clamp(nh, 0, window->h - ny);
             ecl::Rect scaledRect = Rect(nx, ny, nw, nh);
             sdl::copy_rect(rects[i], scaledRect);
-            SDL_BlitScaled(m_sdlsurface, &sdlrect, SDL_GetWindowSurface(m_window), &rects[i]);
+            m_scaler->blit_scaled(m_sdlsurface, &srcrect, window, &rects[i]);
         }
         SDL_UpdateWindowSurfaceRects(m_window, &rects[0], rects.size());
     }
     m_dirtyrects.clear();
+}
+
+void ecl::Screen::reinitScaler() {
+    m_scaler->precalculate(m_surface->get_surface(), NULL, SDL_GetWindowSurface(m_window));
 }
 
 Rect ecl::Screen::size() const {
@@ -432,6 +441,215 @@ int ecl::Screen::window_width() const {
 int ecl::Screen::window_height() const {
     return SDL_GetWindowSurface(m_window)->h;
 }
+
+/* -------------------- Scaler -------------------- */
+
+// Code originally by Andreas Schiffler (SDL2_rotozoom), heavily adapted to our use case.
+
+Scaler::Scaler(SDL_Surface* _src, SDL_Rect* _srccrop, SDL_Surface* _dst, ScalerMode _mode) {
+    assert(_src);
+    assert(_dst);
+    mode = _mode;
+    sax = NULL;
+    say = NULL;
+    precalculate(_src, _srccrop, _dst);
+}
+
+Scaler::~Scaler() {
+    free(sax);
+    free(say);
+}
+
+void Scaler::precalculate(SDL_Surface* src, SDL_Rect* srccrop, SDL_Surface* dst) {
+    // Free prior allocations.
+    free(sax);
+    free(say);
+    sax = NULL;
+    say = NULL;
+
+    // Change mode if src/dst are not 32bit depth.
+    if ((src->format->BytesPerPixel != 4) || (dst->format->BytesPerPixel != 4)) {
+        mode = SC_SDL;
+        return;
+    }
+
+    // Allocate memory for row/column increments
+    if ((sax = (int *) malloc((dst->w + 1) * sizeof(Uint32))) == NULL) {
+        fprintf(stderr, "ecl_video::BlitScaled: Could not allocate memory for row/column increments.\n");
+        sax = NULL;
+        return;
+    }
+    if ((say = (int *) malloc((dst->h + 1) * sizeof(Uint32))) == NULL) {
+        fprintf(stderr, "ecl_video::BlitScaled: Could not allocate memory for row/column increments.\n");
+        free(sax);
+        sax = NULL;
+        say = NULL;
+        return;
+    }
+
+    int x, y, sx, sy, ssx, ssy, csx, csy;
+    int cropx, cropy, cropw, croph;
+    int *csax, *csay;
+
+    if (srccrop) {
+        cropx = Clamp(srccrop->x, 0, src->w);
+        cropy = Clamp(srccrop->y, 0, src->h);
+        cropw = Clamp(srccrop->w, 0, src->w - cropx);
+        croph = Clamp(srccrop->h, 0, src->h - cropy);
+    } else {
+        cropx = 0;
+        cropy = 0;
+        cropw = src->w;
+        croph = src->h;
+    }
+
+    // Precalculate row increments
+    spixelw = (cropw - 1);
+    spixelh = (croph - 1);
+    spixelgap = src->pitch/4;
+    dgap = dst->pitch - dst->w * 4;
+    sx = (int) (65536.0 * (float) spixelw / (float) (dst->w - 1));
+    sy = (int) (65536.0 * (float) spixelh / (float) (dst->h - 1));
+
+    // Maximum scaled source size
+    ssx = (cropw << 16) - 1;
+    ssy = (croph << 16) - 1;
+
+    // Precalculate horizontal row increments
+    csx = cropx;
+    csax = sax;
+    for (x = 0; x <= dst->w; x++) {
+        *csax = csx;
+        csax++;
+        csx += sx;
+        // Guard from overflows
+        if (csx > ssx)
+            csx = ssx;
+    }
+
+    // Precalculate vertical row increments
+    csy = cropy * spixelgap;
+    csay = say;
+    for (y = 0; y <= dst->h; y++) {
+        *csay = csy;
+        csay++;
+        csy += sy;
+        // Guard from overflows
+        if (csy > ssy)
+            csy = ssy;
+    }
+}
+
+void Scaler::blit_scaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect) {
+    if (mode == SC_SDL) {
+        SDL_BlitScaled(src, srcrect, dst, dstrect);
+        return;
+    }
+
+    // Note: srcrect is ignored in SC_bytewise mode.
+
+    typedef struct tColorRGBA {
+        Uint8 r;
+        Uint8 g;
+        Uint8 b;
+        Uint8 a;
+    } tColorRGBA;
+
+    int dstrx, dstry, dstrw, dstrh, x, y, ex, ey, cx, cy, t1, t2;
+    int *csax, *csay, *salast;
+    int sstep, sstepx, sstepy;
+    tColorRGBA *c00, *c01, *c10, *c11, *sp, *csp, *dp;
+
+    if ((sax == NULL) || (say == NULL)) {
+        fprintf(stderr, "ecl_video::BlitScaled: Precalculations missing. (Error allocating memory?)\n");
+        return;
+    }
+
+    if (dstrect) {
+        dstrx = Clamp(dstrect->x, 0, dst->w);
+        dstry = Clamp(dstrect->y, 0, dst->h);
+        dstrw = Clamp(dstrect->w, 0, dst->w - dstrx);
+        dstrh = Clamp(dstrect->h, 0, dst->h - dstry);
+    } else {
+        dstrx = 0;
+        dstry = 0;
+        dstrw = dst->w;
+        dstrh = dst->h;
+    }
+
+    sp = (tColorRGBA *) src->pixels;
+    dp = (tColorRGBA *) dst->pixels;
+
+    // Advance source pointer y to the beginning of the first line to copy
+    csay = say + dstry;
+    sp += ((*csay >> 16) - (*say >> 16)) * spixelgap;
+    // Advance destination pointer to the beginning of the first line to copy
+    dp = (tColorRGBA *) ((Uint8 *) (dp + dst->w * dstry) + dgap * dstry);
+    for (y = dstry; y < dstry + dstrh; y++) {
+        csp = sp;
+        // Advance source pointer x
+        csax = sax + dstrx;
+        sp += (*csax >> 16) - (*sax >> 16);
+        // Advance destination pointer to first position-to-copy in this row
+        dp += dstrx;
+        for (x = dstrx; x < dstrx + dstrw; x++) {
+            // Setup color source pointers
+            ex = (*csax & 0xffff);
+            ey = (*csay & 0xffff);
+            cx = (*csax >> 16);
+            cy = (*csay >> 16);
+            sstepx = cx < spixelw;
+            sstepy = cy < spixelh;
+            c00 = sp;
+            c01 = sp;
+            c10 = sp;
+            if (sstepy)
+                c10 += spixelgap;
+            c11 = c10;
+            if (sstepx) {
+                c01++;
+                c11++;
+            }
+
+            // Draw and interpolate colors
+            t1 = ((((c01->r - c00->r) * ex) >> 16) + c00->r) & 0xff;
+            t2 = ((((c11->r - c10->r) * ex) >> 16) + c10->r) & 0xff;
+            dp->r = (((t2 - t1) * ey) >> 16) + t1;
+            t1 = ((((c01->g - c00->g) * ex) >> 16) + c00->g) & 0xff;
+            t2 = ((((c11->g - c10->g) * ex) >> 16) + c10->g) & 0xff;
+            dp->g = (((t2 - t1) * ey) >> 16) + t1;
+            t1 = ((((c01->b - c00->b) * ex) >> 16) + c00->b) & 0xff;
+            t2 = ((((c11->b - c10->b) * ex) >> 16) + c10->b) & 0xff;
+            dp->b = (((t2 - t1) * ey) >> 16) + t1;
+            t1 = ((((c01->a - c00->a) * ex) >> 16) + c00->a) & 0xff;
+            t2 = ((((c11->a - c10->a) * ex) >> 16) + c10->a) & 0xff;
+            dp->a = (((t2 - t1) * ey) >> 16) + t1;
+
+            // Advance source pointer x
+            salast = csax;
+            csax++;
+            sstep = (*csax >> 16) - (*salast >> 16);
+            sp += sstep;
+
+            // Advance destination pointer x
+            dp++;
+        }
+        // Advance source pointer x
+        salast = csax;
+        csax += dst->w + dstrw - dstrx;
+        sp += (*csax >> 16) - (*salast >> 16);
+        // Advance source pointer y
+        salast = csay;
+        csay++;
+        sstep = (*csay >> 16) - (*salast >> 16);
+        sstep *= spixelgap;
+        sp = csp + sstep;
+
+        // Advance destination pointer to beginning of next row
+        dp = (tColorRGBA *) ((Uint8 *) (dp + dst->w - (dstrx+dstrw)) + dgap);
+    }
+}
+
 
 /* -------------------- Functions -------------------- */
 
@@ -520,15 +738,7 @@ Surface *ecl::MakeSurface(void *data, int w, int h, int bipp, int pitch, const R
     return Surface::make_surface(surface);
 }
 
-Surface *ecl::Resample(Surface *s, Rect rect, int neww, int newh) {
-    SDL_Surface *sdls = SDL_CreateRGBSurface(SDL_SWSURFACE, rect.w, rect.h, 32, 0, 0, 0, 0);
-    SDL_Rect r;
-    sdl::copy_rect(r, rect);
-    SDL_BlitSurface(s->get_surface(), &r, sdls, 0);
-
-    SDL_Surface *s_new;
-    s_new = zoomSurface(sdls, (double)neww / rect.w, (double)newh / rect.h, true);
-
-    SDL_FreeSurface(sdls);
-    return Surface::make_surface(s_new);
+void ecl::BlitScaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect, ScalerMode mode) {
+    Scaler* scaler = new Scaler(src, srcrect, dst, mode);
+    scaler->blit_scaled(src, srcrect, dst, dstrect);
 }

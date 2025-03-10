@@ -1522,6 +1522,7 @@ For various smaller contributions, thanks go to:
 @item Hypocrite (Finnish translation)
 @item Icewing (Level design)
 @item ItTheIt (Level design)
+@item jokker87 (Fixed original oxyd shuffle)
 @item M@'at@'e Lehel Juh@'asz (Hungarian translation)
 @item Stian J@o{}rgensrud (Norwegian translation)
 @item Samuele Kaplun (Italian translation)
@@ -1636,9 +1637,6 @@ For various smaller contributions, thanks go to:
 
 @item toLua++
 @uref{http://www.codenix.com/~tolua}
-
-@item zipios
-@uref{http://zipios.sourceforge.net}
 
 @item Xerces C++
 @uref{http://xml.apache.org/xerces-c}

@@ -25,6 +25,17 @@
 
 namespace enigma {
     /**
+     * Axe
+     */
+    class Axe : public Item {
+        CLONEOBJ(Axe);
+        DECL_ITEMTRAITS;
+
+    public:
+        Axe();
+    };
+
+    /**
      * Banana
      */
     class Banana : public Item {
@@ -76,7 +87,29 @@ namespace enigma {
     /**
      * Coffee
      */
-    DEF_ITEM(Coffee, "it_coffee", it_coffee);
+    class Coffee : public Item {
+        CLONEOBJ(Coffee);
+        DECL_ITEMTRAITS_ARRAY(2, traitsIdx());
+    private:
+        enum iState {
+            DEFAULT =  0,    ///<
+            TEATIME =  1     ///<
+        };
+    public:
+        Coffee(int type);
+
+        // Object interface
+        virtual std::string getClass() const;
+
+        // StateObject interface
+        virtual void setState(int extState);
+
+        // Item interface
+        virtual ItemAction activate(Actor* a, GridPos p);
+
+    private:
+        int traitsIdx() const;
+    };
 
     /**
      * DeathItem
@@ -220,6 +253,20 @@ namespace enigma {
         
         // GridObject interface
         virtual void setOwner(int player);
+    };
+
+    /**
+     * Remote Control
+     */
+    class RemoteControl : public Item {
+        CLONEOBJ(RemoteControl);
+        DECL_ITEMTRAITS;
+
+    public:
+        RemoteControl();
+
+        // Item interface
+        virtual ItemAction activate(Actor* a, GridPos p);
     };
 
     /**
