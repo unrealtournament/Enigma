@@ -9,6 +9,10 @@
 /depcomp
 /install-sh
 /missing
+/cmake-build-*
+/build
+/.idea
+/.vscode
 xcuserdata
 Makefile
 Makefile.in
