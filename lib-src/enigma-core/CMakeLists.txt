@@ -29,8 +29,7 @@ add_library(enigma-core
     SDL_gfxPrimitives.c
     SDL_gfxPrimitives.h
     SDL_gfxPrimitives_font.h
-    SDL_rotozoom.c
-    SDL_rotozoom.h)
+)
 target_include_directories(enigma-core PUBLIC . )
 target_link_libraries(enigma-core
     SDL2::Core)

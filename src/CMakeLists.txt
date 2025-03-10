@@ -341,6 +341,8 @@ add_executable(enigma
     main.hh
     MessageDescriptor.cc
     MessageDescriptor.hh
+    MouseCursor.cc
+    MouseCursor.hh
     MusicManager.cc
     MusicManager.hh
     net_enet.cc
@@ -453,7 +455,6 @@ target_link_libraries(enigma
     enigma-core
     lua
     oxydlib
-    zipios++
 )
 
 install(TARGETS enigma DESTINATION bin)
