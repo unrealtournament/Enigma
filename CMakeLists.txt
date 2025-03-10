@@ -24,6 +24,10 @@ add_compile_definitions(ENABLE_NLS="")
 add_compile_definitions(PACKAGE_NAME="Enigma")
 #add_compile_definitions(CXXLUA=1)
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    add_compile_definitions(MACOSX=1)
+endif()
+
 add_subdirectory(lib-src)
 add_subdirectory(data)
 add_subdirectory(src)
