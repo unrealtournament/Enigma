@@ -196,9 +196,9 @@ namespace enigma { namespace lev {
          * info in the Proxy as an exception.
          */
         GameType engineCompatibility;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMDocument *doc;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *infoElem;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMNodeList *stringList;
+        xercesc::DOMDocument *doc;
+        xercesc::DOMElement *infoElem;
+        xercesc::DOMNodeList *stringList;
         double loadtime;
         
         void load(bool onlyMetadata, bool expectLevel);

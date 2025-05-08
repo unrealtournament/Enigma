@@ -56,7 +56,6 @@ namespace enigma
         substitutions.insert(std::make_pair(schemaSystemId, schemaFilename));
     }
     
-#if _XERCES_VERSION >= 30000
     DOMLSInput * DOMSchemaResolver::resolveResource (
             const XMLCh* const resourceType, const XMLCh* const namespaceUri,
             const XMLCh *const publicId, const XMLCh *const systemId,
@@ -89,35 +88,5 @@ namespace enigma
             }
         }
     }
-#else
-    DOMInputSource * DOMSchemaResolver::resolveEntity (
-            const XMLCh *const publicId, const XMLCh *const systemId,
-            const XMLCh *const baseURI) {
-                
-        std::string schemaName = XMLtoLocal(systemId).c_str();
-        std::map<std::string, std::string>::iterator i = substitutions.find(schemaName);
-        if (i == substitutions.end()) {
-            Log << "DOMSchemaResolver: no schema substitution found for '" 
-                    << schemaName << "'\n";
-            // let the parser try to resolve potential external entities
-            return NULL;
-        } else {
-            std::string schemaPath;
-            bool result = app.systemFS->findFile( std::string("schemas/") + 
-                    i->second , schemaPath);
-            if (result) {
-                DOMInputSource * inSrc = new Wrapper4InputSource(new LocalFileInputSource(
-                        LocalToXML(&schemaPath).x_str()));
-                resolveStatus = true;
-                return inSrc;
-            } else {
-                Log << "DOMSchemaResolver: schema file '" 
-                    << i->second << "' not found\n";
-                // let the parser try to resolve the schema
-                return NULL;
-            }
-        }
-    }
-#endif
 } // namespace enigma
 

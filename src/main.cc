@@ -650,7 +650,6 @@ void Application::initXerces() {
         domParserSchemaResolver = new DOMSchemaResolver();
         domSerErrorHandler = new DOMErrorReporter(&Log);
 
-#if _XERCES_VERSION >= 30000
         domParser = domImplementationLS->createLSParser(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
         DOMConfiguration *config = domParser->getDomConfig();
 
@@ -672,24 +671,6 @@ void Application::initXerces() {
 
         config->setParameter(XMLUni::fgDOMWRTFormatPrettyPrint, true);
         config->setParameter(XMLUni::fgDOMErrorHandler, domSerErrorHandler);
-
-#else
-        domParser = domImplementationLS->createDOMBuilder(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
-
-        domParser->setFeature(XMLUni::fgDOMNamespaces, true);
-        domParser->setFeature(XMLUni::fgXercesSchema, true);
-        domParser->setFeature(XMLUni::fgXercesSchemaFullChecking, true);
-        domParser->setFeature(XMLUni::fgDOMValidation, true);
-        domParser->setFeature(XMLUni::fgDOMDatatypeNormalization, true);
-        // See above comment for why we adopt the document.
-        domParser->setFeature(XMLUni::fgXercesUserAdoptsDOMDocument, true);
-        domParser->setErrorHandler(domParserErrorHandler);
-        domParser->setEntityResolver(domParserSchemaResolver);
-
-        domSer = domImplementationLS->createDOMWriter();
-        domSer->setFeature(XMLUni::fgDOMWRTFormatPrettyPrint, true);
-        domSer->setErrorHandler(domSerErrorHandler);
-#endif
     }
     catch (...) {
         fprintf(stderr, "%s", _("Error in XML initialization.\n"));

@@ -37,11 +37,7 @@
 #include <memory>
 #include <xercesc/dom/DOMImplementation.hpp>
 #include <xercesc/dom/DOMImplementationLS.hpp>
-#if _XERCES_VERSION >= 30000
 #include <xercesc/dom/DOMLSParser.hpp>
-#else
-#include <xercesc/dom/DOMBuilder.hpp>
-#endif
 #include <xercesc/util/TransService.hpp>
 
 namespace enigma
@@ -176,26 +172,22 @@ namespace enigma
         /**
          * A xerces transcoder for utf-8.
          */
-        XERCES_CPP_NAMESPACE_QUALIFIER XMLTranscoder   *xmlUtf8Transcoder;
+        xercesc::XMLTranscoder   *xmlUtf8Transcoder;
         
         /**
          * The implementation of DOM Core.
          */
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMImplementation   *domImplementationCore;
+        xercesc::DOMImplementation   *domImplementationCore;
 
         /**
          * The implementation of DOM Load and Save.
          */
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMImplementationLS *domImplementationLS;
+        xercesc::DOMImplementationLS *domImplementationLS;
 
         /**
          * A configured DOM parser for reusage.
          */
-#if _XERCES_VERSION >= 30000
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMLSParser *domParser;
-#else    
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMBuilder *domParser;
-#endif
+        xercesc::DOMLSParser *domParser;
         /**
          * The error handler attached to the domParser
          */
@@ -209,11 +201,7 @@ namespace enigma
         /**
          * A configured DOM serializer for reusage.
          */
-#if _XERCES_VERSION >= 30000
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMLSSerializer *domSer;
-#else    
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMWriter *domSer;
-#endif
+        xercesc::DOMLSSerializer *domSer;
         /**
          * The error handler attached to the domSer
          */

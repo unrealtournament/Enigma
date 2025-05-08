@@ -23,15 +23,9 @@
 #include <map>
 #include <string>
 #include <xercesc/util/XercesVersion.hpp>
-#if _XERCES_VERSION >= 30000
 #include <xercesc/dom/DOMLSParser.hpp>
 #include <xercesc/dom/DOMLSResourceResolver.hpp>
 #include <xercesc/dom/DOMLSInput.hpp>
-#else    
-#include <xercesc/dom/DOMBuilder.hpp>
-#include <xercesc/dom/DOMEntityResolver.hpp>
-#include <xercesc/dom/DOMInputSource.hpp>
-#endif
 
 namespace enigma
 {
@@ -43,20 +37,12 @@ namespace enigma
      * are resolved by the parser using the given system id. A flag allows to
      * check if the XML file did adhere to a given schema.
      */
-#if _XERCES_VERSION >= 30000
-    class DOMSchemaResolver : public XERCES_CPP_NAMESPACE_QUALIFIER DOMLSResourceResolver {
+    class DOMSchemaResolver : public xercesc::DOMLSResourceResolver {
     public:
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMLSInput * resolveResource (
+        xercesc::DOMLSInput * resolveResource (
             const XMLCh* const resourceType, const XMLCh* const namespaceUri,
             const XMLCh *const publicId, const XMLCh *const systemId,
             const XMLCh *const baseURI);
-#else    
-    class DOMSchemaResolver : public XERCES_CPP_NAMESPACE_QUALIFIER DOMEntityResolver {
-    public:
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMInputSource * resolveEntity (
-            const XMLCh *const publicId, const XMLCh *const systemId,
-            const XMLCh *const baseURI);
-#endif
         DOMSchemaResolver();
         ~DOMSchemaResolver();
         

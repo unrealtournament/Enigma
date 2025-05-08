@@ -672,17 +672,10 @@ namespace enigma { namespace lev {
                 app.domParserSchemaResolver->addSchemaId("level.xsd","level.xsd");
 
                 // preloaded lua-commented xml or zipped xml
-#if _XERCES_VERSION >= 30000
                 std::unique_ptr<DOMLSInput> domInputLevelSource(new Wrapper4InputSource(
                     new MemBufInputSource(reinterpret_cast<const XMLByte *>(&levelCode[0]),
                                           levelCode.size(), absLevelPath.c_str(), false)));
                 doc = app.domParser->parse(domInputLevelSource.get());
-#else
-                std::unique_ptr<Wrapper4InputSource> domInputLevelSource(new Wrapper4InputSource(
-                    new MemBufInputSource(reinterpret_cast<const XMLByte *>(&levelCode[0]),
-                                          levelCode.size(), absLevelPath.c_str(), false)));
-                doc = app.domParser->parse(*domInputLevelSource);
-#endif
                 if (app.domParserSchemaResolver->didResolveSchema() && doc != NULL
                         && !app.domParserErrorHandler->getSawErrors()) {
                     infoElem = dynamic_cast<DOMElement *>(doc->getElementsByTagNameNS(

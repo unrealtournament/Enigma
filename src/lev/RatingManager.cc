@@ -31,9 +31,6 @@
 #include <sstream>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/util/XercesVersion.hpp>
-#if _XERCES_VERSION < 30000
-#include <xercesc/framework/LocalFileFormatTarget.hpp>
-#endif
 
 using namespace std;
 using namespace enigma;
@@ -346,12 +343,7 @@ namespace enigma { namespace lev {
                         Utf8ToXML("levels").x_str())->item(0));
                 std::for_each(cache.begin(), cache.end(), saveLevelRating);
                 std::string writePath = app.userPath + "/" + RATINGSFILENAME;
-#if _XERCES_VERSION >= 30000
                 app.domSer->writeToURI(saveDoc, LocalToXML(writePath.c_str()).x_str());
-#else
-                XMLFormatTarget *myFormTarget = new LocalFileFormatTarget(writePath.c_str());
-                app.domSer->writeNode(myFormTarget, *saveDoc);            
-#endif
                 saveDoc->release();
             }
         }

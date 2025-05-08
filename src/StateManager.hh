@@ -71,13 +71,13 @@ namespace enigma
         StateManager();
     private:
         static StateManager *theSingleton;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *groupsElem;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMNodeList *groupList;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *indicesElem;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMNodeList *indexList;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *levelsElem;
+        xercesc::DOMElement *groupsElem;
+        xercesc::DOMNodeList *groupList;
+        xercesc::DOMElement *indicesElem;
+        xercesc::DOMNodeList *indexList;
+        xercesc::DOMElement *levelsElem;
         
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *getLevel(std::string id);
+        xercesc::DOMElement *getLevel(std::string id);
     };
 } // namespace enigma
 #endif

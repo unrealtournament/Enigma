@@ -128,10 +128,10 @@ namespace enigma { namespace lev {
     private:
         static std::vector<std::shared_ptr<PersistentIndex> > indexCandidates;
         std::string absIndexPath;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMDocument *doc;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *infoElem;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *updateElem;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *levelsElem;
+        xercesc::DOMDocument *doc = nullptr;
+        xercesc::DOMElement *infoElem;
+        xercesc::DOMElement *updateElem;
+        xercesc::DOMElement *levelsElem;
         
 //        static void checkCandidate(PersistentIndex * candidate);
         static void checkCandidate(std::string thePackPath, bool systemOnly, bool userOwned = true, 

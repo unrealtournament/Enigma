@@ -161,40 +161,12 @@ fi
 dnl ----------------------------------------
 dnl Check for xerces
 dnl ----------------------------------------
-if test "$MINGW32" = yes; then
-   AC_MSG_CHECKING([for Xerces release 3.0])
-   AC_EGREP_HEADER([gXercesMajVersion = 3], [xercesc/util/XercesVersion.hpp],
-      [AC_MSG_RESULT([found])],
-      [AC_MSG_ERROR([not found])])
-   AC_CHECK_LIB([xerces-c], [main],,
-      [AC_MSG_ERROR([xerces is required to compile Enigma])])
-else
-   AC_MSG_CHECKING([for current Xerces release 3.0])
-   AC_EGREP_HEADER([gXercesMajVersion = 3], [xercesc/util/XercesVersion.hpp],
-      [xerces3exp="yes"],
-      [xerces3exp="no"])
-   if test "x$xerces3exp" = xyes; then
-      AC_MSG_RESULT([found])
-      AC_CHECK_LIB([xerces-c], [main],,
-         [AC_MSG_ERROR([xerces is required to compile Enigma])])
-   else
-      AC_MSG_RESULT([not found])
-      AC_MSG_CHECKING([for old Xerces release >=2.4])
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <xercesc/util/XercesVersion.hpp>]],
-         [[#if XERCES_VERSION_MAJOR < 2
-           #error too old
-           #else
-	   #if XERCES_VERSION_MAJOR == 2 && XERCES_VERSION_MINOR < 4
-	   #error too old
-	   #endif
-	   #endif
-           ]])],
-         [AC_MSG_RESULT([found])],
-         [AC_MSG_ERROR([Xerces >= 2.4 not found.])])
-    AC_CHECK_LIB([xerces-c], [main],,
-       [AC_MSG_ERROR([xerces is required to compile Enigma])])
-  fi
-fi
+AC_MSG_CHECKING([for Xerces release 3.0])
+AC_EGREP_HEADER([gXercesMajVersion = 3], [xercesc/util/XercesVersion.hpp],
+  [AC_MSG_RESULT([found])],
+  [AC_MSG_ERROR([not found])])
+AC_CHECK_LIB([xerces-c], [main],,
+  [AC_MSG_ERROR([xerces is required to compile Enigma])])
 
 dnl ----------------------------------------
 dnl On Mac SDL flags are set up differently. This is a bit of a kludge for it

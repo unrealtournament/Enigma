@@ -49,10 +49,6 @@
 #include <xercesc/util/XercesVersion.hpp>
 #include <xercesc/framework/MemBufInputSource.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
-#if _XERCES_VERSION < 30000
-#include <xercesc/framework/LocalFileFormatTarget.hpp>
-#include <xercesc/framework/MemBufFormatTarget.hpp>
-#endif
 #include <zlib.h>
 
 
@@ -61,26 +57,16 @@ using namespace enigma;
 XERCES_CPP_NAMESPACE_USE 
 
 namespace {
-#if _XERCES_VERSION >= 30000
     class ScoreDomSerFilter : public DOMLSSerializerFilter {
         public:
             virtual DOMNodeFilter::FilterAction acceptNode(const DOMNode *node) const;
-#else
-    class ScoreDomSerFilter : public DOMWriterFilter {
-        public:
-            virtual short acceptNode(const DOMNode *node) const;
-#endif
             virtual unsigned long getWhatToShow () const {
                 return DOMNodeFilter::SHOW_ALL;
             }
             virtual void setWhatToShow (unsigned long toShow) {}
     };
     
-#if _XERCES_VERSION >= 30000
     DOMNodeFilter::FilterAction ScoreDomSerFilter::acceptNode(const DOMNode *node) const {
-#else
-    short ScoreDomSerFilter::acceptNode(const DOMNode *node) const {
-#endif
         if (node->getNodeType () == DOMNode::ELEMENT_NODE &&
                  std::string(XMLtoUtf8(node->getNodeName()).c_str()) == "level") {
             const DOMElement *e = dynamic_cast<const DOMElement *>(node);
@@ -171,18 +157,10 @@ namespace enigma { namespace lev {
                     errMessage = "Score file incomplete or corrupted.\n";
                     throw XFrontend("");
                 }
-#if _XERCES_VERSION >= 30000
                 std::unique_ptr<DOMLSInput> domInputScoreSource(new Wrapper4InputSource(
                     new MemBufInputSource(reinterpret_cast<const XMLByte *>(score.c_str()),
                                           score.size(), "", false)));
                 doc = app.domParser->parse(domInputScoreSource.get());
-#else
-                std::unique_ptr<Wrapper4InputSource> domInputScoreSource(new Wrapper4InputSource(
-                    new MemBufInputSource(reinterpret_cast<const XMLByte *>(score.c_str()),
-                                          score.size(), "", false)));
-                doc = app.domParser->parse(*domInputScoreSource);
-#endif
-                
             }
             if (app.domParserSchemaResolver->didResolveSchema() &&  doc != NULL 
                     && !app.domParserErrorHandler->getSawErrors()) {
@@ -435,7 +413,6 @@ namespace enigma { namespace lev {
         try {
             ScoreDomSerFilter serialFilter;
             for (int j=0; j < 2; j++) { // save twice: first all, then without dat scores
-#if _XERCES_VERSION >= 30000
 //            result = app.domSer->writeToURI(doc, LocalToXML(& path).x_str());
                 if (j==1)
                     (app.domSer)->setFilter(&serialFilter);
@@ -445,22 +422,6 @@ namespace enigma { namespace lev {
                 if (j==1)
                     (app.domSer)->setFilter(NULL);
                 contents.replace(contents.find("UTF-16"), 6, "UTF-8"); // adapt encoding info
-#else
-//            XMLFormatTarget *myFormTarget = new LocalFileFormatTarget(path.c_str());
-//            result = app.domSer->writeNode(myFormTarget, *doc);            
-//            delete myFormTarget;   // flush
-            
-                MemBufFormatTarget *memFormTarget = new MemBufFormatTarget();
-                if (j==1)
-                    app.domSer->setFilter(&serialFilter);
-                result = app.domSer->writeNode(memFormTarget, *doc);
-                if (j==1)
-                    app.domSer->setFilter(NULL);
-                std::string contents(
-                        reinterpret_cast<const char *>(memFormTarget->getRawBuffer()),
-                        memFormTarget->getLen());
-                delete memFormTarget;
-#endif
 
                 // We need to allocate enough memory to save the
                 // deflated (compressed) xml-file.

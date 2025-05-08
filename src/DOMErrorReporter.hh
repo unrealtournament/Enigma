@@ -28,9 +28,9 @@ namespace enigma
 {
     /**
      * Error handler for DOM parser and serializer.  It reports the error
-     * messages according to there severity as a log note or an alert panel
+     * messages according to their severity as a log note or an alert panel
      */
-    class DOMErrorReporter : public XERCES_CPP_NAMESPACE_QUALIFIER DOMErrorHandler
+    class DOMErrorReporter : public xercesc::DOMErrorHandler
     {
     public:
         /**
@@ -46,7 +46,7 @@ namespace enigma
          * @param domError  the error description 
          * @return  true to continue parse or serialization
          */
-        bool handleError(const XERCES_CPP_NAMESPACE_QUALIFIER DOMError& domError) override;
+        bool handleError(const xercesc::DOMError& domError) override;
 
         /**
          * Returns true if error or warning occured since last reset
@@ -56,7 +56,7 @@ namespace enigma
         /**
          * Returns maximum severity of error since last reset
          */
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMError::ErrorSeverity getSeverity() const;
+        xercesc::DOMError::ErrorSeverity getSeverity() const;
         
         /**
          * Resets error flag and severity
@@ -96,7 +96,7 @@ namespace enigma
         /**
          * Most significant error type since last reset
          */
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMError::ErrorSeverity severity;
+        xercesc::DOMError::ErrorSeverity severity;
         
         /**
          * Current output stream for error reports

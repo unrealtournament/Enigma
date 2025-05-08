@@ -49,15 +49,15 @@ namespace enigma
         
     protected:
         PropertyManager();
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMDocument *doc;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *propertiesElem;
+        xercesc::DOMDocument *doc;
+        xercesc::DOMElement *propertiesElem;
         
         /**
          * force a return of a property element with the given name as key.
          * @param prefName  the name of the searched or new property
          * @return  the property element with the given key name.
          */
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement * getPropertyElement(const char *prefName);
+        xercesc::DOMElement * getPropertyElement(const char *prefName);
 
         /**
          * checks if a property exists.
@@ -66,7 +66,7 @@ namespace enigma
          *                 element found in the preference list (for append usage).
          * @return validity of element.
          */
-         bool hasProperty(const char *prefName, XERCES_CPP_NAMESPACE_QUALIFIER DOMElement ** element);
+         bool hasProperty(const char *prefName, xercesc::DOMElement ** element);
         /**
          * checks if a property exists.
          * @param key     the preference name.
@@ -74,7 +74,7 @@ namespace enigma
          *                element found in the preference list (for append usage).
          * @return validity of element.
          */
-        bool hasProperty(const XMLCh * key, XERCES_CPP_NAMESPACE_QUALIFIER DOMElement ** element);
+        bool hasProperty(const XMLCh * key, xercesc::DOMElement ** element);
     };
 } // namespace enigma
 #endif

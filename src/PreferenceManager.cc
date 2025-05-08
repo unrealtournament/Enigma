@@ -38,9 +38,6 @@
 #include <xercesc/util/XMLUniDefs.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XercesVersion.hpp>
-#if _XERCES_VERSION < 30000
-#include <xercesc/framework/LocalFileFormatTarget.hpp>
-#endif
 
 
 using namespace std;
@@ -156,13 +153,7 @@ namespace enigma {
         stripIgnorableWhitespace(doc->getDocumentElement());
         
         try {
-#if _XERCES_VERSION >= 30000
             result = app.domSer->writeToURI(doc, LocalToXML(& app.prefPath).x_str());
-#else
-            XMLFormatTarget *myFormTarget = new LocalFileFormatTarget(app.prefPath.c_str());
-            result = app.domSer->writeNode(myFormTarget, *doc);            
-            delete myFormTarget;   // flush
-#endif
         } catch (const XMLException& toCatch) {
             errMessage = std::string("Exception on save of preferences: \n") + 
                     XMLtoUtf8(toCatch.getMessage()).c_str() + "\n";

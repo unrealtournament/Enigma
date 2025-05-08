@@ -45,9 +45,6 @@
 #include <xercesc/framework/MemBufInputSource.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
 #include <xercesc/util/XercesVersion.hpp>
-#if _XERCES_VERSION < 30000
-#include <xercesc/framework/LocalFileFormatTarget.hpp>
-#endif
 
 using namespace std;
 XERCES_CPP_NAMESPACE_USE
@@ -423,18 +420,10 @@ namespace enigma { namespace lev {
                         doc = app.domParser->parseURI(indexUrl.c_str());
                 } else {
                     // preloaded  xml or zipped xml
-#if _XERCES_VERSION >= 30000
                     std::unique_ptr<DOMLSInput> domInputIndexSource(new Wrapper4InputSource(
                         new MemBufInputSource(reinterpret_cast<const XMLByte *>(&indexCode[0]),
                                               indexCode.size(), absIndexPath.c_str(), false)));
                     doc = app.domParser->parse(domInputIndexSource.get());
-#else
-                    std::unique_ptr<Wrapper4InputSource> domInputIndexSource(
-                        new Wrapper4InputSource(
-                            new MemBufInputSource(reinterpret_cast<const XMLByte *>(&indexCode[0]),
-                                                  indexCode.size(), absIndexPath.c_str(), false)));
-                    doc = app.domParser->parse(*domInputIndexSource);
-#endif
                 }
 
                 if (app.domParserSchemaResolver->didResolveSchema() && doc != NULL
@@ -957,13 +946,7 @@ namespace enigma { namespace lev {
                     ecl::FolderCreate (directory);
                 }
 
-#if _XERCES_VERSION >= 30000
                 result = app.domSer->writeToURI(doc, LocalToXML(& path).x_str());
-#else
-                XMLFormatTarget *myFormTarget = new LocalFileFormatTarget(path.c_str());
-                result = app.domSer->writeNode(myFormTarget, *doc);
-                delete myFormTarget;   // flush
-#endif
             }
             catch (const XMLException& toCatch) {
                 char* message = XMLString::transcode(toCatch.getMessage());

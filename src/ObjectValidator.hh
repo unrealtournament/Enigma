@@ -68,9 +68,9 @@ namespace enigma
         static bool mayInitialize;
         
         void init();
-        void scanAttributeElement(XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *attribElement);
-        void scanMessageElement(XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *msgElement);
-        void scanObjectElement(XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *objectElement);
+        void scanAttributeElement(xercesc::DOMElement *attribElement);
+        void scanMessageElement(xercesc::DOMElement *msgElement);
+        void scanObjectElement(xercesc::DOMElement *objectElement);
         Value parseTypedValue(const XMLCh* xmlSource, const std::string &strSource, validationType type);
         
         std::map<std::string, KindDescriptor *> kinds;
@@ -78,7 +78,7 @@ namespace enigma
         std::map<std::string, AttributeDescriptor *> defaultAttributes;
         std::list<AttributeDescriptor *> otherAttributes;
         
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMDocument *doc;
+        xercesc::DOMDocument *doc;
     };
 } // namespace enigma
 #endif
