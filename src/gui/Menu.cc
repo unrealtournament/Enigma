@@ -39,8 +39,8 @@ namespace enigma { namespace gui {
     /* -------------------- Menu -------------------- */
 
 Menu::Menu()
-: active_widget(NULL),
-  key_focus_widget(NULL),
+: active_widget(nullptr),
+  key_focus_widget(nullptr),
   quitp(false),
   abortp(false),
   previous_caption(video_engine->GetCaption()) {

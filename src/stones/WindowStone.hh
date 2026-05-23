@@ -77,7 +77,7 @@ namespace enigma {
 
     private:
         void breakFaces(DirectionBits faces);
-        bool tryInnerPull(Direction dir, Actor *initiator = NULL);
+        bool tryInnerPull(Direction dir, Actor *initiator = nullptr);
         void postFaceChange();
     };
 

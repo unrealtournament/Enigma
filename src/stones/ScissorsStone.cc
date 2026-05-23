@@ -69,7 +69,7 @@ namespace enigma {
         ObjectList olist = getAttr("fellows");
         for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it) {
             Stone *fellow = dynamic_cast<Stone *>(*it);
-            if (fellow != NULL)
+            if (fellow != nullptr)
                 SendMessage(fellow, "_scissors");
         }
     }

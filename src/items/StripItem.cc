@@ -50,7 +50,7 @@ namespace enigma {
             return false;
 
         double velocity = 0;
-        if (a != NULL)
+        if (a != nullptr)
             velocity = ecl::length(a->get_actorinfo()->vel);
 
         // calculate the maximal horizontal or vertical distance from the center:

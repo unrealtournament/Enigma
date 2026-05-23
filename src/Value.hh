@@ -173,7 +173,7 @@ namespace enigma {
         
         /**
          * Conversion of a value to an object reference. All values besides valid
-         * object values default to a NULL reference.
+         * object values default to a nullptr.
          */
         operator Object *() const;
         

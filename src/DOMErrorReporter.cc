@@ -92,7 +92,7 @@ namespace enigma
     }
     
     void DOMErrorReporter::reportToNull() {
-        reportStream = NULL;
+        reportStream = nullptr;
     }
     
     void DOMErrorReporter::reportToOstream(std::ostream *anOstream) {

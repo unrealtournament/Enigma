@@ -196,7 +196,7 @@ namespace enigma { namespace gui {
             }
         } else if (w == but_delete) {
             std::vector<lev::Index *> * indices = lev::Index::getGroup(oldGroupName);
-            if (indices != NULL) {
+            if (indices != nullptr) {
                 // reassign remaining indices from back to front to keep the
                 // group vector valid
                 for (int i = indices->size() - 1; i >= 0; i--) {

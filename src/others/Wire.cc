@@ -23,7 +23,7 @@
 #include "world.hh"
 
 namespace enigma {
-    Wire::Wire() : Other(), anchor1 (NULL), anchor2 (NULL), model (NULL) {
+    Wire::Wire() : Other(), anchor1 (nullptr), anchor2 (nullptr), model (nullptr) {
     }
     
     std::string Wire::getClass() const {
@@ -34,13 +34,13 @@ namespace enigma {
         if (key == "anchor1") {
             Stone *old = anchor1;
             anchor1 = dynamic_cast<Stone *>((Object *)val);
-            ASSERT(anchor1 != NULL, XLevelRuntime, "Wire: 'anchor1' is no stone");
+            ASSERT(anchor1 != nullptr, XLevelRuntime, "Wire: 'anchor1' is no stone");
             ASSERT(anchor1 != anchor2, XLevelRuntime, "Wire: 'anchor1' is identical to 'anchor2'");
             switchAnchor(old, anchor1, anchor2);
         } else if (key == "anchor2") {
             Stone * old = anchor2;
             anchor2 = dynamic_cast<Stone *>((Object *)val);
-            ASSERT(anchor2 != NULL, XLevelRuntime, "Wire: 'anchor2' is no stone");
+            ASSERT(anchor2 != nullptr, XLevelRuntime, "Wire: 'anchor2' is no stone");
             ASSERT(anchor2 != anchor1, XLevelRuntime, "Wire: 'anchor1' is identical to 'anchor2'");
             switchAnchor(old, anchor2, anchor1);
         }
@@ -71,8 +71,8 @@ namespace enigma {
     
     void Wire::preRemoval() {
         model.kill();
-        switchAnchor(anchor1, NULL, anchor2);
-        switchAnchor(anchor2, NULL, anchor1);        
+        switchAnchor(anchor1, nullptr, anchor2);
+        switchAnchor(anchor2, nullptr, anchor1);
     }
     
     void Wire::tick(double dt) {  // TODO maybe we should let the stones inform the wires on every move
@@ -82,11 +82,11 @@ namespace enigma {
     
     
     void Wire::switchAnchor(Object *oldAnchor, Object *newAnchor, Object *otherAnchor) {
-        if (oldAnchor != NULL) {
+        if (oldAnchor != nullptr) {
             ObjectList olist = oldAnchor->getAttr("wires");
             olist.remove(this);
             oldAnchor->setAttr("wires", olist);
-            if (otherAnchor != NULL) {
+            if (otherAnchor != nullptr) {
                 // remove both anchors from each others fellows list
                 olist = oldAnchor->getAttr("fellows");
                 ObjectList::iterator it = find(olist.begin(), olist.end(), otherAnchor);
@@ -102,11 +102,11 @@ namespace enigma {
                 otherAnchor->setAttr("fellows", olist);
             }            
         }
-        if (newAnchor != NULL) {
+        if (newAnchor != nullptr) {
             ObjectList olist = newAnchor->getAttr("wires");
             olist.push_back(this);
             newAnchor->setAttr("wires", olist);
-            if (otherAnchor != NULL) {
+            if (otherAnchor != nullptr) {
                 // add both anchors to each others fellows list
                 olist = newAnchor->getAttr("fellows");
                 ObjectList::iterator it = find(olist.begin(), olist.end(), otherAnchor);
@@ -115,7 +115,7 @@ namespace enigma {
                     olist = newAnchor->getAttr("wires");
                     for (ObjectList::iterator itr = olist.begin(); itr != olist.end(); ++itr) {
                         Wire *w = dynamic_cast<Wire *>(*itr);
-                        if (w != NULL && (((Object *)(w->getAttr("anchor1")) == newAnchor &&  (Object *)(w->getAttr("anchor2")) == otherAnchor)
+                        if (w != nullptr && (((Object *)(w->getAttr("anchor1")) == newAnchor &&  (Object *)(w->getAttr("anchor2")) == otherAnchor)
                                 || ((Object *)(w->getAttr("anchor2")) == newAnchor &&  (Object *)(w->getAttr("anchor1")) == otherAnchor)))
                             KillOther(w);
                             break;

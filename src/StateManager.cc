@@ -73,7 +73,7 @@ namespace enigma {
             app.domParserSchemaResolver->addSchemaId("state.xsd","state.xsd");
 
             doc = app.domParser->parseURI(statePath.c_str());
-            if (doc != NULL && !app.domParserErrorHandler->getSawErrors()) {
+            if (doc != nullptr && !app.domParserErrorHandler->getSawErrors()) {
                 propertiesElem = dynamic_cast<DOMElement *>(doc->getElementsByTagName(
                         Utf8ToXML("properties").x_str())->item(0));
                 groupsElem = dynamic_cast<DOMElement *>(doc->getElementsByTagName(
@@ -102,7 +102,7 @@ namespace enigma {
     }
      
     StateManager::~StateManager() {
-        if (doc != NULL)
+        if (doc != nullptr)
             shutdown();
     }
     
@@ -110,7 +110,7 @@ namespace enigma {
         bool result = true;
         std::string errMessage;
         
-        if (doc == NULL)
+        if (doc == nullptr)
             return true;
 
         int count = getInt("Count");
@@ -175,9 +175,9 @@ namespace enigma {
 
     void StateManager::shutdown() {
         save();
-        if (doc != NULL)
+        if (doc != nullptr)
             doc->release();
-        doc = NULL;
+        doc = nullptr;
     }
 
     void StateManager::getGroupNames(std::vector<std::string> *names) {
@@ -364,7 +364,7 @@ namespace enigma {
     
     std::string StateManager::getAnnotation(std::string id) {
         DOMElement * level = getLevel(id);
-        if (level != NULL)
+        if (level != nullptr)
             return XMLtoUtf8(level->getAttribute(Utf8ToXML("annotation").x_str())).c_str(); 
         else
             return "";
@@ -372,7 +372,7 @@ namespace enigma {
     
     void StateManager::setAnnotation(std::string id, std::string annotation) {
         DOMElement * level = getLevel(id);
-        if (level == NULL) {
+        if (level == nullptr) {
             level = doc->createElement (Utf8ToXML("level").x_str());
             level->setAttribute(Utf8ToXML("id").x_str(), Utf8ToXML(id).x_str());
             levelsElem->appendChild(level);
@@ -393,6 +393,6 @@ namespace enigma {
             }
         }
         XMLString::release(&xmlId);
-        return levelFound ? level : NULL;
+        return levelFound ? level : nullptr;
     }
 } // namespace enigma

@@ -48,14 +48,14 @@ namespace enigma {
             int theid = getId();
             updateIState(countActors(),
                     server::EnigmaCompatibility >= 1.10 || server::GameCompatibility != GAMET_ENIGMA);
-            if (Object::getObject(theid) != NULL)   // not killed?
+            if (Object::getObject(theid) != nullptr)   // not killed?
                 init_model();
             return Value();
         } else if (m.message == "_jumping" ) {
             updateIState(m.value.to_bool() ? -1 : +1);
         } else if (m.message == "_dying" ) {
             Actor *ac = dynamic_cast<Actor *>(m.sender);
-            if (ac != NULL) {
+            if (ac != nullptr) {
                 if (m.value.to_bool() && !ac->is_flying())
                     updateIState(-1);
                 else if (!m.value.to_bool())
@@ -77,7 +77,7 @@ namespace enigma {
         state = 0;
         int theid = getId();
         updateIState(countActors(), true);
-        if (Object::getObject(theid) != NULL)   // not killed?
+        if (Object::getObject(theid) != nullptr)   // not killed?
             init_model();
     }
 
@@ -120,7 +120,7 @@ namespace enigma {
 
         Stone *st = GetStone(get_pos());
         state &= ~1;  // delete stone pressure bit
-        if (st != NULL && (!st->is_floating() || st->getClass() == "st_puzzle")) {
+        if (st != nullptr && (!st->is_floating() || st->getClass() == "st_puzzle")) {
             // Hack to make hollow puzzle stones press triggers
             state |= 1;   // add stone pressure bit
         }

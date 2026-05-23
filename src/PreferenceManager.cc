@@ -88,7 +88,7 @@ namespace enigma {
                         Log << "Preferences: add new Property \"" << XMLtoLocal(key) << "\"\n";
                         // make a copy
                         DOMNode * newProperty =  doc->importNode(tmplProperty, false);
-                        if (newProperty == NULL) {
+                        if (newProperty == nullptr) {
                             Log << "Preferences: copy new Property failed!\n";
                         } else {
                             // insert it at the end of the existing user properties
@@ -139,7 +139,7 @@ namespace enigma {
     }
      
     PreferenceManager::~PreferenceManager() {
-        if (doc != NULL)
+        if (doc != nullptr)
             shutdown();
     }
     
@@ -147,7 +147,7 @@ namespace enigma {
         bool result = true;
         std::string errMessage;
         
-        if (doc == NULL)
+        if (doc == nullptr)
             return true;
 
         stripIgnorableWhitespace(doc->getDocumentElement());
@@ -179,9 +179,9 @@ namespace enigma {
 
     void PreferenceManager::shutdown() {
         save();
-        if (doc != NULL)
+        if (doc != nullptr)
             doc->release();
-        doc = NULL;
+        doc = nullptr;
     }
     
 } // namespace enigma

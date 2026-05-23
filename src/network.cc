@@ -99,7 +99,7 @@ bool Peer_Enet::poll_message (Buffer &b, int &player_no)
            
         case ENET_EVENT_TYPE_DISCONNECT:
             m_connected = false;
-            event.peer -> data = NULL;
+            event.peer -> data = nullptr;
             break;
 
         default:

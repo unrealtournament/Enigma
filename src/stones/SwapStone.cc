@@ -51,7 +51,7 @@ namespace enigma {
         // point of time. The vanishing part is the proxy of the other exchanged stone.
         // Thus it inherits the floating behaviour from it. 
         return (state == VANISHING && 
-                (yieldedStone == NULL || yieldedStone->is_floating())); 
+                (yieldedStone == nullptr || yieldedStone->is_floating()));
     }
     
     bool SwapStone::is_sticky(const Actor *a) const {
@@ -67,7 +67,7 @@ namespace enigma {
         // point of time. The vanishing part is the proxy of the other exchanged stone.
         // Thus it inherits the transparency behaviour from it. 
         return (state == VANISHING && 
-                (yieldedStone != NULL && yieldedStone->is_transparent(d))); 
+                (yieldedStone != nullptr && yieldedStone->is_transparent(d)));
     }
     void SwapStone::on_impulse(const Impulse& impulse) {
         if (state != IDLE)

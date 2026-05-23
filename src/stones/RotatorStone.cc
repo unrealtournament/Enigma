@@ -141,7 +141,7 @@ void RotatorStone::setAttr(const std::string& key, const Value &val) {
         for (int i = WEST; i <= NORTH; i++) {
             if (Value theid = getAttr(ecl::strf("$neighbor%d",i))) {
                 Stone *st = GetStone(move(get_pos(), (Direction)i));
-                if (st != NULL  && theid == st->getId()) {
+                if (st != nullptr  && theid == st->getId()) {
                     send_impulse(move(p, (Direction)i), state == CW ? rotate_cw((Direction)i) : rotate_ccw((Direction)i));
                 }
             }
@@ -155,7 +155,7 @@ void RotatorStone::setAttr(const std::string& key, const Value &val) {
     void RotatorStone::send_impulses() {
         for (int i = WEST; i <= NORTH; i++) {
             Stone *st = GetStone(move(get_pos(), (Direction)i));
-            Stone::setAttr(ecl::strf("$neighbor%d",i), (st == NULL) ? Value() : Value(st->getId()));
+            Stone::setAttr(ecl::strf("$neighbor%d",i), (st == nullptr) ? Value() : Value(st->getId()));
         }
         GameTimer.set_alarm(this, 0.1);
 

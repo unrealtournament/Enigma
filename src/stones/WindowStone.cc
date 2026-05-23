@@ -243,8 +243,8 @@ namespace enigma {
                 // move items
                 Item *it = GetItem(w_pos);
                 Item *it_neighbor = GetItem(w_pos_neighbor);
-                if (it != NULL && !it->isStatic()) {
-                    if (it_neighbor == NULL)
+                if (it != nullptr && !it->isStatic()) {
+                    if (it_neighbor == nullptr)
                         SetItem(w_pos_neighbor, YieldItem(w_pos));
                     else
                         SetItem(w_pos, MakeItem("it_squashed"));
@@ -272,7 +272,7 @@ namespace enigma {
                                    dest[1] = ecl::Max(dest[1], w_pos.y + r + eps);
                                 } else {
                                    Stone *obstacle = GetStone(move(w_pos_neighbor, NORTH));
-                                   if ((obstacle != NULL) && (((obstacle->get_traits().id == st_window) &&
+                                   if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
                                            has_dir(obstacle->getFaces(), SOUTH)) || obstacle->is_sticky(a)))
                                        dest[1] = ecl::Max(dest[1], w_pos.y + r);
                                 }
@@ -280,7 +280,7 @@ namespace enigma {
                                    dest[1] = ecl::Min(dest[1], w_pos.y + 1 - r - eps);
                                 } else {
                                    Stone *obstacle = GetStone(move(w_pos_neighbor, SOUTH));
-                                   if ((obstacle != NULL) && (((obstacle->get_traits().id == st_window) &&
+                                   if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
                                            has_dir(obstacle->getFaces(), NORTH)) || obstacle->is_sticky(a)))
                                        dest[1] = ecl::Min(dest[1], w_pos.y + 1 - r);
                                 }
@@ -290,7 +290,7 @@ namespace enigma {
                                    dest[0] = ecl::Max(dest[0], w_pos.x + r + eps);
                                 } else {
                                    Stone *obstacle = GetStone(move(w_pos_neighbor, WEST));
-                                   if ((obstacle != NULL) && (((obstacle->get_traits().id == st_window) &&
+                                   if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
                                            has_dir(obstacle->getFaces(), EAST)) || obstacle->is_sticky(a)))
                                        dest[0] = ecl::Max(dest[0], w_pos.x + r);
                                 }
@@ -298,7 +298,7 @@ namespace enigma {
                                    dest[0] = ecl::Min(dest[0], w_pos.x + 1 - r - eps);
                                 } else {
                                    Stone *obstacle = GetStone(move(w_pos_neighbor, EAST));
-                                   if ((obstacle != NULL) && (((obstacle->get_traits().id == st_window) &&
+                                   if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
                                            has_dir(obstacle->getFaces(), WEST)) || obstacle->is_sticky(a)))
                                        dest[0] = ecl::Min(dest[0], w_pos.x + 1 - r);
                                 }

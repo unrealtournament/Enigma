@@ -49,7 +49,7 @@ namespace enigma {
             // recursive distribution of light change
             for (Direction d = NORTH; d != NODIR; d = previous(d)) {
                 Stone * st = GetStone(move(get_pos(), d));
-                if (st != NULL && st->getClass() == "st_disco")
+                if (st != nullptr && st->getClass() == "st_disco")
                     SendMessage(st, "signal", (state < orgState) ? 1 : 0, this);
             }
         }

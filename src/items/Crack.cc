@@ -137,7 +137,7 @@ namespace enigma {
 
     void Crack::crack() {
         Floor *fl = GetFloor(get_pos());
-        if (fl != NULL && fl->is_destructible()) {
+        if (fl != nullptr && fl->is_destructible()) {
             Value v = fl->getAttr("fragility");
             double fragility = getDefaultedAttr("fragility", v ? v : Value(server::Fragility));
             double spreading = getDefaultedAttr("spreading", server::CrackSpreading);

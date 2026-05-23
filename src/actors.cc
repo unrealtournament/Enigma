@@ -78,8 +78,8 @@ Actor::Actor(const ActorTraits &tr)
   inplaceRespawn(false),
   spikes(false),
   controllers(0),
-  left(NULL),
-  right(NULL) {
+  left(nullptr),
+  right(nullptr) {
     setAttr("adhesion", 0.0);
 
     // copy default properties to dynamic properties
@@ -290,7 +290,7 @@ void Actor::move() {
             firstGridStep = false;
         } else if (!flagRespawn && !isMoribund() && !is_flying()) {
             Floor *fl = m_actorinfo.field->floor;
-            if (fl != NULL) {
+            if (fl != nullptr) {
                 if (fl->getAdhesion() != 0) {
                     respawnpos = m_actorinfo.pos;
                 }
@@ -347,7 +347,7 @@ bool Actor::sound_event(const char *name, double vol) {
 
 double Actor::squareDistance(const Object *other) const {
     const Actor *a = dynamic_cast<const Actor *>(other);
-    if (a != NULL)
+    if (a != nullptr)
         return ecl::square(get_pos() - a->get_pos());
     else
         return other->squareDistance(this);
@@ -355,7 +355,7 @@ double Actor::squareDistance(const Object *other) const {
 
 bool Actor::isSouthOrEastOf(const Object *other) const {
     const Actor *a = dynamic_cast<const Actor *>(other);
-    if (a != NULL)
+    if (a != nullptr)
         return (get_pos()[1] > -a->get_pos()[1]) ||
                ((get_pos()[1] == a->get_pos()[1]) && (get_pos()[0] > -a->get_pos()[0]));
     else

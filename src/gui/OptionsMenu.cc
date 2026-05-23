@@ -368,7 +368,7 @@ private:
             app.selectedFullscreenMode = displayModes[value];
             if (dependent_button != nullptr)
                 dependent_button->reinit();
-            if (get_parent() != NULL)
+            if (get_parent() != nullptr)
                 get_parent()->invalidate_all();
             const VMInfo* info = video_engine->GetInfo(displayModes[value]);
             assert(info);
@@ -456,7 +456,7 @@ private:
         VideoTilesetId vtsid = (VideoTilesetId) tilesets[value];
         app.selectedWindowTilesetId = vtsid;
         app.prefs->setProperty("WindowTileset", VideoTilesetPrefName(vtsid));
-        if (get_parent() != NULL)
+        if (get_parent() != nullptr)
             get_parent()->invalidate_all();
     }
 
@@ -696,28 +696,28 @@ private:
     /* -------------------- Options Menu -------------------- */
 
     OptionsMenu::OptionsMenu(ecl::Surface *background_, bool gameIsOngoing_)
-    : pagesVList(NULL),
-      commandHList(NULL),
-      optionsVList(NULL),
-      back(NULL),
-      language(NULL),
-      but_main_options(NULL),
-      but_video_options(NULL),
-      but_audio_options(NULL),
-      but_config_options(NULL),
-      fullscreen(NULL),
-      fullscreenmode(NULL),
-      windowsize(NULL),
-      fullscreentileset(NULL),
-      windowtileset(NULL),
-      videocheck_button_yes(NULL),
-      videocheck_button_no(NULL),
-      videocheck_tick_down(NULL),
-      userNameTF(NULL),
-      userPathTF(NULL),
-      userImagePathTF(NULL),
-      localizationPathTF(NULL),
-      menuMusicTF(NULL),
+    : pagesVList(nullptr),
+      commandHList(nullptr),
+      optionsVList(nullptr),
+      back(nullptr),
+      language(nullptr),
+      but_main_options(nullptr),
+      but_video_options(nullptr),
+      but_audio_options(nullptr),
+      but_config_options(nullptr),
+      fullscreen(nullptr),
+      fullscreenmode(nullptr),
+      windowsize(nullptr),
+      fullscreentileset(nullptr),
+      windowtileset(nullptr),
+      videocheck_button_yes(nullptr),
+      videocheck_button_no(nullptr),
+      videocheck_tick_down(nullptr),
+      userNameTF(nullptr),
+      userPathTF(nullptr),
+      userImagePathTF(nullptr),
+      localizationPathTF(nullptr),
+      menuMusicTF(nullptr),
       background(background_),
       gameIsOngoing(gameIsOngoing_),
       videoSettingsTouched(false),
@@ -996,44 +996,44 @@ private:
             }
         }
         // Delete widgets.
-        if (pagesVList != NULL) {
+        if (pagesVList != nullptr) {
             pagesVList->clear();
             remove_child(pagesVList);
             delete pagesVList;
-            pagesVList = NULL;
+            pagesVList = nullptr;
         }
-        but_main_options = NULL;
-        but_video_options = NULL;
-        but_audio_options = NULL;
-        but_config_options = NULL;
-        but_paths_options = NULL;
-        if (commandHList != NULL) {
+        but_main_options = nullptr;
+        but_video_options = nullptr;
+        but_audio_options = nullptr;
+        but_config_options = nullptr;
+        but_paths_options = nullptr;
+        if (commandHList != nullptr) {
             commandHList->clear();
             remove_child(commandHList);
             delete commandHList;
-            commandHList = NULL;
+            commandHList = nullptr;
         }
-        back = NULL;
-        if (optionsVList != NULL) {
+        back = nullptr;
+        if (optionsVList != nullptr) {
             optionsVList->clear();
             remove_child(optionsVList);
             delete optionsVList;
-            optionsVList = NULL;
+            optionsVList = nullptr;
         }
-        language = NULL;
-        fullscreen = NULL;
-        fullscreenmode = NULL;
-        windowsize = NULL;
-        fullscreentileset = NULL;
-        windowtileset = NULL;
-        videocheck_button_yes = NULL;
-        videocheck_button_no = NULL;
-        videocheck_tick_down = NULL;
-        menuMusicTF = NULL;
-        userNameTF = NULL;
-        userPathTF = NULL;
-        userImagePathTF = NULL;
-        localizationPathTF = NULL;
+        language = nullptr;
+        fullscreen = nullptr;
+        fullscreenmode = nullptr;
+        windowsize = nullptr;
+        fullscreentileset = nullptr;
+        windowtileset = nullptr;
+        videocheck_button_yes = nullptr;
+        videocheck_button_no = nullptr;
+        videocheck_tick_down = nullptr;
+        menuMusicTF = nullptr;
+        userNameTF = nullptr;
+        userPathTF = nullptr;
+        userImagePathTF = nullptr;
+        localizationPathTF = nullptr;
         pageAfterVideoCheck = OPTIONS_MAIN;
         currentPage = OPTIONS_MAIN;
         showVideoCheck = false;
@@ -1166,7 +1166,7 @@ private:
 
     void OptionsMenu::tick(double dtime)
     {
-        if (videocheck_tick_down != NULL)
+        if (videocheck_tick_down != nullptr)
             videocheck_tick_down->tick(dtime);
     }
 

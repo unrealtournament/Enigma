@@ -127,7 +127,7 @@ namespace enigma {
         if ((getAttr("flavor").to_string() == "d") and (state == CLOSED)) {
             // door knocking
             Item *it = GetItem(get_pos());
-            if (it != NULL && server::GameCompatibility != GAMET_PEROXYD 
+            if (it != nullptr && server::GameCompatibility != GAMET_PEROXYD
                     && (server::GameCompatibility != GAMET_ENIGMA || server::EnigmaCompatibility < 1.10 ))
                 SendMessage(it, "_hit", sc.actor);
             else

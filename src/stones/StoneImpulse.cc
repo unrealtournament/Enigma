@@ -88,7 +88,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
     Value StoneImpulse::message(const Message &m) {
         if (m.message == "_trigger" && m.value.to_bool()) {
             Direction incoming = NODIR;
-            if (m.sender != NULL)
+            if (m.sender != nullptr)
                 incoming = direction_fromto(dynamic_cast<GridObject *>(m.sender)->get_pos(), get_pos());
 
             if (state == IDLE && incoming != NODIR) {
@@ -209,7 +209,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
         if (state == BREAKING)
             return;
 
-        Actor *hitman = NULL;
+        Actor *hitman = nullptr;
         if ((objFlags & OBJBIT_MOVABLE) && (impulse.dir != NODIR)) {
             // move stone without disturbing a running animation
             display::Model *yieldedModel = display::YieldModel(GridLoc(GRID_STONES, get_pos()));
@@ -220,7 +220,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
 
             // pulse only if not pushed with a wand
             hitman = dynamic_cast<Actor*>(impulse.sender);
-            if (hitman == NULL || !player::WieldedItemIs(hitman, "it_magicwand")) {
+            if (hitman == nullptr || !player::WieldedItemIs(hitman, "it_magicwand")) {
                 if (state == IDLE)
                     setIState(EXPANDING, impulse.dir);
                 else if (didMove && state != EXPANDING) {
@@ -237,7 +237,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
 
         // direct impulse propagation
         if (objFlags & OBJBIT_MOVABLE && (impulse.dir != NODIR)) {
-            if (hitman != NULL) {
+            if (hitman != nullptr) {
                 objFlags &= ~OBJBIT_PROPAGATE;
                 propagateImpulse(impulse);
             } else
@@ -299,7 +299,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
             int sourceId = getDefaultedAttr("$impulse_source", 0);
             for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it) {
                 Stone *fellow = dynamic_cast<Stone *>(*it);
-                if (fellow != NULL && fellow->getId() != sourceId) {
+                if (fellow != nullptr && fellow->getId() != sourceId) {
                     Impulse wireImpulse(this, fellow->get_pos(), impulse.dir, true);
                     fellow->on_impulse(wireImpulse);
                 }

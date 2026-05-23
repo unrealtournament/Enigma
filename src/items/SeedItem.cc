@@ -107,7 +107,7 @@ namespace enigma {
        }
        Stone *st = MakeStone(flavor == 0 ? "st_box_wood_growing" : (flavor == 1 ? "st_greenbrown_growing" :
                (flavor == 2 ? "st_volcano_growing" : "st_box_hay_growing")));
-       ASSERT(st != NULL, XLevelRuntime, "SeedItem - failure on stone creation");
+       ASSERT(st != nullptr, XLevelRuntime, "SeedItem - failure on stone creation");
        transferIdentity(st);
        if (Value v = getAttr("secure"))
            st->setAttr("secure", v);

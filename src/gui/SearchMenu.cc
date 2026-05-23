@@ -96,7 +96,7 @@ namespace enigma { namespace gui {
         void on_action(Widget *) {
             sc->toggleOnlyUnsolved(diff);
             invalidate();
-            if (secondaryListener != NULL)
+            if (secondaryListener != nullptr)
                 secondaryListener->on_action(this);
         }
 
@@ -272,7 +272,7 @@ namespace enigma { namespace gui {
         set_key_focus(tf_search_text);
 
         if (!sc_is_fresh)
-            on_action(NULL); // this will show/update the level count
+            on_action(nullptr); // this will show/update the level count
     }
 
     bool SearchMenu::isSearchQuit() {
@@ -307,7 +307,7 @@ namespace enigma { namespace gui {
             invalidate_all();
         }
         // update level count
-        if (lbLevelCount != NULL) {
+        if (lbLevelCount != nullptr) {
             sc->setSearchText(tf_search_text->getText());
             int count = Proxy::countSearchResults(sc);
             std::string text = ecl::strf(_("Levels fitting these criteria: %d"), count);

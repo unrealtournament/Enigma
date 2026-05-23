@@ -132,7 +132,7 @@ void Inventory::add_item(Item *i)
     ItemHolder *firstHolder = dynamic_cast<ItemHolder*>(get_item(0));
     ItemHolder *addHolder = dynamic_cast<ItemHolder*>(i);
     if (firstHolder && !firstHolder->is_full() &&  
-            (addHolder == NULL || !addHolder->is_empty())) {
+            (addHolder == nullptr || !addHolder->is_empty())) {
         // first item is a bag and not full and add item is not an empty bag
         firstHolder->add_item (i);
     }
@@ -179,8 +179,8 @@ bool Inventory::willAddItem(Item *it) {
     ItemHolder *holder = dynamic_cast<ItemHolder*>(it);
     if (is_full()) {
         return false;
-    } else if (holder != NULL && holder->is_empty() &&
-            (m_items.size() >= max_items || dynamic_cast<ItemHolder*>(get_item(0)) != NULL)) {
+    } else if (holder != nullptr && holder->is_empty() &&
+            (m_items.size() >= max_items || dynamic_cast<ItemHolder*>(get_item(0)) != nullptr)) {
         // should add a bag that is empty, but first item in Inventory is itself
         // a bag or Inventory is full -- avoid recursive bags
         return false;
@@ -207,7 +207,7 @@ bool Inventory::containsKind(std::string kind) const {
             return true;
         else {
             ItemHolder * ith = dynamic_cast<ItemHolder *>(it);
-            if (ith != NULL && ith->containsKind(kind))
+            if (ith != nullptr && ith->containsKind(kind))
                 return true;
         }
     }

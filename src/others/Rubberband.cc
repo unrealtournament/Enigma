@@ -26,8 +26,8 @@
 
 namespace enigma {
     Rubberband::Rubberband() : strength (10), outerThreshold (1), innerThreshold (0), minLength (0), maxLength (0) {
-        anchor1 = NULL;
-        anchor2.ac = NULL;
+        anchor1 = nullptr;
+        anchor2.ac = nullptr;
     }
 
     std::string Rubberband::getClass() const {
@@ -38,18 +38,18 @@ namespace enigma {
         if (key == "anchor1") {
             Actor *old = anchor1;
             anchor1 = dynamic_cast<Actor *>((Object *)val);
-            ASSERT(anchor1 != NULL, XLevelRuntime, "Rubberband: 'anchor1' is no actor");
+            ASSERT(anchor1 != nullptr, XLevelRuntime, "Rubberband: 'anchor1' is no actor");
             ASSERT(anchor1 != anchor2.ac, XLevelRuntime, "Rubberband: 'anchor1' is identical to 'anchor2'");
             switchAnchor(old, anchor1, anchor2Object());
         } else if (key == "anchor2") {
             Object * old = anchor2Object();
             Object * obj = val;
-            if (obj != NULL && obj->getObjectType() == Object::ACTOR) {
+            if (obj != nullptr && obj->getObjectType() == Object::ACTOR) {
                 anchor2.ac = dynamic_cast<Actor *>((Object *)val);
                 ASSERT(anchor1 != anchor2.ac, XLevelRuntime, "Rubberband: 'anchor1' is identical to 'anchor2'");
                 objFlags &= ~OBJBIT_STONE;
                 switchAnchor(old, anchor2.ac, anchor1);
-            } else if (obj != NULL && obj->getObjectType() == Object::STONE) {
+            } else if (obj != nullptr && obj->getObjectType() == Object::STONE) {
                 anchor2.st = dynamic_cast<Stone *>((Object *)val);
                 objFlags |= OBJBIT_STONE;
                 switchAnchor(old, anchor2.st, anchor1);
@@ -116,8 +116,8 @@ namespace enigma {
     }
 
     void Rubberband::postAddition() {
-        ASSERT(anchor1 != NULL, XLevelRuntime, "Rubberband: 'anchor1' is no actor");
-        ASSERT(anchor2.ac != NULL, XLevelRuntime, "Rubberband: 'anchor2' is neither actor nor stone");
+        ASSERT(anchor1 != nullptr, XLevelRuntime, "Rubberband: 'anchor1' is no actor");
+        ASSERT(anchor2.ac != nullptr, XLevelRuntime, "Rubberband: 'anchor2' is neither actor nor stone");
         // If the length value is negative (magic value -1.0) the we use the
         // current distance between the two anchors as the rubberband length.
         // Otherwise the length given by the corresponding "length" attribute is used.
@@ -131,8 +131,8 @@ namespace enigma {
 
     void Rubberband::preRemoval() {
         model.kill();
-        switchAnchor(anchor1, NULL, anchor2Object());
-        switchAnchor(anchor2Object(), NULL, anchor1);
+        switchAnchor(anchor1, nullptr, anchor2Object());
+        switchAnchor(anchor2Object(), nullptr, anchor1);
     }
 
     void Rubberband::tick(double /*dt*/) {
@@ -295,11 +295,11 @@ namespace enigma {
     }
 
     void Rubberband::switchAnchor(Object *oldAnchor, Object *newAnchor, Object *otherAnchor) {
-        if (oldAnchor != NULL) {
+        if (oldAnchor != nullptr) {
             ObjectList olist = oldAnchor->getAttr("rubbers");
             olist.remove(this);
             oldAnchor->setAttr("rubbers", olist);
-            if (otherAnchor != NULL) {
+            if (otherAnchor != nullptr) {
                 // remove both anchors from each others fellows list
                 olist = oldAnchor->getAttr("fellows");
                 ObjectList::iterator it = find(olist.begin(), olist.end(), otherAnchor);
@@ -315,9 +315,9 @@ namespace enigma {
                 otherAnchor->setAttr("fellows", olist);
             }
         }
-        if (newAnchor != NULL) {
+        if (newAnchor != nullptr) {
             ObjectList olist;
-            if (otherAnchor != NULL) {
+            if (otherAnchor != nullptr) {
                 // check on existing rubberbands between anchors
                 olist = newAnchor->getAttr("fellows");
                 ObjectList::iterator it = find(olist.begin(), olist.end(), otherAnchor);

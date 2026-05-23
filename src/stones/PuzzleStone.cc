@@ -215,7 +215,7 @@ namespace enigma {
                 // if cluster contains single stone
                 // -> move it if dest pos is free
                 GridPos dest = move(get_pos(), move_dir);
-                if (GetStone(dest) == NULL) {
+                if (GetStone(dest) == nullptr) {
                     // move without falling in water or abyss
                     Stone *puzz = YieldStone(get_pos());
                     SetStone(dest, puzz);
@@ -321,7 +321,7 @@ namespace enigma {
         GridPos newpos = move(source->get_pos(), dir);
         PuzzleStone *pz = dynamic_cast<PuzzleStone*>(GetStone(newpos));
 
-        if ((pz ==  NULL) || (pz->getAttr("color") != color))
+        if ((pz ==  nullptr) || (pz->getAttr("color") != color))
             return false;
 
         DirectionBits cfaces = pz->getConnections();
@@ -428,10 +428,10 @@ namespace enigma {
         bool move_ok = true;
         for (PuzzleList::iterator itr = cluster.begin(); itr != cluster.end(); ++itr) {
             Stone *st = GetStone(move((*itr)->get_pos(), dir));
-            if (st != NULL) {
+            if (st != nullptr) {
                 // check if is the stone at destination a part of the cluster
                 PuzzleStone *pz = dynamic_cast<PuzzleStone*>(st);
-                if ((pz == NULL) || !(pz->objFlags & OBJBIT_VISITED)) {
+                if ((pz == nullptr) || !(pz->objFlags & OBJBIT_VISITED)) {
                     move_ok = false;
                     break;
                 }

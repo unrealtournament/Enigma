@@ -171,11 +171,11 @@ namespace enigma { namespace lev {
     bool SearchCombination::fits(Proxy *p) {
         // All criteria have to fit.
         // Numerical criteria:
-        Rating *r = NULL;  // get rating only if we really need it, and only once
+        Rating *r = nullptr;  // get rating only if we really need it, and only once
         if (checkRatings || checkAVR)
             r = theRatingMgr->findRating(p);
         if (checkRatings) {
-            if (   (r == NULL)
+            if (   (r == nullptr)
                 || !ecl::isOrdered(int_min, r->intelligence,  int_max)
                 || !ecl::isOrdered(dex_min, r->dexterity,     dex_max)
                 || !ecl::isOrdered(pat_min, r->patience,      pat_max)
@@ -185,7 +185,7 @@ namespace enigma { namespace lev {
                 return false;
         }
         if (checkAVR) {
-            if (   (r == NULL)
+            if (   (r == nullptr)
                 || !ecl::isOrdered(avr_min, r->averageRating, avr_max))
             return false;
         }

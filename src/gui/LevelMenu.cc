@@ -231,7 +231,7 @@ namespace enigma { namespace gui {
                     next_unsolved();
                     break;
                 case SDLK_F6:
-                    /*if (lev::Index::getCurrentIndex() != NULL) {
+                    /*if (lev::Index::getCurrentIndex() != nullptr) {
                         lev::Variation var;
                         for (int pos = 0; pos < lev::Index::getCurrentIndex()->size(); pos++) {
                             var = lev::Index::getCurrentIndex()->getVariation(pos);

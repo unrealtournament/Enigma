@@ -115,7 +115,7 @@ namespace enigma {
         }
         if (state == ON || state == BLINK) {
             Item *it = GetItem(p);
-            if (it != NULL && get_id(it) == it_cross) {
+            if (it != nullptr && get_id(it) == it_cross) {
                 setState(0);
             }
         } else if (state == ON_NEW) {
@@ -157,12 +157,12 @@ namespace enigma {
     
     void LightPassengerStone::actor_hit(const StoneContact &sc) {
         Actor *a = sc.actor;
-        if (a != NULL && state == BLINK && player::WieldedItemIs(a, "it_hammer")) {
+        if (a != nullptr && state == BLINK && player::WieldedItemIs(a, "it_hammer")) {
             state = BREAK;
             init_model();
         } else if (state == OFF && player::WieldedItemIs(a, "it_brush")) {
             Item * it = GetItem(get_pos());
-            if (it != NULL && get_id(it) == it_cross)
+            if (it != nullptr && get_id(it) == it_cross)
                 KillItem(get_pos());
             setState(1);
         }
@@ -170,7 +170,7 @@ namespace enigma {
 
     void LightPassengerStone::on_impulse(const Impulse& impulse) {
         Actor *a = dynamic_cast<Actor*>(impulse.sender);
-        if (a == NULL && ((objFlags & OBJBIT_LIGHTNEWDIRS) == NODIRBIT || state == OFF 
+        if (a == nullptr && ((objFlags & OBJBIT_LIGHTNEWDIRS) == NODIRBIT || state == OFF
                 || server::GameCompatibility != GAMET_ENIGMA)) {
             move_stone(impulse.dir);
             propagateImpulse(impulse);
@@ -223,7 +223,7 @@ namespace enigma {
                 } else {
                     move_stone(skateDir);
                     Item * it = GetItem(get_pos());
-                    if (it != NULL && get_id(it) == it_cross) {
+                    if (it != nullptr && get_id(it) == it_cross) {
                         setState(0);
                     }
                 }

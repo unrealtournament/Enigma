@@ -47,7 +47,7 @@ LevelPreviewCache *LevelPreviewCache::instance() {
     return theSingleton;
 }
 
-LevelPreviewCache::LevelPreviewCache() : cachedIndex(NULL) {
+LevelPreviewCache::LevelPreviewCache() : cachedIndex(nullptr) {
 }
 
 void LevelPreviewCache::clear() {
@@ -66,7 +66,7 @@ Surface *LevelPreviewCache::getPreview(lev::Proxy *levelProxy, const ThumbnailIn
         return i->second;
 
     // we have to cache a new preview - check if we should clear cache first
-    if (cachedIndex == NULL) {
+    if (cachedIndex == nullptr) {
         // remember the index we are caching
         cachedIndex = lev::Index::getCurrentIndex();
     } else if (cachedIndex != lev::Index::getCurrentIndex()) {
@@ -131,7 +131,7 @@ ecl::Surface *LevelPreviewCache::newPreview(lev::Proxy *levelProxy,
         SDL_Rect r;
         sdl::copy_rect(r, vminfo.gamearea);
         surface = MakeSurface(thumbinfo.width, thumbinfo.height);
-        BlitScaled(video_engine->BackBuffer()->get_surface(), &r, surface->get_surface(), NULL);
+        BlitScaled(video_engine->BackBuffer()->get_surface(), &r, surface->get_surface(), nullptr);
     }
     return surface;
 }
@@ -180,7 +180,7 @@ void LevelPreviewCache::makeSystemPreview(lev::Proxy *levelProxy, const Thumbnai
         ecl::FolderCreate(directory);
     }
     ecl::Surface *s = newPreview(levelProxy, thumbinfo);
-    if (s != NULL)
+    if (s != nullptr)
         ecl::SavePNG(s, savePath);
 }
 }

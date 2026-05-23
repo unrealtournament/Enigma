@@ -417,7 +417,7 @@ namespace enigma { namespace gui {
 /* -------------------- ValueButton -------------------- */
     class ValueButton: public TextButton {
     public:
-        ValueButton(int min_value_, int max_value_, ActionListener *al = NULL);
+        ValueButton(int min_value_, int max_value_, ActionListener *al = nullptr);
 
         virtual int get_value() const     = 0;
         virtual void set_value(int value) = 0;

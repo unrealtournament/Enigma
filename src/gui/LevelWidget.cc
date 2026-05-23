@@ -223,7 +223,7 @@ namespace enigma { namespace gui {
         const VMInfo *vminfo = video_engine->GetInfo();
         Surface *img =
             preview_cache->getPreview(proxy, vminfo->thumb, allowGeneration, didGenerate);
-        if (img == NULL)
+        if (img == nullptr)
             return false;
    
         if (selected) {
@@ -251,8 +251,8 @@ namespace enigma { namespace gui {
             //   Silver: Level beaten in easy mode (normal mode available)
             //   Gold: Level beaten in normal mode - easy not availabe
             //   Silver + Gold: Level beaten in all modes - easy available
-            Surface *useAsEasy = NULL;
-            Surface *useAsDifficult = NULL;
+            Surface *useAsEasy = nullptr;
+            Surface *useAsDifficult = nullptr;
             if (proxy->hasEasyMode()) {
                 useAsEasy = img_feather;
                 if (scoreMgr->isSolved(proxy, DIFFICULTY_EASY))
@@ -263,16 +263,16 @@ namespace enigma { namespace gui {
             
             if (app.state->getInt("Difficulty") == DIFFICULTY_HARD) {
                 // draw golden medal over silber medal
-                if (useAsEasy != NULL)
+                if (useAsEasy != nullptr)
                     blit (gc, x+thumb_off(3,3,24), y, useAsEasy);
-                if (useAsDifficult != NULL)
+                if (useAsDifficult != nullptr)
                     blit (gc, x+thumb_off(8,8,29), y, useAsDifficult);
             }
             else {
                 // draw silver medal over golden medal
-                if (useAsDifficult != NULL)
+                if (useAsDifficult != nullptr)
                     blit (gc, x+thumb_off(8,8,29), y, useAsDifficult);
-                if (useAsEasy != NULL)
+                if (useAsEasy != nullptr)
                     blit (gc, x+thumb_off(3,3,24), y, useAsEasy);
             }
         
@@ -334,7 +334,7 @@ namespace enigma { namespace gui {
                 lev::Proxy *levelProxy = curIndex->getProxy(i);
                 int imgx = xpos + (buttonw-imgw)/2;
                 int imgy = ypos + bwidth;
-                if (levelProxy != NULL) {
+                if (levelProxy != nullptr) {
                     bool didGenerate;
                     bool didDraw = draw_level_preview(gc, imgx, imgy, bwidth, levelProxy, 
                             (int) i == iselected, !curIndex->isSource(levelProxy), 

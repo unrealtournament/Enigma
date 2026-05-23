@@ -225,29 +225,29 @@ static int userType(lua_State *L) {
 static Object *to_object(lua_State *L, int idx) {
     
     if (lua_isnil(L,idx) && server::EnigmaCompatibility < 1.10)
-        return NULL;
+        return nullptr;
 
     if (!is_object(L,idx)) {
         throwLuaError(L, "Cannot convert type to an Object");
-        return NULL;
+        return nullptr;
     }
     int id = *(static_cast<int *>(lua_touserdata(L,idx)));
-    Object *obj = NULL;
+    Object *obj = nullptr;
     if (id != -1)
        obj = Object::getObject(id);
 
-    return obj;  // NULL if object does no longer exist
+    return obj;  // nullptr if object does no longer exist
 }
 
 static void pushobject(lua_State *L, Object *obj) {
     int *udata;
     /* Lua does not allow NULL pointers in userdata variables, so
        convert them manually to `nil' values. */
-    if (obj == NULL && server::EnigmaCompatibility < 1.10) {
+    if (obj == nullptr && server::EnigmaCompatibility < 1.10) {
         lua_pushnil(L);   // nil as not existing object
     } else {
         udata=(int *)lua_newuserdata(L,sizeof(int));
-        if (obj != NULL)
+        if (obj != nullptr)
             *udata = obj->getId();
         else
             *udata = -1;  // object with id 0 as not existing object
@@ -516,7 +516,7 @@ int en_make_object (lua_State *L)
         throwLuaError(L, "MakeObject: string expected as argument");
     }
     Object *obj = MakeObject(name);
-    if (obj == NULL)
+    if (obj == nullptr)
         throwLuaError(L, ecl::strf("MakeObject: unknown object name '%s'", name).c_str());
     pushobject(L, obj);
     return 1;
@@ -1328,7 +1328,7 @@ static int pushNewTile(lua_State *L, int numArgs, std::string key="") {
 
 static void setObjectAttributes(Object *obj, lua_State *L) {
     // L, -1 is table with key, values
-    if (obj == NULL || !lua_istable(L, -1)) 
+    if (obj == nullptr || !lua_istable(L, -1))
         return;
     // process all table entries
     lua_pushnil(L);  // first key
@@ -1384,7 +1384,7 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
             } else {
                 continue;  // no valid position
             }
-            Object *obj = NULL;
+            Object *obj = nullptr;
             switch (ot) {
             case Object::FLOOR: obj = GetFloor(p); break;
             case Object::ITEM: obj = GetItem(p); break;
@@ -1393,7 +1393,7 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
                 // do nothing, simply return nullptr
                 break;
             }
-            if (obj != NULL) 
+            if (obj != nullptr)
                 objects.push_back(obj);
         }
         pushNewGroup(L, objects);
@@ -1402,7 +1402,7 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
         ObjectList objects;
         for (PositionList::iterator itr = positions.begin(); itr != positions.end(); ++itr) {
             GridPos p = *itr;
-            Object *obj = NULL;
+            Object *obj = nullptr;
             switch (ot) {
                 case Object::FLOOR :
                     obj = GetFloor(p); break;
@@ -1411,7 +1411,7 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
                 case Object::STONE :
                     obj = GetStone(p); break;
             }
-            if (obj != NULL) 
+            if (obj != nullptr)
                 objects.push_back(obj);
         }
         pushNewGroup(L, objects);
@@ -1422,7 +1422,7 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
         int x = round_down<int>(lua_tonumber(L, -1));
         lua_rawgeti(L, -2, 2);
         int y = round_down<int>(lua_tonumber(L, -1));
-        Object *obj = NULL;
+        Object *obj = nullptr;
         switch (ot) {
             case Object::FLOOR :
                 obj = GetFloor(GridPos(x, y)); break;
@@ -1538,7 +1538,7 @@ static int objectExistence(lua_State *L) {
         return 0;        
     }
     Object * obj = to_object(L, 1);
-    lua_pushboolean(L, (obj != NULL));
+    lua_pushboolean(L, (obj != nullptr));
     return 1;
 }
 
@@ -1549,7 +1549,7 @@ static int objectGetKind(lua_State *L) {
         return 0;        
     }
     Object * obj = to_object(L, 1);
-    lua_pushstring(L, (obj != NULL) ? obj->getKind().c_str() : "");
+    lua_pushstring(L, (obj != nullptr) ? obj->getKind().c_str() : "");
     return 1;
 }
 
@@ -1566,7 +1566,7 @@ static int objectIsKind(lua_State *L) {
     }
     std::string kind = lua_tostring(L, 2);
     
-    lua_pushboolean(L, (obj != NULL) ? obj->isKind(kind) : false);
+    lua_pushboolean(L, (obj != nullptr) ? obj->isKind(kind) : false);
     return 1;
 }
 
@@ -1710,7 +1710,7 @@ static int intersectGroupBase(lua_State *L, bool isIntersect, bool equal =false)
         for (int i = 1; i <= numObjects; ++i) {
             lua_rawgeti(L, -1, i);  // the object
             Object * obj = to_object(L, -1);
-            if (obj != NULL) {
+            if (obj != nullptr) {
                 size2++;
                 objSet.insert(obj);
             }
@@ -1719,7 +1719,7 @@ static int intersectGroupBase(lua_State *L, bool isIntersect, bool equal =false)
         lua_pop(L, 1);          // the metatable        
     } else {
         Object * obj = to_object(L, 2);
-        if (obj != NULL) {
+        if (obj != nullptr) {
             size2++;
             objSet.insert(obj);
         }
@@ -1731,7 +1731,7 @@ static int intersectGroupBase(lua_State *L, bool isIntersect, bool equal =false)
         for (int i = 1; i <= numObjects; ++i) {
             lua_rawgeti(L, -1, i);  // the object
             Object * obj = to_object(L, -1);
-            if (obj != NULL) {
+            if (obj != nullptr) {
                 size1++;
                 if ((isIntersect && objSet.find(obj) != objSet.end()) ||
                         (!isIntersect && objSet.find(obj) == objSet.end())) {
@@ -1744,7 +1744,7 @@ static int intersectGroupBase(lua_State *L, bool isIntersect, bool equal =false)
         lua_pop(L, 1);          // the metatable        
     } else {
         Object * obj = to_object(L, 1);
-        if (obj != NULL) {
+        if (obj != nullptr) {
             size1++;
             if ((isIntersect && objSet.find(obj) != objSet.end()) ||
                     (!isIntersect && objSet.find(obj) == objSet.end())) {
@@ -1783,7 +1783,7 @@ static int newPolist(lua_State *L) {
         ObjectList ol = toObjectList(L, 1);
         for (ObjectList::iterator itr = ol.begin(); itr != ol.end(); ++itr) {
             // eliminate invalid object references and add every object as value of its own
-            if (*itr != NULL) {
+            if (*itr != nullptr) {
                 positions.push_back(*itr);
             }
         }
@@ -1874,11 +1874,11 @@ static int dispatchObjectReadAccess(lua_State *L) {
     } else {
         // attribute
         Value val;  // nil
-        if ((keyStr.find('_') != 0) && ((obj != NULL && obj->validateMessage(keyStr, Value(Value::DEFAULT))) 
-                || (obj == NULL && (keyStr == "exists" || keyStr == "kill")))) {
+        if ((keyStr.find('_') != 0) && ((obj != nullptr && obj->validateMessage(keyStr, Value(Value::DEFAULT)))
+                || (obj == nullptr && (keyStr == "exists" || keyStr == "kill")))) {
             // it is a valid public message - try to send it
             lua_pushcclosure(L, objectDirectMessage, 1);  // store message name in closure
-        } else if (obj != NULL) {
+        } else if (obj != nullptr) {
             val = obj->getAttrChecked(keyStr);
             // user attribute, existing system attribute or nil if no object
             push_value(L, val);
@@ -1915,7 +1915,7 @@ static int objectSound(lua_State *L) {
         vol = lua_tonumber(L, 3);
     
     GridObject *gobj = dynamic_cast<GridObject*>(to_object(L, 1));
-    if (gobj != NULL) {
+    if (gobj != nullptr) {
         if (!gobj->sound_event(lua_tostring(L, 2), vol)) {
             //throwLuaError(L, strf("Can't find sound '%s'", soundname).c_str());
             // Don't throw an error when no sound file was found.
@@ -2235,11 +2235,11 @@ static int dispatchWorldReadAccess(lua_State *L) {
 }
 
 
-static int setObjectByTable(lua_State *L, double x, double y, bool onlyFloors = false, ItemHolder *itemHolder =NULL) {
+static int setObjectByTable(lua_State *L, double x, double y, bool onlyFloors = false, ItemHolder *itemHolder =nullptr) {
     // table at -1 
     int xi = round_down<int>(x);
     int yi = round_down<int>(y);
-    Object *obj = NULL;
+    Object *obj = nullptr;
     
     if (!lua_istable(L, -1)) {
         throwLuaError(L, ecl::strf("World: object set of wrong type '%s'", lua_typename(L, -1)).c_str());
@@ -2282,7 +2282,7 @@ static int setObjectByTable(lua_State *L, double x, double y, bool onlyFloors = 
     }
     
     obj = MakeObject(name.c_str());
-    if (obj == NULL) {
+    if (obj == nullptr) {
         throwLuaError(L, ecl::strf("World: unknown object name '%s'", name.c_str()).c_str());
         return 0;
     }
@@ -2297,7 +2297,7 @@ static int setObjectByTable(lua_State *L, double x, double y, bool onlyFloors = 
         throwLuaError (L, "uncaught exception");
     }
     
-    if (itemHolder != NULL) {
+    if (itemHolder != nullptr) {
         if (obj->getObjectType() != Object::ITEM) {
             DisposeObject(obj);
             throwLuaError(L, "Attempt to add an object to a bag or inventory that is no item");
@@ -2376,7 +2376,7 @@ static int setObjectByTable(lua_State *L, double x, double y, bool onlyFloors = 
     return 0;
 }
 
-static int setObjectByTile(lua_State *L, double x, double y, bool onlyFloors = false, ItemHolder *itemHolder =NULL) {
+static int setObjectByTile(lua_State *L, double x, double y, bool onlyFloors = false, ItemHolder *itemHolder =nullptr) {
     // tile at -1
     
     // this is a recursive function - ensure enough space on the stack
@@ -2480,7 +2480,7 @@ static int setObjectByKey(lua_State *L, std::string key, int j, int i, bool only
 
     lua_pop(L, 5);  // tile, y, x, key, resolver
 
-    if (GetFloor(GridPos(j, i)) == NULL) {
+    if (GetFloor(GridPos(j, i)) == nullptr) {
         lua_pushvalue(L, -1);
         lua_getfield(L, LUA_REGISTRYINDEX, LUA_ID_FLOORKEY);
         lua_pushinteger(L, j);
@@ -2498,7 +2498,7 @@ static int setObjectByKey(lua_State *L, std::string key, int j, int i, bool only
             setObjectByTile(L, j, i, true);   // limit to floor set
             
         lua_pop(L, 5);  // default tile
-        if (GetFloor(GridPos(j, i)) == NULL) {
+        if (GetFloor(GridPos(j, i)) == nullptr) {
             throwLuaError(L, ecl::strf("World no floor at %d, %d", j, i).c_str());
             return 0;
         }
@@ -2778,7 +2778,7 @@ static int addOther(lua_State *L) {
             setObjectByTile(L, -1, -1, false, player::GetInventory(player));         
     } else if (is_object(L, 2) && (is_tile(L, 3)  || is_table(L, 3))) {
         ItemHolder *ih = dynamic_cast<ItemHolder *>(to_object(L, 2));
-        if (ih == NULL)
+        if (ih == nullptr)
             throwLuaError(L, "World attempt to add objects to an object that can not take other objects");
         if (is_table(L, -1))
             setObjectByTable(L, -1, -1, false, ih);
@@ -2851,9 +2851,9 @@ static int shuffleOxyd(lua_State *L) {
             lua_getfield(L, i, "linear");
             if (lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
                 ObjectList oxyds = group1;
-                Object *firstOxyd = NULL;
+                Object *firstOxyd = nullptr;
                 for (ObjectList::iterator i = oxyds.begin(); i != oxyds.end(); ++i) {
-                    if (firstOxyd == NULL)
+                    if (firstOxyd == nullptr)
                         firstOxyd = *i;
                     else {
                         OxydStone::addShuffleRule(OxydStone::RULE_PAIR_MAX, 0, Value(firstOxyd), Value(*i));
@@ -2866,10 +2866,10 @@ static int shuffleOxyd(lua_State *L) {
             lua_getfield(L, i, "circular");
             if (lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
                 ObjectList oxyds = group1;
-                Object *firstOxyd = NULL;
-                Object *leftOxyd = NULL;
+                Object *firstOxyd = nullptr;
+                Object *leftOxyd = nullptr;
                 for (ObjectList::iterator i = oxyds.begin(); i != oxyds.end(); ++i) {
-                    if (firstOxyd == NULL) {
+                    if (firstOxyd == nullptr) {
                         firstOxyd = *i;
                         leftOxyd = *i;
                     } else {
@@ -2877,7 +2877,7 @@ static int shuffleOxyd(lua_State *L) {
                         leftOxyd = *i;
                     }
                 }
-                if (firstOxyd != NULL && firstOxyd != leftOxyd)
+                if (firstOxyd != nullptr && firstOxyd != leftOxyd)
                     OxydStone::addShuffleRule(OxydStone::RULE_PAIR_MAX, 0, Value(firstOxyd), Value(leftOxyd));
             }
             lua_pop(L, 1);
@@ -3167,7 +3167,7 @@ static int dispatchGroupReadAccess(lua_State *L) {
         if (i >= 1 && i <= size)
             lua_rawgeti(L, -1, i);
         else
-            pushobject(L, NULL);
+            pushobject(L, nullptr);
     } else if(lua_isstring(L, 2)) {
         std::string keyStr = lua_tostring(L, 2); 
         MethodMap::iterator iter;
@@ -3309,7 +3309,7 @@ static int sortGroup(lua_State *L) {
         double cy = 0;  // center
         int num = 0;
         for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr) {
-            if (*itr != NULL) {
+            if (*itr != nullptr) {
                 ecl::V2 pos = Value(*itr);
                 cx += pos[0];
                 cy += pos[1];
@@ -3320,7 +3320,7 @@ static int sortGroup(lua_State *L) {
             cx = cx/num;
             cy = cy/num;
             for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr) {
-                if (*itr != NULL) {
+                if (*itr != nullptr) {
                     ecl::V2 pos = Value(*itr);
                     double alpha = std::atan2(pos[1] - cy, pos[0] - cx); 
                     sortMap[alpha] = *itr;
@@ -3375,11 +3375,11 @@ static int nearestGroup(lua_State *L) {
 
     ObjectList oldList = toObjectList(L, 1);
     Object *center = to_object(L, 2);
-    if (center == NULL) {
+    if (center == nullptr) {
         throwLuaError(L, "Error: reference object is no longer existing");
     }
     double mindist = -1;
-    Object *candidate = NULL;
+    Object *candidate = nullptr;
     
     for (ObjectList::iterator itr = oldList.begin(); itr != oldList.end(); ++itr) {
         if (mindist < 0) {

@@ -39,7 +39,7 @@ namespace enigma {
             Item *it = nullptr;
             if (flavor != "all") {
                 it = dynamic_cast<Item *>(GetObjectTemplate(flavor));
-                ASSERT(it != NULL && it->isPortable(), XLevelRuntime,
+                ASSERT(it != nullptr && it->isPortable(), XLevelRuntime,
                     ecl::strf("Barrier stone with illeagal flavor '%s'", flavor.c_str()).c_str());
             }
             if (isDisplayable())

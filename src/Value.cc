@@ -57,7 +57,7 @@ namespace enigma {
     }
     
     Value::Value(Object *obj) : type (OBJECT) {
-        if (obj != NULL) {
+        if (obj != nullptr) {
             Value v = obj->getAttr("name");
             if (v && v.type == STRING && strcmp(v.val.str, "") != 0) {
                 val.str = new char[strlen(v.val.str)+1];
@@ -73,7 +73,7 @@ namespace enigma {
         std::string descriptor;
         ObjectList::iterator it;
         for (it = aList.begin(); it != aList.end(); ++it) {
-            if (*it == NULL)
+            if (*it == nullptr)
                 descriptor.append("#0,");
             else {
                 Value v = (*it)->getAttr("name");
@@ -267,9 +267,9 @@ namespace enigma {
                 return (val.dval[0] != 0) ? 1 : 0;
             case STRING: 
                 if (val.str[0] == '%')
-                    return std::strtol(&(val.str[1]), NULL, 0);
+                    return std::strtol(&(val.str[1]), nullptr, 0);
                 else
-                    return std::strtol(val.str, NULL, 0);
+                    return std::strtol(val.str, nullptr, 0);
             default: return 0;
         }
     }
@@ -282,12 +282,12 @@ namespace enigma {
             case STRING:
                 return GetNamedObject(val.str);            
             default: 
-                return NULL;
+                return nullptr;
         }
     }
     
     Value::operator ObjectList() const {
-        return getObjectList(NULL);
+        return getObjectList(nullptr);
     }
     
     Value::operator TokenList() const {
@@ -329,7 +329,7 @@ namespace enigma {
     }
     
     Value::operator ecl::V2() const {
-        Object *obj = NULL;
+        Object *obj = nullptr;
         switch (type) {
             case POSITION:
             case GRIDPOS:
@@ -338,7 +338,7 @@ namespace enigma {
             case STRING:
             case OBJECT:
                 obj = *this;
-                if (obj != NULL)
+                if (obj != nullptr)
                     switch (obj->getObjectType()) {
                         case Object::STONE :
                         case Object::FLOOR :
@@ -440,7 +440,7 @@ namespace enigma {
     }
     
     ecl::V2 Value::centeredPos() const {
-        Object *obj = NULL;
+        Object *obj = nullptr;
         switch (type) {
             case POSITION:
                 return ecl::V2(val.dval[0], val.dval[1]);
@@ -450,7 +450,7 @@ namespace enigma {
             case STRING:
             case OBJECT:
                 obj = *this;
-                if (obj != NULL)
+                if (obj != nullptr)
                     switch (obj->getObjectType()) {
                         case Object::STONE :
                         case Object::FLOOR :
@@ -540,7 +540,7 @@ namespace enigma {
             //
             ObjectList result = GetNamedGroup(val.str, reference);
             clear();
-            if (!result.empty() && result.front() != NULL) {
+            if (!result.empty() && result.front() != nullptr) {
                 Value v = result.front()->getAttr("name");
                 if (v && v.type == STRING && strcmp(v.val.str, "") != 0) {
                     val.str = new char[strlen(v.val.str)+1];

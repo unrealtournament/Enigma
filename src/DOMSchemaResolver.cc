@@ -67,7 +67,7 @@ namespace enigma
             Log << "DOMSchemaResolver: no schema substitution found for '" 
                     << schemaName << "'\n";
             // let the parser try to resolve potential external entities
-            return NULL;
+            return nullptr;
         } else {
             std::string schemaPath;
             bool result = app.systemFS->findFile( std::string("schemas/") + 
@@ -84,7 +84,7 @@ namespace enigma
                 Log << "DOMSchemaResolver: schema file '" 
                     << i->second << "' not found\n";
                 // let the parser try to resolve the schema
-                return NULL;
+                return nullptr;
             }
         }
     }

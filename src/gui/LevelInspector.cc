@@ -155,7 +155,7 @@ namespace enigma { namespace gui {
          }
          void set_value(int value) { 
              theScoreMgr->setRating(theLevel, value);
-             if (get_parent() != NULL) {
+             if (get_parent() != nullptr) {
                 get_parent()->invalidate_all();
              }
          }

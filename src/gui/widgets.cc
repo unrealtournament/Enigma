@@ -297,13 +297,13 @@ ecl::Rect Container::boundingbox() {
 }
 
 void Container::set_key_focus(Widget *newfocus) {
-    if (get_parent() != NULL) {
+    if (get_parent() != nullptr) {
         get_parent()->set_key_focus(newfocus);
     }
 }
 
 bool Container::is_key_focus(Widget *focus) {
-    if (get_parent() != NULL) {
+    if (get_parent() != nullptr) {
         return get_parent()->is_key_focus(focus);
     } else
         return false;
@@ -934,7 +934,7 @@ void ValueButton::on_action(Widget *) {
                 update_value(get_value(), max_value);
         }
     }
-    if (secondaryListener != NULL)
+    if (secondaryListener != nullptr)
         secondaryListener->on_action(this);
 }
 

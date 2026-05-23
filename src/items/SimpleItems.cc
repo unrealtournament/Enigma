@@ -211,7 +211,7 @@ namespace enigma {
                 else if (server::SubSoil == 2) {
                     for (Direction d = NORTH; d != NODIR; d = previous(d)) {
                         Floor *thefl = GetFloor(move(get_pos(), d));
-                        if (thefl != NULL && thefl->getClass() == "fl_water") {
+                        if (thefl != nullptr && thefl->getClass() == "fl_water") {
                             isAbyss = false;
                             break;
                         }

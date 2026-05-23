@@ -82,7 +82,7 @@ namespace enigma {
             return Value();
         } else if (m.message == "_trigger" && !m.value.to_bool() && (objFlags & OBJBIT_MOVABLE)) {
             Direction incoming = NODIR;
-            if (m.sender != NULL)
+            if (m.sender != nullptr)
                 incoming = direction_fromto(dynamic_cast<GridObject *>(m.sender)->get_pos(), get_pos());
             if (incoming != NODIR)
                 move_stone(incoming);

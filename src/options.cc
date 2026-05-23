@@ -78,7 +78,7 @@ bool HasOption (const char *name, std::string &value) {
     lua_pushstring (L, name);
     lua_rawget (L, -2);
     result = lua_tostring (L, -1);
-    if (result != NULL) {
+    if (result != nullptr) {
         hasOption = true;
         value = result;
     } else {

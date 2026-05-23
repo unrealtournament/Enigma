@@ -120,7 +120,7 @@ namespace enigma {
     }
 
     void BlockerItem::stone_change(Stone *st) {
-        if (st != NULL) {
+        if (st != nullptr) {
             if (st->getClass() == "st_boulder") { // boulder arrived
                 switch (state) {
                     case IDLE:

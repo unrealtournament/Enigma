@@ -50,7 +50,7 @@ namespace enigma {
         // point of time. The vanishing part is the proxy of the other exchanged stone.
         // Thus it inherits the floating behaviour from it. 
         return (state == VANISHING && 
-                (yieldedStone == NULL || yieldedStone->is_floating())); 
+                (yieldedStone == nullptr || yieldedStone->is_floating()));
     }
     
     bool PullStone::is_sticky(const Actor *a) const {
@@ -66,7 +66,7 @@ namespace enigma {
         // point of time. The vanishing part is the proxy of the other exchanged stone.
         // Thus it inherits the transparency behaviour from it. 
         return (state != VANISHING || 
-                (yieldedStone != NULL && yieldedStone->is_transparent(d))); 
+                (yieldedStone != nullptr && yieldedStone->is_transparent(d)));
     }
     
     void PullStone::on_impulse(const Impulse& impulse) {
@@ -119,23 +119,23 @@ namespace enigma {
 
                 if (dir == EAST || dir == WEST) {
                     Stone *obstacle = GetStone(move(oldPos, NORTH));
-                    if ((obstacle != NULL) && (((obstacle->get_traits().id == st_window) &&
+                    if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
                             has_dir(obstacle->getFaces(), SOUTH)) || obstacle->is_sticky(actor))) {
                         dest[1] = ecl::Max(dest[1], oldPos.y + r);
                     }
                     obstacle = GetStone(move(oldPos, SOUTH));
-                    if ((obstacle != NULL) && (((obstacle->get_traits().id == st_window) &&
+                    if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
                             has_dir(obstacle->getFaces(), NORTH)) || obstacle->is_sticky(actor))) {
                         dest[1] = ecl::Min(dest[1], oldPos.y + 1 - r);
                     }
                 } else if (dir == NORTH || dir == SOUTH) {
                     Stone *obstacle = GetStone(move(oldPos, WEST));
-                    if ((obstacle != NULL) && (((obstacle->get_traits().id == st_window) &&
+                    if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
                             has_dir(obstacle->getFaces(), EAST)) || obstacle->is_sticky(actor))) {
                         dest[0] = ecl::Max(dest[0], oldPos.x + r);
                     }
                     obstacle = GetStone(move(oldPos, EAST));
-                    if ((obstacle != NULL) && (((obstacle->get_traits().id == st_window) &&
+                    if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
                             has_dir(obstacle->getFaces(), WEST)) || obstacle->is_sticky(actor))) {
                         dest[0] = ecl::Min(dest[0], oldPos.x + 1 - r);
                     }

@@ -69,7 +69,7 @@ namespace enigma {
                 1 << ac_marble_white | 1 << ac_marble_black | 1 << ac_marble_glass
               | 1 << ac_pearl_white  | 1 << ac_pearl_black);
         Actor *a;
-        while((a = air_it.next()) != NULL) {
+        while((a = air_it.next()) != nullptr) {
             if (a->is_movable() && !a->is_invisible()) {
                 ecl::V2 v = a->get_pos() - get_pos();
                 if ((attacknearest && !attackCurrentOnly) ||

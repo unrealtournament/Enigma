@@ -23,24 +23,24 @@
 #include "world.hh"
 
 namespace enigma {
-    YieldingStone::YieldingStone() : Stone(), yieldedStone (NULL), yieldedModel (NULL) {
+    YieldingStone::YieldingStone() : Stone(), yieldedStone (nullptr), yieldedModel (nullptr) {
     }
 
     void YieldingStone::dispose() {
-         if (yieldedStone != NULL) {
+         if (yieldedStone != nullptr) {
             SendMessage(yieldedStone, "disconnect");
             DisposeObject(yieldedStone);
          }
-         if (yieldedModel != NULL)
+         if (yieldedModel != nullptr)
             delete yieldedModel;
-         yieldedStone = NULL;
-         yieldedModel = NULL;
+         yieldedStone = nullptr;
+         yieldedModel = nullptr;
          delete this;
     }
 
     void YieldingStone::yieldStone(Stone *st) {
-        if (st != NULL) {
-            ASSERT(yieldedStone == NULL, XLevelRuntime, "YieldingStone: internal error of double yielding");
+        if (st != nullptr) {
+            ASSERT(yieldedStone == nullptr, XLevelRuntime, "YieldingStone: internal error of double yielding");
             yieldedStone = st;
             origin = st->get_pos();
             yieldedModel = display::YieldModel(GridLoc(GRID_STONES, origin));
@@ -53,18 +53,18 @@ namespace enigma {
         GridPos p = get_pos();
         SendMessage(this, "disconnect");
         YieldStone(p);
-        if (yieldedStone != NULL) {
+        if (yieldedStone != nullptr) {
             int theid = yieldedStone->getId();
             SetStone(p, yieldedStone);
-            if (Object::getObject(theid) != NULL) { // not killed?
+            if (Object::getObject(theid) != nullptr) { // not killed?
                 display::SetModel(GridLoc(GRID_STONES, p), yieldedModel);
                 yieldedStone->on_move(origin);    // continue animations -- this is buggy if the stone has another
                                             // model on the new position like st-chameleon
-                if (Object::getObject(theid) != NULL)   // not killed?
+                if (Object::getObject(theid) != nullptr)   // not killed?
                     SendMessage(yieldedStone, "_model_reanimated");  // temp fix: reset bad models
             }
-            yieldedStone = NULL;
-            yieldedModel = NULL;
+            yieldedStone = nullptr;
+            yieldedModel = nullptr;
         }
         DisposeObject(this);
     }

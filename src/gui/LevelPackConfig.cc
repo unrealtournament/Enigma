@@ -100,7 +100,7 @@ namespace enigma { namespace gui {
     /* -------------------- LevelPackConfig -------------------- */
 
     LevelPackConfig::LevelPackConfig(std::string indexName, std::string groupName,
-            bool forceGroupReasign) : titleTF (NULL), isReasignOnly (forceGroupReasign),
+            bool forceGroupReasign) : titleTF (nullptr), isReasignOnly (forceGroupReasign),
             didEditMetaData (false), undo_quit (false) {
         const VMInfo &vminfo = *video_engine->GetInfo();
         const int vshrink = vminfo.width < 640 ? 1 : 0;
@@ -112,9 +112,9 @@ namespace enigma { namespace gui {
                     INDEX_STD_FILENAME, lev::Index::getCurrentGroup()); // mark as incomplete
         else
             packIndex = lev::Index::findIndex(indexName);
-        ASSERT (packIndex != NULL, XFrontend, "not existing index Name");
+        ASSERT (packIndex != nullptr, XFrontend, "not existing index Name");
         persIndex = dynamic_cast<lev::PersistentIndex *>(packIndex);
-        isPersistent = (persIndex != NULL);
+        isPersistent = (persIndex != nullptr);
         isEditable = isPersistent ? persIndex->isUserEditable() : false;
 
         // build a list of allowed group
@@ -566,7 +566,7 @@ namespace enigma { namespace gui {
         } else if (w == but_metadata && !didEditMetaData) {
             switchToMetadataEdit();
             invalidate_all();
-        } else if (w == titleTF && w != NULL) {
+        } else if (w == titleTF && w != nullptr) {
             thisIndex->set_text(titleTF->getText());
         }
     }

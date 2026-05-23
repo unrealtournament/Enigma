@@ -312,22 +312,22 @@ void Application::init(int argc, char **argv)
     if (ap.redirect) {
         FILE *newfp;
         newfp = std::freopen((userStdPath + "/Output.log").c_str(), "w", stdout);
-        if ( newfp == NULL ) {  // This happens on NT
+        if ( newfp == nullptr ) {  // This happens on NT
             newfp = fopen((userStdPath + "/Output.log").c_str(), "w");
             if (newfp) {  // in case stdout is a macro
                 *stdout = *newfp;
             }
         }
-        setvbuf(stdout, NULL, _IOLBF, BUFSIZ);   // Line buffered
+        setvbuf(stdout, nullptr, _IOLBF, BUFSIZ);   // Line buffered
 
         newfp = std::freopen((userStdPath + "/Error.log").c_str(), "w", stderr);
-        if ( newfp == NULL ) {  // This happens on NT
+        if ( newfp == nullptr ) {  // This happens on NT
             newfp = fopen((userStdPath + "/Error.log").c_str(), "w");
             if (newfp) {  // in case stderr is a macro
                 *stderr = *newfp;
             }
         }
-        setbuf(stderr, NULL);   // No buffering
+        setbuf(stderr, nullptr);   // No buffering
     }
 
     // initialize logfile -- needs ap
@@ -939,7 +939,7 @@ void Application::shutdown()
         if (!video_engine->IsFullscreen())
             video_engine->SaveWindowSizePreferences();
         lev::RatingManager::instance()->save();
-        if (lev::PersistentIndex::historyIndex != NULL)
+        if (lev::PersistentIndex::historyIndex != nullptr)
             lev::PersistentIndex::historyIndex->save();
         lev::ScoreManager::instance()->shutdown();
         app.state->shutdown();

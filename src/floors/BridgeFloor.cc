@@ -54,7 +54,7 @@ namespace enigma {
         if (m.message == "_init") {
             // a stone may be set or changed after floor set
             Stone *st = GetStone(get_pos());
-            if ((objFlags & OBJBIT_EXPLICIT) || (st != NULL && !st->is_floating())) {
+            if ((objFlags & OBJBIT_EXPLICIT) || (st != nullptr && !st->is_floating())) {
                 state = CLOSED;
             } else {
                 state = OPEN;
@@ -72,7 +72,7 @@ namespace enigma {
     void BridgeFloor::setState(int extState) {
         if (isDisplayable()) {
             Stone *st = GetStone(get_pos());
-            if (extState == 1 && (state == CLOSED || state == CLOSING) && (st == NULL || st->is_floating()))
+            if (extState == 1 && (state == CLOSED || state == CLOSING) && (st == nullptr || st->is_floating()))
                 set_iState(OPENING);
             else if (extState == 0 && (state == OPEN || state == OPENING))
                 set_iState(CLOSING);
@@ -87,7 +87,7 @@ namespace enigma {
     
     void BridgeFloor::toggleState() {
         Stone *st = GetStone(get_pos());
-        if ((state == CLOSED || state == CLOSING) && st != NULL && !st->is_floating())
+        if ((state == CLOSED || state == CLOSING) && st != nullptr && !st->is_floating())
             objFlags ^= OBJBIT_EXPLICIT;   // toggle flag
         else if (state == CLOSED || state == CLOSING)
             setState(1);
@@ -102,7 +102,7 @@ namespace enigma {
     void BridgeFloor::on_creation(GridPos p) {
         // we can not rely on state attribute in case a floor in yielded and reset on anther grid
         Stone *st = GetStone(get_pos());
-        if ((objFlags & OBJBIT_EXPLICIT) || (st != NULL && !st->is_floating()))
+        if ((objFlags & OBJBIT_EXPLICIT) || (st != nullptr && !st->is_floating()))
             state = CLOSED;
         else
             state = OPEN;
@@ -118,10 +118,10 @@ namespace enigma {
     }
 
     void BridgeFloor::stone_change(Stone *st) {
-        if (st != NULL && !st->is_floating() && (state == OPEN || state == OPENING)) {
+        if (st != nullptr && !st->is_floating() && (state == OPEN || state == OPENING)) {
             set_iState(CLOSING);
         }
-        else if ((st == NULL || st->is_floating()) && (state == CLOSED || state == CLOSING) 
+        else if ((st == nullptr || st->is_floating()) && (state == CLOSED || state == CLOSING)
                 && !(objFlags & OBJBIT_EXPLICIT)) {
             set_iState(OPENING);
         }

@@ -39,7 +39,7 @@ namespace enigma
         DOMNode * child = elem->getFirstChild();
         DOMNode * next;
 
-        for (child = elem->getFirstChild(); child != NULL; child = next) {
+        for (child = elem->getFirstChild(); child != nullptr; child = next) {
             next = child->getNextSibling();
             if (child->getNodeType() == DOMNode::TEXT_NODE) {
                 if (dynamic_cast<DOMText *>(child)->isIgnorableWhitespace()) {
@@ -47,7 +47,7 @@ namespace enigma
                 }
             } else if (child->getNodeType() == DOMNode::ELEMENT_NODE) {
                 DOMElement * childElem = dynamic_cast<DOMElement *>(child);
-                if (childElem != NULL)
+                if (childElem != nullptr)
                     stripIgnorableWhitespace(childElem);
             }
         }

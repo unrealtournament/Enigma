@@ -135,14 +135,14 @@ void Client::shutdown() {
 bool Client::network_start() {
     if (m_network_host)
         return true;
-    m_network_host = enet_host_create(NULL, 1 /* only allow 1 outgoing connection */,
+    m_network_host = enet_host_create(nullptr, 1 /* only allow 1 outgoing connection */,
 #ifdef ENET_VER_EQ_GT_13
                                       2 /* 2 channels are sufficient */,
 #endif
                                       57600 / 8 /* 56K modem with 56 Kbps downstream bandwidth */,
                                       14400 / 8 /* 56K modem with 14 Kbps upstream bandwidth */);
 
-    if (m_network_host == NULL) {
+    if (m_network_host == nullptr) {
         fprintf(stderr, "An error occurred while trying to create an ENet client host.\n");
         return false;
     }
@@ -163,7 +163,7 @@ bool Client::network_start() {
     m_server = enet_host_connect(m_network_host, &sv_address, 2);
 #endif
 
-    if (m_server == NULL) {
+    if (m_server == nullptr) {
         fprintf(stderr, "No available peers for initiating an ENet connection.\n");
         return false;
     }

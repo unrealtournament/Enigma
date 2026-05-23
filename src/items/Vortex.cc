@@ -29,8 +29,8 @@ namespace enigma {
     Vortex::Vortex(bool open) : Item() {
         state = open ? OPEN : CLOSED;
         setAttr("$dest_idx", 0);
-        setAttr("$dest_vortex", (Object *)NULL);
-        setAttr("$grabbed_actor", (Object *)NULL);
+        setAttr("$dest_vortex", (Object *)nullptr);
+        setAttr("$grabbed_actor", (Object *)nullptr);
     }
 
     Vortex::~Vortex() {
@@ -152,7 +152,7 @@ namespace enigma {
             while (getDestinationByIndex(idx++, targetpos)) {
                 GridPos  targetgpos(targetpos);
                 Vortex *v = dynamic_cast<Vortex*>(GetItem(targetgpos));
-                if (v != NULL) {  // Destination is also a vortex
+                if (v != nullptr) {  // Destination is also a vortex
                     if (v->externalState() == 1)   // opened
                         results.push_back(targetgpos);
                 } else {
@@ -186,7 +186,7 @@ namespace enigma {
     }
 
     void Vortex::emit_actor(Vortex *destVortex) {
-        if (destVortex == NULL)   // destination vortex got killed in meantime
+        if (destVortex == nullptr)   // destination vortex got killed in meantime
             destVortex = this;    // reemit from source vortex
         ecl::V2 v(destVortex->get_pos().center());
         if (Actor *actor = dynamic_cast<Actor *>((Object *)getAttr("$grabbed_actor"))) {
@@ -205,7 +205,7 @@ namespace enigma {
         if (this != destVortex)
             performAction(getAttr("$grabbed_actor"));
 
-        setAttr("$grabbed_actor", (Object *)NULL);
+        setAttr("$grabbed_actor", (Object *)nullptr);
     }
 
     void Vortex::warp_to(const ecl::V2 &target) {
@@ -223,12 +223,12 @@ namespace enigma {
             setState(0);
 
         performAction(getAttr("$grabbed_actor"));
-        setAttr("$grabbed_actor", (Object *)NULL);
+        setAttr("$grabbed_actor", (Object *)nullptr);
     }
 
     void Vortex::perform_warp() {
         Actor *actor = dynamic_cast<Actor *>((Object *)getAttr("$grabbed_actor"));
-        if (actor == NULL)
+        if (actor == nullptr)
             return;
 
         ASSERT (state == WARPING, XLevelRuntime, "Vortex: perform_warp called with inconsistent state");

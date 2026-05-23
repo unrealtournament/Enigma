@@ -41,7 +41,7 @@ namespace enigma {
     }
     
     bool BrakeItem::can_drop_at(GridPos p) {
-        return GetStone(p) == NULL;
+        return GetStone(p) == nullptr;
     }
     
     void BrakeItem::drop (Actor *a, GridPos p) {

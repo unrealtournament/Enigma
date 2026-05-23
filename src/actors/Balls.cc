@@ -329,7 +329,7 @@ namespace enigma {
 
         Floor *fl = m_actorinfo.field->floor;
         Item *it = m_actorinfo.field->item;
-        if (!(it != NULL && it->covers_floor(get_pos(), this)) && fl != NULL)
+        if (!(it != nullptr && it->covers_floor(get_pos(), this)) && fl != nullptr)
             fl->get_sink_speed (sink_speed, raise_speed);
 
         if (sink_speed == 0.0 || has_shield() || getAttr("color") == GLASS) {

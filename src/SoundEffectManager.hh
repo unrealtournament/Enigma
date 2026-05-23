@@ -108,7 +108,7 @@
  *  World::getVolume returns the volume, if object OBJECT_CALLING wants
  *  to play sound effect NAME with default volume DEF_VOLUME. Often played
  *  sounds from always the same object are damped to reduce noise-level.
- *  Note that OBJECT_CALLING == NULL is explicitly allowed and used e.g.
+ *  Note that OBJECT_CALLING == nullptr is explicitly allowed and used e.g.
  *  for all laser-sounds. The damping factor is increased by 1.0 for each
  *  event, and multiplied with 0.9 each 0.1 seconds, thereby approximately
  *  equals the average number of events per second.

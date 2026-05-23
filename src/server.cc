@@ -139,9 +139,9 @@ ServerState state_before_teatime = sv_idle;
 double time_accu = 0;
 double current_state_dtime = 0;
 int move_counter;                 // counts movements of stones
-lev::Index *currentIndex = NULL;  // volatile F6 jump back history
+lev::Index *currentIndex = nullptr;  // volatile F6 jump back history
 int currentLevel;
-lev::Index *previousIndex = NULL;
+lev::Index *previousIndex = nullptr;
 int previousLevel;
 ENetAddress network_address;
 ENetHost *network_host = 0;
@@ -405,7 +405,7 @@ void Msg_LoadLevel(lev::Proxy *levelProxy, bool isPreview) {
 }
 
 void Msg_JumpBack() {
-    if (previousIndex != NULL) {
+    if (previousIndex != nullptr) {
         lev::Index::setCurrentIndex(previousIndex->getName());
         previousIndex->setCurrentPosition(previousLevel);
         currentIndex = previousIndex;

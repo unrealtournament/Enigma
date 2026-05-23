@@ -50,9 +50,9 @@ namespace enigma { namespace gui {
         0
     };
     
-    LevelPackMenu::LevelPackMenu() : packsHList (NULL), scrollLeft (NULL), 
-            scrollRight (NULL), scrollUp (NULL), scrollDown (NULL), 
-            groupsVList (NULL), isLevelMenuSubmenu (false) {
+    LevelPackMenu::LevelPackMenu() : packsHList (nullptr), scrollLeft (nullptr),
+            scrollRight (nullptr), scrollUp (nullptr), scrollDown (nullptr),
+            groupsVList (nullptr), isLevelMenuSubmenu (false) {
         const VMInfo &vminfo = *video_engine->GetInfo();
         const int vshrink = vminfo.width < 640 ? 1 : 0;
         vtt = vminfo.tt;
@@ -64,8 +64,8 @@ namespace enigma { namespace gui {
         but_search = new StaticTextButton(N_("Search"), this);
         but_level = new StaticTextButton(N_("Start Game"), this);
         but_main = new StaticTextButton(N_("Main Menu"), this);
-        but_tutorial1 = NULL;
-        but_tutorial2 = NULL;
+        but_tutorial1 = nullptr;
+        but_tutorial2 = nullptr;
 
         // Create label for index description
         lb_index_description = new Label("");
@@ -149,46 +149,46 @@ namespace enigma { namespace gui {
             N_("You will find more training landscapes here:"),
         };
 
-        if (groupsVList != NULL) {
+        if (groupsVList != nullptr) {
             groupsVList->clear();
             remove_child(groupsVList);
             delete groupsVList;
-            groupsVList = NULL;
-            scrollUp = NULL;   // deleted with groupsVList
-            scrollDown = NULL; // deleted with groupsVList
+            groupsVList = nullptr;
+            scrollUp = nullptr;   // deleted with groupsVList
+            scrollDown = nullptr; // deleted with groupsVList
         }
         
-        if (packsHList != NULL) {
+        if (packsHList != nullptr) {
             packsHList->clear();
             remove_child(packsHList);
             delete packsHList;
-            packsHList = NULL;
+            packsHList = nullptr;
         }
 
-        if (scrollLeft != NULL) {
+        if (scrollLeft != nullptr) {
             remove_child(scrollLeft);
             delete scrollLeft;
-            scrollLeft = NULL;
+            scrollLeft = nullptr;
         }
-        if (scrollRight != NULL) {
+        if (scrollRight != nullptr) {
             remove_child(scrollRight);
             delete scrollRight;
-            scrollRight = NULL;
+            scrollRight = nullptr;
         }
 
-        if (but_tutorial1 != NULL) {
+        if (but_tutorial1 != nullptr) {
             remove_child(but_tutorial1);
             delete but_tutorial1;
-            but_tutorial1 = NULL;
+            but_tutorial1 = nullptr;
         }
-        if (but_tutorial2 != NULL) {
+        if (but_tutorial2 != nullptr) {
             remove_child(but_tutorial2);
             delete but_tutorial1;
-            but_tutorial2 = NULL;
+            but_tutorial2 = nullptr;
         }
 
         for (auto it = tutorialLines.begin(); it != tutorialLines.end(); it++)
-            if (*it != NULL)
+            if (*it != nullptr)
                 remove_child(*it);
         tutorialLines.clear();
 
@@ -270,7 +270,7 @@ namespace enigma { namespace gui {
         // ---- build list of level packs of current group in the middle of the screen ----
 
         std::vector<lev::Index *> * group = lev::Index::getGroup(curGroupName);
-        ASSERT(group != NULL, XFrontend, "curGroupName corresponds to NULL group");
+        ASSERT(group != nullptr, XFrontend, "curGroupName corresponds to NULL group");
         unsigned packCount = group->size();
         int packOffset = 0;
         int posCurrentIndex = getIndexPosition(group, lev::Index::getCurrentIndex()->getName());

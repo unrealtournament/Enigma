@@ -181,7 +181,7 @@ namespace enigma {
     }
 
     bool BoulderStone::haveObstacle(Direction dir) {
-        return GetStone(move(get_pos(), dir)) != NULL;
+        return GetStone(move(get_pos(), dir)) != nullptr;
     }
 
     void BoulderStone::triggerObstacle(Direction dir, bool isRaising) {

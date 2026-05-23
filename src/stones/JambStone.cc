@@ -42,7 +42,7 @@ namespace enigma {
                 
                 Actor *a = dynamic_cast<Actor *>(o);
                 int c = getAttr("color");
-                if ((a != NULL && (server::GameCompatibility == GAMET_ENIGMA || a->getClass() == "ac_marble") &&
+                if ((a != nullptr && (server::GameCompatibility == GAMET_ENIGMA || a->getClass() == "ac_marble") &&
                         a->getAttr("color") && a->getAttr("color") == c) || 
                         (m.sender->getObjectType() != Object::ITEM && m.message == "signal")) {
                     if (p.y == sender->get_pos().y) {

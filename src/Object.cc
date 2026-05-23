@@ -60,7 +60,7 @@ int Object::getNextId(Object *obj, bool bootFinished) {
 }
 
 void Object::bootFinished() {
-    getNextId(NULL, true);
+    getNextId(nullptr, true);
 }
 
 void Object::freeId(int id) {
@@ -70,7 +70,7 @@ void Object::freeId(int id) {
 Object *Object::getObject(int id) {
     std::map<int, Object *>::iterator it = objects.find(id);
     if (it == objects.end())
-        return NULL;
+        return nullptr;
     else
         return it->second;
 }
@@ -175,12 +175,12 @@ void Object::setAttrChecked(const std::string &key, const Value &val) {
 
         // on name clash unname other object with same name and repair all fellow references
         Object *victim = GetNamedObject(newName);
-        if (victim != NULL) {
+        if (victim != nullptr) {
             UnnameObject(victim);
             ObjectList olist = victim->getAttr("fellows");
             for (ObjectList::iterator itr = olist.begin(); itr != olist.end(); ++itr) {
                 ObjectList olist2 = (*itr)->getAttr("fellows");
-                olist2.remove(NULL);
+                olist2.remove(nullptr);
                 olist2.push_back(victim);
                 (*itr)->setAttr("fellows", olist2);
             }
@@ -188,12 +188,12 @@ void Object::setAttrChecked(const std::string &key, const Value &val) {
 
         NameObject(this, val.to_string());
 
-        // in case of a renaming repair all fellow reference that will now be NULL instead of this
+        // in case of a renaming repair all fellow reference that will now be nullptr instead of this
         if (isRename) {
             ObjectList olist = getAttr("fellows");
             for (ObjectList::iterator itr = olist.begin(); itr != olist.end(); ++itr) {
                 ObjectList olist2 = (*itr)->getAttr("fellows");
-                olist2.remove(NULL);
+                olist2.remove(nullptr);
                 olist2.push_back(this);
                 (*itr)->setAttr("fellows", olist2);
             }
@@ -263,7 +263,7 @@ Value Object::getDefaultedAttr(const std::string &key, Value defaultValue) const
 }
 
 void Object::transferName(Object *target) {
-    if (target == NULL)
+    if (target == nullptr)
         return;
     if (Value v = getAttr("name")) {
         std::string name(v);
@@ -279,7 +279,7 @@ void Object::transferName(Object *target) {
 }
 
 void Object::transferIdentity(Object *target) {
-    if (target == NULL)
+    if (target == nullptr)
         return;
     transferName(target);
     for (AttribMap::iterator it = attribs.begin(); it != attribs.end(); ++it) {
@@ -320,7 +320,7 @@ void Object::performAction(const Value &val) {
 
         ObjectList ol =
             tit->getObjectList(this);  // get all or nearest objects described by target token
-        if (ol.empty() || (ol.size() == 1 && ol.front() == NULL)) {  // no target object
+        if (ol.empty() || (ol.size() == 1 && ol.front() == nullptr)) {  // no target object
             if ((action == "callback" || action.empty()) && (tit->getType() == Value::STRING)) {
                 // it is an existing callback function
                 if (secure) {
@@ -340,7 +340,7 @@ void Object::performAction(const Value &val) {
             if (action == "")
                 action = (objFlags & OBJBIT_NOP) ? "nop" : "toggle";
             for (ObjectList::iterator oit = ol.begin(); oit != ol.end(); ++oit) {
-                if (*oit != NULL) {
+                if (*oit != nullptr) {
                     std::string obj_action = action;
                     if (server::EnigmaCompatibility < 1.10) {
                         // we may need to translate the new API message to old API

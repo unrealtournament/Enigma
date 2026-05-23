@@ -28,12 +28,12 @@
 //#include "main.hh"
 
 namespace enigma {
-    ThiefFloor::ThiefFloor() : Floor("fl_thief", 4.5, 1.5), victimId (0), bag (NULL) {
+    ThiefFloor::ThiefFloor() : Floor("fl_thief", 4.5, 1.5), victimId (0), bag (nullptr) {
 
     }
 
     ThiefFloor::~ThiefFloor() {
-        if (bag != NULL)
+        if (bag != nullptr)
             delete bag;
     }
 
@@ -45,13 +45,13 @@ namespace enigma {
         if (m.message == "_capture" && (state == IDLE || state == DRUNKEN) && isDisplayable()) {
             // add items on grid pos that can be picked up to our bag
             Item * it =  GetItem(get_pos());
-            if (it != NULL && !(it->get_traits().flags & itf_static) && bag != NULL) {
+            if (it != nullptr && !(it->get_traits().flags & itf_static) && bag != nullptr) {
                 dynamic_cast<ItemHolder *>(bag)->add_item(YieldItem(get_pos()));
             }
             // drop bag if pos is not occupied by a static item
-            if (GetItem(get_pos()) == NULL) {
+            if (GetItem(get_pos()) == nullptr) {
                 SetItem(get_pos(), bag);
-                bag = NULL;
+                bag = nullptr;
             }
             state = (state == IDLE) ? CAPTURE : DRUNKENCAPTURE;
             init_model();
@@ -137,7 +137,7 @@ namespace enigma {
                 if (!(victim->has_shield())) {
                     enigma::Inventory *inv = player::GetInventory(owner);
                     if (inv && inv->size() > 0) {
-                        if (bag == NULL) {
+                        if (bag == nullptr) {
                             bag = MakeItem("it_bag");
                             bag->setOwnerPos(get_pos());
                         }
@@ -156,7 +156,7 @@ namespace enigma {
         // steal from grid
         if(Item *it = GetItem(get_pos())) {
             if (!(it->get_traits().flags & itf_static)) {
-                if (bag == NULL) {
+                if (bag == nullptr) {
                     bag = MakeItem("it_bag");
                     bag->setOwnerPos(get_pos());
                 }

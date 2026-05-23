@@ -75,7 +75,7 @@ namespace enigma {
             AddOther(dynamic_cast<Other *>(obj));
             transferIdentity(obj);
             SendMessage(obj, "_performaction");
-            if (Object::getObject(theid) != NULL)   // not killed?
+            if (Object::getObject(theid) != nullptr)   // not killed?
                 SendMessage(obj, "_recheck");
             return ITEM_KILL;
         } else

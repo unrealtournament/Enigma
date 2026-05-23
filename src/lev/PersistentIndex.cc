@@ -60,7 +60,7 @@ namespace enigma { namespace lev {
             target == otherVar.target && extensions == otherVar.extensions;
     }
 
-    PersistentIndex * PersistentIndex::historyIndex = NULL;
+    PersistentIndex * PersistentIndex::historyIndex = nullptr;
     std::vector<std::shared_ptr<PersistentIndex> > PersistentIndex::indexCandidates;
 
     void PersistentIndex::checkCandidate(std::string thePackPath, bool systemOnly, bool userOwned,
@@ -308,7 +308,7 @@ namespace enigma { namespace lev {
 
         // check if history is available - else generate a new index
         Index * foundHistory = Index::findIndex("History");
-        if ( foundHistory != NULL) {
+        if ( foundHistory != nullptr) {
             historyIndex = dynamic_cast<PersistentIndex *>(foundHistory);
         } else {
             historyIndex = new PersistentIndex("cross", false, true, false, INDEX_HISTORY_PACK_LOCATION,
@@ -322,9 +322,9 @@ namespace enigma { namespace lev {
         Variation var;
         Proxy * curProxy = Index::getCurrentProxy();
         // remember all but commandline absolute and relative paths
-        if (curProxy != NULL && curProxy->getNormPathType() != Proxy::pt_absolute) {
+        if (curProxy != nullptr && curProxy->getNormPathType() != Proxy::pt_absolute) {
             PersistentIndex * curIndex = dynamic_cast<PersistentIndex *>(Index::getCurrentIndex());
-            if (curIndex != NULL)
+            if (curIndex != nullptr)
                 var = curIndex->getVariation(curIndex->getCurrentPosition());
             historyIndex->insertProxy(0, curProxy, false, var.ctrl, var.unit,
                     var.target, var.extensions);
@@ -341,7 +341,7 @@ namespace enigma { namespace lev {
             packPath(thePackPath), isModified(false),
             isUserOwned(userOwned), isEditable(true), isAuto(autoLoading),
             indexFilename(theIndexFilename), release(1), revision(1),
-            compatibility(1.00), doc(NULL) {
+            compatibility(1.00), doc(nullptr) {
 //        Log << "PersistentIndex AddLevelPack " << thePackPath << " - " << anIndexName <<  " - " << indexDefaultLocation <<"\n";
         load(loadSystemFS);
     }
@@ -351,9 +351,9 @@ namespace enigma { namespace lev {
     }
 
     void PersistentIndex::load(bool loadSystemFS, bool update) {
-        if (doc != NULL) {
+        if (doc != nullptr) {
             doc->release();
-            doc = NULL;
+            doc = nullptr;
         }
         // new levelpacks are not loadable
         if (packPath == " ")
@@ -370,7 +370,7 @@ namespace enigma { namespace lev {
                             (dirEntry.name.rfind(".lua") == dirEntry.name.size() - 4))) {
                         Proxy * newProxy = Proxy::autoRegisterLevel(packPath,
                                 dirEntry.name.substr(0, dirEntry.name.size() - 4), 1);
-                        if (newProxy != NULL) {
+                        if (newProxy != nullptr) {
                             // first check that the proxy is not in the index
                             //  - may occur if the level is stored as .xml and .lua in the folder
                             if (!containsProxy(newProxy)) {
@@ -426,7 +426,7 @@ namespace enigma { namespace lev {
                     doc = app.domParser->parse(domInputIndexSource.get());
                 }
 
-                if (app.domParserSchemaResolver->didResolveSchema() && doc != NULL
+                if (app.domParserSchemaResolver->didResolveSchema() && doc != nullptr
                         && !app.domParserErrorHandler->getSawErrors()) {
                     infoElem = dynamic_cast<DOMElement *>(doc->getElementsByTagName(
                             Utf8ToXML("info").x_str())->item(0));
@@ -463,9 +463,9 @@ namespace enigma { namespace lev {
                     message += _("Note: the current version will be reloaded!\n\n");
                     message += errMessage;
                 } else {
-                    if (doc != NULL) {
+                    if (doc != nullptr) {
                         doc->release();           // empty or errornous doc
-                        doc = NULL;
+                        doc = nullptr;
                     }
                     message = _("Error on registration of levelpack index: \n");
                     message += absIndexPath + "\n\n";
@@ -478,7 +478,7 @@ namespace enigma { namespace lev {
                     load(loadSystemFS, false);  // reload local version
                 }
                 return;
-            } else if (doc != NULL) {
+            } else if (doc != nullptr) {
                 //TODO check if an updated index exists for system packs
                 loadDoc();
             }
@@ -486,7 +486,7 @@ namespace enigma { namespace lev {
     }
 
     void PersistentIndex::loadDoc() {
-        if (doc != NULL) {
+        if (doc != nullptr) {
             clear();  // allow a reload of an index
             indexName = XMLtoUtf8(infoElem->getAttribute(
                     Utf8ToXML("title").x_str())).c_str();
@@ -509,7 +509,7 @@ namespace enigma { namespace lev {
             indexLocation = indexDefaultLocation;
             delete result;
 
-            if (updateElem != NULL) {
+            if (updateElem != nullptr) {
                 indexUrl = XMLtoUtf8(updateElem->getAttribute(
                         Utf8ToXML("indexurl").x_str())).c_str();
             }
@@ -583,7 +583,7 @@ namespace enigma { namespace lev {
     }
 
     PersistentIndex::~PersistentIndex() {
-       if (doc != NULL)
+       if (doc != nullptr)
            doc->release();
     }
 
@@ -597,7 +597,7 @@ namespace enigma { namespace lev {
     }
 
     bool PersistentIndex::setName(std::string newName, bool isSokoball) {
-        if (findIndex(newName) != NULL)
+        if (findIndex(newName) != nullptr)
             return false;  // do not allow duplicate names
 
         // substitute spaces by underscores
@@ -640,7 +640,7 @@ namespace enigma { namespace lev {
     }
 
     bool PersistentIndex::isUpdatable() {
-        return (updateElem != NULL) && !indexUrl.empty();
+        return (updateElem != nullptr) && !indexUrl.empty();
     }
 
     bool PersistentIndex::isCross() {
@@ -798,7 +798,7 @@ namespace enigma { namespace lev {
     bool PersistentIndex::save(bool allowOverwrite) {
         bool result = true;
 
-        if (doc == NULL) {
+        if (doc == nullptr) {
             std::string errMessage;
             std::string indexTemplatePath;
             if (app.systemFS->findFile( "schemas/index.xml" , indexTemplatePath)) {
@@ -809,7 +809,7 @@ namespace enigma { namespace lev {
                     app.domParserSchemaResolver->resetResolver();
                     app.domParserSchemaResolver->addSchemaId("index.xsd","index.xsd");
                     doc = app.domParser->parseURI(indexTemplatePath.c_str());
-                    if (app.domParserSchemaResolver->didResolveSchema() && doc != NULL
+                    if (app.domParserSchemaResolver->didResolveSchema() && doc != nullptr
                             && !app.domParserErrorHandler->getSawErrors()) {
                         infoElem = dynamic_cast<DOMElement *>(doc->getElementsByTagName(
                                 Utf8ToXML("info").x_str())->item(0));
@@ -827,9 +827,9 @@ namespace enigma { namespace lev {
                     errMessage = "Unexpected XML Exception on load of index\n";
                 }
                 if (!errMessage.empty()) {
-                    if (doc != NULL) {
+                    if (doc != nullptr) {
                         doc->release();           // empty or errornous doc
-                        doc = NULL;
+                        doc = nullptr;
                     }
                     Log << errMessage;   // make long error messages readable
                     return false;
@@ -983,7 +983,7 @@ namespace enigma { namespace lev {
             Index(anIndexName, aDescription, INDEX_DEFAULT_GROUP, Index::getNextUserLocation()),
             indexFilename(theIndexFilename), isAuto (false), isModified (false),
             isUserOwned (true), isEditable (true), release (1), revision (1),
-            compatibility (1.00), doc(NULL) {
+            compatibility (1.00), doc(nullptr) {
         Log << "PersistentIndex convert 0.92 index " << thePackPath << " - " << anIndexName <<"\n";
         lev::RatingManager *theRatingMgr = lev::RatingManager::instance();
 
@@ -1178,7 +1178,7 @@ namespace enigma { namespace lev {
 
     void AddLevelPack (const char *init_file, const char *indexName) {
 //        Log << "Index AddLevelPack " << init_file << "\n";
-        if (Index::findIndex(indexName) == NULL) {
+        if (Index::findIndex(indexName) == nullptr) {
             std::string absPath;
             if (app.resourceFS->findFile(init_file, absPath)) {
                 try {

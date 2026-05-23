@@ -167,7 +167,7 @@ namespace enigma {
             }
         }
         // colors for remaining auto colored oxyds
-        Object *lastObject = NULL;     // keep reference of last colored oxyd
+        Object *lastObject = nullptr;     // keep reference of last colored oxyd
         unsigned short lastColor;
         if (autocoloredOxyds.size() % 2 == 1)   
             onlyPairs = false;  // we will color pairs - one oxyd remains 
@@ -184,7 +184,7 @@ namespace enigma {
             dc++;
         }
         // substitute odd oxyd with a fake one
-        if (!onlyPairs && lastObject != NULL) {
+        if (!onlyPairs && lastObject != nullptr) {
             lastObject->setAttr("oxydcolor", FAKE);
             colorsUsageCount[lastColor]--;
             shuffledFakeCount++;
@@ -1011,7 +1011,7 @@ namespace enigma {
     
     void OxydStone::tryOpen() {
         bool isSingleOpened = false;
-        OxydStone *pairCandidate = NULL;
+        OxydStone *pairCandidate = nullptr;
         
         initColors();
         
@@ -1188,7 +1188,7 @@ namespace enigma {
                 std::string firstname = tl.front().to_string();
                 std::string lastname = tl.back().to_string();
                 GridObject *pairedoxyd = dynamic_cast<GridObject *>(getObject(getAttr("$pairid")));
-                if (pairedoxyd != NULL) {
+                if (pairedoxyd != nullptr) {
                     if (firstname.find('=') == 0) {
                         if (lua::CallFunc(lua::LevelState(), "enigma.settile", firstname.substr(1), pairedoxyd)) {
                             throw XLevelRuntime(std::string("oxyd stone set tile failed:\n")+lua::LastError(lua::LevelState()));

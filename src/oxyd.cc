@@ -621,14 +621,14 @@ void OxydLoader::connect_rubberbands ()
     for (int i=0; i<num_rubberbands; ++i) {
         const RubberBand &rb = level.getRubberBand(game_mode, i);
 
-        Object *anchor2 = NULL;
+        Object *anchor2 = nullptr;
         if (rb.isSecondEndMarble()) {
             anchor2 = get_actor (rb.getSecondEndMarble());
         }
         else {
             GridPos p(rb.getSecondEndPieceX(), rb.getSecondEndPieceY());
             anchor2 = GetStone(p);
-            if (anchor2 == NULL) // Fix for MagnumGold Level #108
+            if (anchor2 == nullptr) // Fix for MagnumGold Level #108
                 continue;
         }
         

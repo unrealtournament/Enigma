@@ -52,11 +52,11 @@ void TurnstilePivot::setAttr(const std::string& key, const Value &val) {
     Value TurnstilePivot::message(const Message &m) {
         if (m.message == "signal") {               // turn , turnback
             if (isDisplayable())
-                rotate(m.value == 0, NULL, NULL);
+                rotate(m.value == 0, nullptr, nullptr);
             return Value();
         } else if ((m.message == "turn" || m.message == "turnback")) {
             rotate(((m.message == "turn" && !getAttr("counterclock").to_bool()) ||
-                    (m.message == "turnback" && getAttr("counterclock").to_bool())), NULL, NULL);
+                    (m.message == "turnback" && getAttr("counterclock").to_bool())), nullptr, nullptr);
             return Value();
         }
         return Stone::message(m);
@@ -96,7 +96,7 @@ void TurnstilePivot::setAttr(const std::string& key, const Value &val) {
         GridPos p = get_pos();
         p.x += xoff;
         p.y += yoff;
-        return (NULL == GetStone(p));
+        return (nullptr == GetStone(p));
     }
 
     bool TurnstilePivot::rotate(bool clockwise, Object *impulse_sender, TurnstileArm *initiator) {
@@ -153,7 +153,7 @@ void TurnstilePivot::setAttr(const std::string& key, const Value &val) {
             rotate_arms(arms, clockwise);
             handleActorsAndItems(clockwise, impulse_sender);
 
-            if (Object::getObject(ID) == NULL) // Killed? Then forget the rest.
+            if (Object::getObject(ID) == nullptr) // Killed? Then forget the rest.
                 return can_rotate;
 
             Direction dir = to_direction(getAttr("orientation"));
@@ -178,10 +178,10 @@ void TurnstilePivot::setAttr(const std::string& key, const Value &val) {
     void TurnstilePivot::rotate_arms(DirectionBits arms, bool clockwise) {
         GridPos p = get_pos();
 
-        Object * n = (arms & NORTHBIT) ? YieldStone(move (p, NORTH)) : NULL;
-        Object * e = (arms & EASTBIT)  ? YieldStone(move (p, EAST))  : NULL;
-        Object * s = (arms & SOUTHBIT) ? YieldStone(move (p, SOUTH)) : NULL;
-        Object * w = (arms & WESTBIT)  ? YieldStone(move (p, WEST))  : NULL;
+        Object * n = (arms & NORTHBIT) ? YieldStone(move (p, NORTH)) : nullptr;
+        Object * e = (arms & EASTBIT)  ? YieldStone(move (p, EAST))  : nullptr;
+        Object * s = (arms & SOUTHBIT) ? YieldStone(move (p, SOUTH)) : nullptr;
+        Object * w = (arms & WESTBIT)  ? YieldStone(move (p, WEST))  : nullptr;
 
         if (clockwise) {
             if (arms & NORTHBIT) setArm(n, EAST);
@@ -421,13 +421,13 @@ void TurnstileArm::setAttr(const std::string& key, const Value &val) {
         int ID = getId();
         TurnstilePivot *pivot = getPivot();
 
-        if (pivot != NULL) {
+        if (pivot != nullptr) {
             ArmAction a = actions[state][impulse.dir];
             if (a != stay) {
                 bool clockwise = (a == ROTR);
                 Actor *actor = dynamic_cast<Actor*>(impulse.sender);
 //                Log << "Turnstile impulse " << get_id(pivot) << " - "<<st_turnstile_green <<"\n";
-                if (get_id(pivot) == st_turnstile_green && actor != NULL &&
+                if (get_id(pivot) == st_turnstile_green && actor != nullptr &&
                         player::WieldedItemIs(actor, "it_wrench")) {
 //                    Log << "Turnstile Wand\n";
                     clockwise = !clockwise;
@@ -440,7 +440,7 @@ void TurnstileArm::setAttr(const std::string& key, const Value &val) {
             move_stone(impulse.dir);
         }
 
-        if (Object::getObject(ID) != NULL)   // not killed - on pivot action?
+        if (Object::getObject(ID) != nullptr)   // not killed - on pivot action?
             propagateImpulse(impulse);
     }
 

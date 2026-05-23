@@ -38,7 +38,7 @@ namespace enigma { namespace lev {
     std::map<std::string, Index *> Index::indices;
     std::map<std::string, std::vector<Index *> *> Index::indexGroups;
 
-    Index * Index::currentIndex = NULL;
+    Index * Index::currentIndex = nullptr;
     std::string Index::currentGroup;
     std::map<std::string, std::string> Index::nullExtensions;
 
@@ -59,11 +59,11 @@ namespace enigma { namespace lev {
     }
 
     void Index::registerIndex(Index *anIndex) {
-        if (anIndex == NULL)
+        if (anIndex == nullptr)
             return;
 
         // check for uniqueness of index name
-        if (findIndex(anIndex->getName()) != NULL)
+        if (findIndex(anIndex->getName()) != nullptr)
             return;
 
         indices.insert(std::make_pair(anIndex->getName(), anIndex));
@@ -90,7 +90,7 @@ namespace enigma { namespace lev {
         else
             groupName = anIndex->indexGroup;  // use index default group
 
-        std::vector<Index *> * group = NULL;
+        std::vector<Index *> * group = nullptr;
 
         // if no prefs ask for index default group
 
@@ -156,7 +156,7 @@ namespace enigma { namespace lev {
         std::string::size_type lastChar = anIndexName.find_last_not_of(" ");
         if (lastChar == std::string::npos)
             // the name is effectively an empty string
-            return NULL;
+            return nullptr;
 
         // stip of trailing and leading spaces
         std::string name = anIndexName.substr(0 , lastChar + 1);
@@ -166,11 +166,11 @@ namespace enigma { namespace lev {
         if (i != indices.end())
             return i->second;
         else 
-            return NULL;
+            return nullptr;
     }
 
     std::string Index::getCurrentGroup() {
-        if (currentIndex == NULL)
+        if (currentIndex == nullptr)
             // initialize current group
             getCurrentIndex();
         return currentGroup;
@@ -186,10 +186,10 @@ namespace enigma { namespace lev {
         Index * newIndex = findIndex(indexName);
         std::string indexGroupName;
 
-        if (newIndex != NULL)
+        if (newIndex != nullptr)
             indexGroupName = newIndex->getGroupName();
 
-        if (newIndex != NULL && (indexGroupName == groupName ||
+        if (newIndex != nullptr && (indexGroupName == groupName ||
                 indexGroupName == INDEX_EVERY_GROUP || 
                 groupName == INDEX_ALL_PACKS)) {
             // set the groups current index as main current index
@@ -217,7 +217,7 @@ namespace enigma { namespace lev {
 
     void Index::deleteGroup(std::string groupName) {
         std::vector<Index *> * theGroup = getGroup(groupName);
-        if (theGroup != NULL) {
+        if (theGroup != nullptr) {
             indexGroups.erase(groupName);
             delete theGroup;
         }
@@ -322,7 +322,7 @@ namespace enigma { namespace lev {
     }
 
     Index * Index::getCurrentIndex() {
-        if (currentIndex == NULL) {
+        if (currentIndex == nullptr) {
             // first look for user preference
             if (setCurrentIndex(app.state->getGroupSelectedIndex(
                     app.state->getString("CurrentGroup"))))
@@ -349,7 +349,7 @@ namespace enigma { namespace lev {
 
     bool Index::setCurrentIndex(std::string anIndexName) {
         Index * newIndex = findIndex(anIndexName);
-        if (newIndex != NULL) {
+        if (newIndex != nullptr) {
             if (newIndex != currentIndex) {
                 sound::SetDefaultSoundSet(newIndex->get_default_SoundSet());
                 currentIndex = newIndex;
@@ -371,7 +371,7 @@ namespace enigma { namespace lev {
 
     Index * Index::nextGroupIndex() {
         std::vector<Index *> * curGroup = getGroup(currentGroup);
-        ASSERT(curGroup != NULL, XFrontend, "");
+        ASSERT(curGroup != nullptr, XFrontend, "");
 
         for (int i = 0; i < curGroup->size() - 1; i++) {
             if ((*curGroup)[i] == currentIndex)
@@ -382,7 +382,7 @@ namespace enigma { namespace lev {
 
     Index * Index::previousGroupIndex() {
         std::vector<Index *> * curGroup = getGroup(currentGroup);
-        ASSERT(curGroup != NULL, XFrontend, "");
+        ASSERT(curGroup != nullptr, XFrontend, "");
 
         for (int i = 1; i < curGroup->size(); i++) {
             if ((*curGroup)[i] == currentIndex)
@@ -400,7 +400,7 @@ namespace enigma { namespace lev {
         if (i != indexGroups.end()) 
             return i->second;
         else 
-            return NULL;
+            return nullptr;
     }
 
     double Index::getNextUserLocation() {
@@ -637,7 +637,7 @@ namespace enigma { namespace lev {
         if (pos >= 0 && pos < proxies.size())
             return proxies[pos];
         else
-            return NULL;
+            return nullptr;
     }
 
     bool Index::containsProxy(Proxy * aProxy) {

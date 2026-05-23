@@ -67,7 +67,7 @@ namespace enigma {
         int theid = getId();
             performAction(true);    // may kill the stone!
 
-        if (Object::getObject(theid) != NULL) {  // not killed?
+        if (Object::getObject(theid) != nullptr) {  // not killed?
             TokenList tl = getAttr("selection");
             int idx = enigma::IntegerRand(1, tl.size()) - 1;
             TokenList::iterator itr = tl.begin();

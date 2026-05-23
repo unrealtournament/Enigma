@@ -372,7 +372,7 @@ void GrateStone::setAttr(const std::string& key, const Value &val) {
         ObjectList olist = getAttr("fellows");
         for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it) {
             Stone *fellow = dynamic_cast<Stone *>(*it);
-            if (fellow != NULL)
+            if (fellow != nullptr)
                 SendMessage(fellow, "_paper");
         }
     }
@@ -422,7 +422,7 @@ void GrateStone::setAttr(const std::string& key, const Value &val) {
         ObjectList olist = getAttr("fellows");
         for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it) {
             Stone *fellow = dynamic_cast<Stone *>(*it);
-            if (fellow != NULL)
+            if (fellow != nullptr)
                 SendMessage(fellow, "_pebble");
         }
     }

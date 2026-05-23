@@ -42,7 +42,7 @@ using namespace enigma;
 XERCES_CPP_NAMESPACE_USE 
 
 namespace enigma {
-    PropertyManager::PropertyManager() : doc (NULL), propertiesElem (NULL) {
+    PropertyManager::PropertyManager() : doc (nullptr), propertiesElem (nullptr) {
     }
     
     PropertyManager::~PropertyManager() {
@@ -138,8 +138,8 @@ namespace enigma {
     }
     
     DOMElement * PropertyManager::getPropertyElement(const char *prefName) {
-        ASSERT(propertiesElem != NULL, XFrontend, "");
-        ASSERT(doc != NULL, XFrontend, "");
+        ASSERT(propertiesElem != nullptr, XFrontend, "");
+        ASSERT(doc != nullptr, XFrontend, "");
         XMLCh * key = XMLString::replicate(Utf8ToXML(prefName).x_str());
         DOMElement * property;
         bool propFound = hasProperty(prefName, &property);
@@ -160,13 +160,13 @@ namespace enigma {
     }
         
     bool PropertyManager::hasProperty(const XMLCh * key, DOMElement ** element) {
-        ASSERT(propertiesElem != NULL, XFrontend, "");
+        ASSERT(propertiesElem != nullptr, XFrontend, "");
         bool propFound = false;
-        DOMElement * property = NULL;
+        DOMElement * property = nullptr;
 
 // Xerces 3.0 has no full XPath support - otherwise the following simple
 // statement would suffice and not be aborted with NOT_SUPPORTED_ERR.
-//        doc->evaluate(Utf8ToXML("//property[@key='...']").x_str(), doc, NULL, 0, NULL);
+//        doc->evaluate(Utf8ToXML("//property[@key='...']").x_str(), doc, nullptr, 0, nullptr);
 
         DOMNodeList * propList = propertiesElem->getElementsByTagName(Utf8ToXML("property").x_str());
         for (int i = 0, l = propList-> getLength(); i < l && !propFound; i++) {

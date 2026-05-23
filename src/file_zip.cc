@@ -62,8 +62,8 @@ bool enigma::extractFromZipString(std::string zipString, std::string fileName, s
     size_t compressedSize = 0;
     size_t uncompressedSize = 0;
     size_t posLocalHeader = 0;
-    Bytef *ptrCompressed = NULL;
-    Bytef *ptrUncompressed = NULL;
+    Bytef *ptrCompressed = nullptr;
+    Bytef *ptrUncompressed = nullptr;
     try {
         // Search for the first occurence of fileName, from back to front.
         size_t pos = zipString.rfind(fileName);
@@ -91,7 +91,7 @@ bool enigma::extractFromZipString(std::string zipString, std::string fileName, s
         // We need to allocate enough memory to save the inflated (decompressed) xml-file.
         ptrCompressed = (Bytef*)(compressedData.data());
         ptrUncompressed = (Bytef*)(calloc(uncompressedSize, 1));
-        ASSERT(ptrUncompressed != NULL, XFrontend, "Could not allocate memory for zip inflation.");
+        ASSERT(ptrUncompressed != nullptr, XFrontend, "Could not allocate memory for zip inflation.");
 
         // Prepare a zlib-stream for inflation.
         z_stream inflateStream;

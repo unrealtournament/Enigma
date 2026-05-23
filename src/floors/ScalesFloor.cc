@@ -68,7 +68,7 @@ namespace enigma {
             updateIState();
         } else if (m.message == "_dying" ) {
             Actor *ac = dynamic_cast<Actor *>(m.sender);
-            if (ac != NULL) {
+            if (ac != nullptr) {
                 updateIState();
             }
         } else if (m.message == "_update_mass" ) {
@@ -129,7 +129,7 @@ namespace enigma {
         
         Stone *st = GetStone(get_pos());
         objFlags &= ~OBJBIT_STONE;
-        if (st != NULL && (!st->is_floating() || st->getClass() == "st_puzzle")) {
+        if (st != nullptr && (!st->is_floating() || st->getClass() == "st_puzzle")) {
             // Hack to make hollow puzzle stones press triggers
             objFlags |= OBJBIT_STONE;
             state = ON;

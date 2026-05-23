@@ -150,7 +150,7 @@ namespace enigma {
 
     void ChessStone::on_floor_change() {
         Floor *fl = GetFloor(get_pos());
-        if (fl != NULL) {
+        if (fl != nullptr) {
             if (fl->getClass() == "fl_abyss")
                 try_state(FALLING);
             if (fl->getClass() =="fl_swamp")

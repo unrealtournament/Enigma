@@ -36,7 +36,7 @@ using namespace std;
 
 namespace enigma { namespace gui {
 
-    lev::PersistentIndex * LevelPackComposer::clipboard = NULL;
+    lev::PersistentIndex * LevelPackComposer::clipboard = nullptr;
 
     static const char *helptext[] = {
         N_("Shift-click:"),         N_("Add to clipboard"),
@@ -165,7 +165,7 @@ namespace enigma { namespace gui {
                         if (isEditable) {
                             int pos = curIndex->getCurrentPosition();
                             lev::Proxy * curProxy = curIndex->getCurrent();
-                            if (curProxy == NULL) {
+                            if (curProxy == nullptr) {
                                 // levelpack is empty
                                 handled=true;
                                 break;
@@ -210,7 +210,7 @@ namespace enigma { namespace gui {
                             lev::Variation var = clipboard->getVariation(i);
                             lev::Proxy *levelCopy = clipboard->getProxy(i)->copy(app.userPath + "/levels",
                                     curIndex->getPackPath(), true);
-                            if (levelCopy == NULL) {
+                            if (levelCopy == nullptr) {
                                 // insert a crossreference
                                 curIndex->insertProxy(pos++, clipboard->getProxy(i), true,
                                         var.ctrl, var.unit, var.target, var.extensions);
@@ -281,7 +281,7 @@ namespace enigma { namespace gui {
                 lev::Proxy * curProxy = lev::Index::getCurrentProxy();
                 if (curProxy->getNormPathType() != lev::Proxy::pt_absolute) {
                     // all but absolute commandline proxies may be put on the clipboard
-                    if (curIndex != NULL)
+                    if (curIndex != nullptr)
                         var = curIndex->getVariation(curIndex->getCurrentPosition());
                     clipboard->appendProxy(curProxy, var.ctrl,
                             var.unit, var.target, var.extensions);
@@ -389,7 +389,7 @@ namespace enigma { namespace gui {
     }
 
     void LevelPackComposer::maybeInitClipboard() {
-        if (clipboard == NULL) {
+        if (clipboard == nullptr) {
             std::vector<std::string> dummy;
             clipboard = new lev::PersistentIndex(" ", false, true, false,
                 INDEX_CLIPBOARD_PACK_LOCATION, INDEX_CLIPBOARD_PACK_NAME,
@@ -402,7 +402,7 @@ namespace enigma { namespace gui {
         lev::PersistentIndex *pIndex = dynamic_cast<lev::PersistentIndex *>(index);
         lev::Variation var;
         maybeInitClipboard();
-        if (pIndex != NULL) {
+        if (pIndex != nullptr) {
             for (int pos = 0; pos < pIndex->size(); pos++) {
                 var = pIndex->getVariation(pos);
                 clipboard->appendProxy(pIndex->getProxy(pos), var.ctrl,

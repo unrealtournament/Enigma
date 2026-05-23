@@ -32,12 +32,12 @@ namespace enigma {
     }
 
     void ShogunStone::dispose() {
-         if (subShogun != NULL) {
+         if (subShogun != nullptr) {
             SendMessage(subShogun, "disconnect");
             DisposeObject(subShogun);
          }
-         subShogun = NULL;
-         superShogun = NULL;
+         subShogun = nullptr;
+         superShogun = nullptr;
          delete this;
     }
 
@@ -104,13 +104,13 @@ Value ShogunStone::getAttr(const std::string &key) const {
 
     void ShogunStone::setOwnerPos(GridPos po) {
         Stone::setOwnerPos(po);
-        if (subShogun != NULL)
+        if (subShogun != nullptr)
             subShogun->setOwnerPos(po);
     }
 
     void ShogunStone::on_creation(GridPos p) {
         Stone::on_creation(p);
-        if (subShogun != NULL)
+        if (subShogun != nullptr)
             // swap or pull based new grid positioning of a shogun stack
             subShogun->setOwnerPos(p);
         else if (getHoles() != ownHole()) {
@@ -128,7 +128,7 @@ Value ShogunStone::getAttr(const std::string &key) const {
             }
             if (subHoles & S) {
                 ShogunStone *s = dynamic_cast<ShogunStone *>(MakeObject("st_shogun_s"));
-                if (subShogun == NULL) {
+                if (subShogun == nullptr) {
                     subShogun = s;
                     s->superShogun = this;
                 } else {
@@ -143,27 +143,27 @@ Value ShogunStone::getAttr(const std::string &key) const {
     }
 
     void ShogunStone::on_removal(GridPos p) {
-        if (subShogun != NULL)
+        if (subShogun != nullptr)
             subShogun->setOwnerPos(GridPos(-1,-1));
         Stone::on_removal(p);
     }
 
     void ShogunStone::on_impulse(const Impulse& impulse) {
-        if (!impulse.byWire && subShogun != NULL) {
+        if (!impulse.byWire && subShogun != nullptr) {
             subShogun->on_impulse(impulse);
             return;
         }
         GridPos newPos = move(getOwnerPos(), impulse.dir);
         Stone * st = GetStone(newPos);
-        ShogunStone *nss = NULL;
+        ShogunStone *nss = nullptr;
         bool fitsNeighborShogun = false;
-        if (st != NULL) {
+        if (st != nullptr) {
             nss = dynamic_cast<ShogunStone *>(st);
-            if (nss != NULL)
+            if (nss != nullptr)
                 fitsNeighborShogun = (nss->getHoles() & (2*ownHole() -1)) == 0;
         }
 
-        if ((subShogun == NULL) && ((st == NULL) || fitsNeighborShogun)) {  // can we move?
+        if ((subShogun == nullptr) && ((st == nullptr) || fitsNeighborShogun)) {  // can we move?
             // first remove from current position
             if (!yieldShogun())
                 return;            // being swapped or pulled
@@ -171,12 +171,12 @@ Value ShogunStone::getAttr(const std::string &key) const {
             sound_event("movesmall");
 
             // then put to new position
-            if (st == NULL) {
+            if (st == nullptr) {
                 SetStone(newPos, this);
             } else {
                 // register our hole to all super shoguns
                 ShogunStone *s = nss;
-                for (; s->subShogun != NULL; s = s->subShogun) {
+                for (; s->subShogun != nullptr; s = s->subShogun) {
                     s->addSubHoles(ownHole());
                 }
                 // register ourself to smallest shogun
@@ -230,23 +230,23 @@ Value ShogunStone::getAttr(const std::string &key) const {
     }
 
     bool ShogunStone::yieldShogun() {
-        if (isDisplayable() && subShogun == NULL) {
+        if (isDisplayable() && subShogun == nullptr) {
             YieldStone(get_pos());
         } else if (isDisplayable()) {
             // top most shogun moved by wire or killed
             GridPos oldPos = get_pos();
             YieldStone(oldPos);
-            subShogun->superShogun = NULL;
+            subShogun->superShogun = nullptr;
             SetStone(oldPos, subShogun);
-            subShogun = NULL;
+            subShogun = nullptr;
             removeAllSubHoles();
         } else {
             // a sub shogun
             ShogunStone *oss = dynamic_cast<ShogunStone *>(GetStone(getOwnerPos()));
-            if (oss == NULL)   // we are swapped or pulled and impulsed by wire
+            if (oss == nullptr)   // we are swapped or pulled and impulsed by wire
                 return false;        // forget impulse
 
-            ASSERT(superShogun != NULL, XLevelRuntime, "Shogun: missing super shogun");
+            ASSERT(superShogun != nullptr, XLevelRuntime, "Shogun: missing super shogun");
             superShogun->subShogun = subShogun;
             superShogun->removeSubHoles(ownHole());
             if (ShogunStone *superSuperShogun = superShogun->superShogun) {
@@ -256,9 +256,9 @@ Value ShogunStone::getAttr(const std::string &key) const {
             } else
                 superShogun->init_model();
                 TouchStone(getOwnerPos());
-            if (subShogun != NULL) subShogun->superShogun = superShogun;
-            superShogun = NULL;
-            subShogun = NULL;
+            if (subShogun != nullptr) subShogun->superShogun = superShogun;
+            superShogun = nullptr;
+            subShogun = nullptr;
             removeAllSubHoles();
         }
         return true;

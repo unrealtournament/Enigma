@@ -39,22 +39,22 @@ namespace enigma {
             else
                 super = ObjectValidator::instance()->getKindDesc("");
         }
-        ASSERT(super != NULL || name == "", XFrontend, "Object description initialization error - unknown super kind");
+        ASSERT(super != nullptr || name == "", XFrontend, "Object description initialization error - unknown super kind");
         // isClass - if all super are abstract
         isClass = !abstract;
-        for (KindDescriptor *s = super; s != NULL; s = s->super)
+        for (KindDescriptor *s = super; s != nullptr; s = s->super)
             if (!s->isAbstract)
                 isClass = false;
 
         // inherit messages from super
-        if (super != NULL)
+        if (super != nullptr)
             messages = super->messages;
 
         // inherit attributes from super
-        if (super != NULL)
+        if (super != nullptr)
             attributes = super->attributes;
             
-        if (super != NULL)
+        if (super != nullptr)
             super->registerSubKind(this);
     }
     
@@ -62,7 +62,7 @@ namespace enigma {
         ASSERT(isAbstract || isClass, XFrontend, 
                 ecl::strf("Object description initialization error - message '%s' addition to subkind '%s'",
                 msg.c_str(), kind.c_str()).c_str());
-        if (messages[msg] == NULL)
+        if (messages[msg] == nullptr)
             messages[msg] = ObjectValidator::instance()->getMessage(msg);
     }
     
@@ -75,14 +75,14 @@ namespace enigma {
         ASSERT(isAbstract || isClass, XFrontend, 
                 ecl::strf("Object description initialization error - attribute '%s' addition to subkind '%s'",
                 name.c_str(), kind.c_str()).c_str());
-        if (attributes[name] == NULL)
+        if (attributes[name] == nullptr)
             attributes[name] = ObjectValidator::instance()->getDefaultAttributeDesc(name);
     }
     
     AttributeDescriptor * KindDescriptor::addModifiedAttribute(std::string name) {
         // make a clone and return it for modification
         AttributeDescriptor *inheritedAttribute = attributes[name];
-        if (inheritedAttribute == NULL) {
+        if (inheritedAttribute == nullptr) {
             ASSERT(isAbstract || isClass, XFrontend, 
                     ecl::strf("Object description initialization error - attribute '%s' addition to subkind '%s'",
                     name.c_str(), kind.c_str()).c_str());
@@ -143,7 +143,7 @@ namespace enigma {
             return true;
         else {
             // is it a super kind name?
-            for (KindDescriptor *s = super; s != NULL; s = s->super)
+            for (KindDescriptor *s = super; s != nullptr; s = s->super)
                 if (match == s->kind)
                     return true;
                     
@@ -155,7 +155,7 @@ namespace enigma {
     }
     
     void KindDescriptor::log() {
-        if (super != NULL)
+        if (super != nullptr)
             Log << "Kind " << kind << " of super " << super->kind << " isClass " << isClass << "\n";
         else
             Log << "Kind " << kind << " is base - isClass " << isClass << "\n";

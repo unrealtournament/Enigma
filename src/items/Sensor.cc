@@ -39,7 +39,7 @@ namespace enigma {
         if (m.message == "_hit") {   // door knocking forward to black/whitballstone
             setAttr("$hitactor", m.value);
             performAction(true);
-            setAttr("$hitactor", (Object *)NULL);
+            setAttr("$hitactor", (Object *)nullptr);
             return Value();
         } else if (m.message == "_hitactor") {
             return getAttr("$hitactor");

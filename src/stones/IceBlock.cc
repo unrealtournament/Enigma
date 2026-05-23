@@ -86,26 +86,26 @@ namespace enigma {
         bool isFrozenBomb = false;
         Item *itf = GetItem(origin);
         Item *itd = GetItem(get_pos());
-        if (itd != NULL) {
+        if (itd != nullptr) {
             SendMessage(itd, "_freeze");
             itd = GetItem(get_pos());
         }
-        if (itf != NULL && itf->isFreezable()) {
-            if (itd == NULL || !itd->isStatic() || (itd->isFreezable() && !itf->isPortable())) {
+        if (itf != nullptr && itf->isFreezable()) {
+            if (itd == nullptr || !itd->isStatic() || (itd->isFreezable() && !itf->isPortable())) {
                 isFrozenBomb = itf->isKind("it_bomb");
                 SetItem(get_pos(), YieldItem(origin));
             } else
                 KillItem(origin);
         }
         Floor *fl = GetFloor(get_pos());
-        if (fl != NULL && fl->isKind("fl_water")) {
+        if (fl != nullptr && fl->isKind("fl_water")) {
             SetFloor(get_pos(), MakeFloor("fl_ice"));
         }
         Stone::on_move(origin);
         
         // deny all item actions on stone move besides bomb explosions
         itd = GetItem(get_pos());
-        return (itd != NULL && itd->isKind("it_bomb") && !isFrozenBomb);
+        return (itd != nullptr && itd->isKind("it_bomb") && !isFrozenBomb);
     }
     
     DEF_TRAITSM(IceBlock, "st_ice", st_ice, MOVABLE_STANDARD);

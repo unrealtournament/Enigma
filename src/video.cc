@@ -389,9 +389,9 @@ private:
 };
 
 VideoEngineImpl::VideoEngineImpl() :
-    screen(NULL),
-    window(NULL),
-    renderer(NULL),
+    screen(nullptr),
+    window(nullptr),
+    renderer(nullptr),
     video_tileset(nullptr),
     video_tileset_id(VTS_NONE),
     nominal_inputgrab_status(false)

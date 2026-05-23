@@ -111,7 +111,7 @@ namespace enigma {
             int theid = getId();  // in future user might kill actors on callback
             performAction(true);
             // target reached or? try next one
-            if ((Object::getObject(theid) != NULL)  && (objFlags & OBJBIT_AUTOMOVE) &&
+            if ((Object::getObject(theid) != nullptr)  && (objFlags & OBJBIT_AUTOMOVE) &&
                     !getDestinationByIndex(++destidx, target)) {
                 if (getAttr("loop").to_bool()) {
                     destidx = 0;     // failed -> start anew

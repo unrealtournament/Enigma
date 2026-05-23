@@ -59,7 +59,7 @@ namespace enigma {
         } else if (m.message == "_trigger") {
             // a boulder that we will send back
             Object *boulder = m.sender;
-            if (boulder != NULL && m.value.to_bool()) {
+            if (boulder != nullptr && m.value.to_bool()) {
                 boulder->setAttr("orientation", reverse(to_direction(boulder->getAttr("orientation"))));
                 sound_event("bumper");
                 state = PULSING;

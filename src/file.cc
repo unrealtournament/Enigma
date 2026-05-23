@@ -56,12 +56,12 @@ namespace
 
     class DirIterOS : DirIter {
     public:
-        DirIterOS (const std::string &path) : m_dir (NULL), m_entry (NULL) {
+        DirIterOS (const std::string &path) : m_dir (nullptr), m_entry (nullptr) {
             open (path);
             dir_path = path;
         }
         virtual ~DirIterOS () {
-            if (m_dir != NULL)
+            if (m_dir != nullptr)
                 closedir (m_dir);
         }
 
@@ -72,7 +72,7 @@ namespace
         virtual bool get_next (DirEntry &entry) {
             if (m_dir == 0) return false;
             m_entry = readdir(m_dir);
-            if (m_entry != NULL) {
+            if (m_entry != nullptr) {
                 entry.name = m_entry->d_name;
 //                entry.is_dir = false;
                 entry.is_dir = ecl::FolderExists(dir_path + "/" + entry.name);
@@ -425,7 +425,7 @@ bool enigma::Copyfile(std::string fromPath, std::string toPath) {
             return false;
         
         easycurl = curl_easy_init();
-        return easycurl != NULL;
+        return easycurl != nullptr;
     }
     
     void enigma::ShutdownCurl() {
