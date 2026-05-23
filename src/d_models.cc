@@ -35,8 +35,6 @@
 
 using namespace enigma;
 using namespace display;
-using namespace std;
-using namespace ecl;
 
 #ifndef CXXLUA
 extern "C" {
@@ -91,8 +89,7 @@ private:
 
 /* -------------------- SurfaceCache -------------------- */
 
-Surface *SurfaceCache_Alpha::acquire(const std::string &name) {
-    const VMInfo *vminfo = video_engine->GetInfo();
+ecl::Surface *SurfaceCache_Alpha::acquire(const std::string &name) {
     std::string filename;
     std::unique_ptr<ecl::Surface> es;
 
@@ -108,8 +105,7 @@ Surface *SurfaceCache_Alpha::acquire(const std::string &name) {
     return es.release();
 }
 
-Surface *SurfaceCache::acquire(const std::string &name) {
-    const VMInfo *vminfo = video_engine->GetInfo();
+ecl::Surface *SurfaceCache::acquire(const std::string &name) {
     std::string filename;
     std::unique_ptr<ecl::Surface> es;
 
@@ -169,8 +165,8 @@ namespace {
 SurfaceCache surface_cache;
 SurfaceCache_Alpha surface_cache_alpha;
 ModelManager *modelmgr = nullptr;
-vector<Surface *> image_pile;
-string anim_templ_name;
+std::vector<ecl::Surface *> image_pile;
+std::string anim_templ_name;
 Anim2d *anim_templ = nullptr;
 
 }  // namespace
@@ -200,7 +196,7 @@ void display::InitModels() {
         m.manage();
     }
 
-    string fname;
+    std::string fname;
 
     fname = app.systemFS->findFile(vts->initscript);
     if (lua::DoSysFile(L, vts->initscript) != lua::NO_LUAERROR) {
@@ -211,7 +207,7 @@ void display::InitModels() {
                          N_("Continue"));
         m.manage();
     }
-    enigma::Log << "# models: " << modelmgr->num_templates() << endl;
+    enigma::Log << "# models: " << modelmgr->num_templates() << std::endl;
 
     surface_cache_alpha.clear();
     lua_close(L);
@@ -226,7 +222,7 @@ void display::ShutdownModels() {
     anim_templ = nullptr;
 }
 
-Surface *display::CropSurface(const Surface *s, Rect r) {
+ecl::Surface *display::CropSurface(const ecl::Surface *s, ecl::Rect r) {
     return ecl::Grab(s, r);
 }
 
@@ -239,11 +235,11 @@ void display::DefineModel(const char *name, Model *m) {
     modelmgr->define(name, m);
 }
 
-Model *display::MakeModel(const string &name) {
+Model *display::MakeModel(const std::string &name) {
     if (Model *m = modelmgr->create(name))
         return m;
     else {
-        enigma::Log << "Unknown model " << name << endl;
+        enigma::Log << "Unknown model " << name << std::endl;
         return modelmgr->create("dummy");
     }
 }
@@ -291,9 +287,9 @@ void display::DefineShadedModel(const char *name, const char *model, const char 
    `images' is the name of the background image, the following images are
    drawn on top of it. */
 void display::DefineOverlayImage(const char *name, int n, char **images) {
-    Surface *sfc = Duplicate(surface_cache.get(images[0]));
+    ecl::Surface *sfc = Duplicate(surface_cache.get(images[0]));
     if (sfc) {
-        GC gc(sfc);
+        ecl::GC gc(sfc);
         for (int i = 1; i < n; i++)
             blit(gc, 0, 0, surface_cache_alpha.get(images[i]));
         DefineModel(name, new ImageModel(sfc, 0, 0));
@@ -360,10 +356,10 @@ ImageModel::ImageModel(Image *i, int xo, int yo) : image(i), xoff(xo), yoff(yo) 
     incref(image);
 }
 
-ImageModel::ImageModel(Surface *s, int xo, int yo) : image(new Image(s)), xoff(xo), yoff(yo) {
+ImageModel::ImageModel(ecl::Surface *s, int xo, int yo) : image(new Image(s)), xoff(xo), yoff(yo) {
 }
 
-ImageModel::ImageModel(Surface *s, const ecl::Rect &r, int xo, int yo)
+ImageModel::ImageModel(ecl::Surface *s, const ecl::Rect &r, int xo, int yo)
 : image(new Image(s, r)), xoff(xo), yoff(yo) {
 }
 
@@ -530,7 +526,7 @@ void Anim2d::remove(ModelLayer *ml) {
     ml->deactivate(this);
 }
 
-bool Anim2d::has_changed(Rect &r) {
+bool Anim2d::has_changed(ecl::Rect &r) {
     bool retval = changedp;
     if (changedp) {
         get_extension(r);
@@ -582,7 +578,7 @@ void Anim2d::tick(double dtime) {
 
 namespace display {
 
-Surface *GetSurface(const std::string &filename) {
+ecl::Surface *GetSurface(const std::string &filename) {
     return surface_cache.get(filename);
 }
 
