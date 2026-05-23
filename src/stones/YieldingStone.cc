@@ -23,7 +23,7 @@
 #include "world.hh"
 
 namespace enigma {
-    YieldingStone::YieldingStone() : Stone(), yieldedStone (nullptr), yieldedModel (nullptr) {
+    YieldingStone::YieldingStone() : yieldedStone (nullptr) {
     }
 
     void YieldingStone::dispose() {
@@ -31,10 +31,8 @@ namespace enigma {
             SendMessage(yieldedStone, "disconnect");
             DisposeObject(yieldedStone);
          }
-         if (yieldedModel != nullptr)
-            delete yieldedModel;
          yieldedStone = nullptr;
-         yieldedModel = nullptr;
+         yieldedModel.reset();
          delete this;
     }
 
@@ -57,14 +55,13 @@ namespace enigma {
             int theid = yieldedStone->getId();
             SetStone(p, yieldedStone);
             if (Object::getObject(theid) != nullptr) { // not killed?
-                display::SetModel(GridLoc(GRID_STONES, p), yieldedModel);
+                display::SetModel(GridLoc(GRID_STONES, p), std::move(yieldedModel));
                 yieldedStone->on_move(origin);    // continue animations -- this is buggy if the stone has another
                                             // model on the new position like st-chameleon
                 if (Object::getObject(theid) != nullptr)   // not killed?
                     SendMessage(yieldedStone, "_model_reanimated");  // temp fix: reset bad models
             }
             yieldedStone = nullptr;
-            yieldedModel = nullptr;
         }
         DisposeObject(this);
     }

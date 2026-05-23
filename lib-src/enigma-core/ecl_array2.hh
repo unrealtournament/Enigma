@@ -24,31 +24,8 @@
 
 namespace ecl {
 
-template <class T, class A = std::allocator<T> >
-struct Array2Base {
-    A alloc;          // allocator
-    T* first, *last;  // start/end of allocated space
-
-    Array2Base(const A& a, typename A::size_type n)
-    : alloc(a), first(alloc.allocate(n)), last(first + n) {}
-
-    ~Array2Base() {
-        // allocate(0) returns 0 on GCC 2.95 -- standard?
-        if (first)
-            alloc.deallocate(first, last - first);
-    }
-    void resize(typename A::size_type n) {
-        if (first)
-            alloc.deallocate(first, last - first);
-        first = alloc.allocate(n);
-        last = first + n;
-    }
-};
-
-template <class T, class A = std::allocator<T> >
-class Array2 : private Array2Base<T, A> {
-    A alloc;
-
+template <class T, class A = std::allocator<T>>
+class Array2 {
 public:
     typedef T value_type;
     typedef T* iterator;
@@ -63,7 +40,7 @@ public:
     Array2<T, A>& operator=(Array2<T, A> a2);  // call by value!
 
     // Destructor
-    ~Array2() { destroy_elements(); }
+    ~Array2() {}
 
     iterator begin() { return this->first; }
     iterator end() { return this->last; }
@@ -74,7 +51,7 @@ public:
     const_iterator row_begin(size_type y) const { return this->first + y * w; }
     const_iterator row_end(size_type y) const { return this->first + y * w + w; }
 
-    void swap(Array2<T, A>& a2);
+    void swap(Array2<T, A>& a2) noexcept;
 
     size_type width() const { return w; }
     size_type height() const { return h; }
@@ -91,51 +68,48 @@ public:
 
     /*! Resize the array in place, but discard any old array
       entries */
-    void resize(int w, int h, const T& val = T());
+    void resize(int w, int h);
 
 private:
-    void destroy_elements();
-
+    A alloc;
+    std::vector<T, A> vec;
+    T* first;
+    T* last;
     size_type w, h;
 };
 
 template <class T, class A>
-Array2<T, A>::Array2(int ww, int hh, const T& val, const A& a)
-: Array2Base<T, A>(a, ww * hh), w(ww), h(hh) {
-    std::uninitialized_fill(this->first, this->last, val);
+Array2<T, A>::Array2(int ww, int hh, const T& val, const A& a) : w(ww), h(hh) {
+    vec.resize(ww * hh);
+    first = vec.data();
+    last = first + ww * hh;
 }
 
 template <class T, class A>
-Array2<T, A>::Array2(const Array2<T, A>& a)
-: Array2Base<T, A>(a.alloc, a.last - a.first) {
-    std::uninitialized_copy(a.begin(), a.end(), this->first);
-}
-
-template <class T, class A>
-void Array2<T, A>::destroy_elements() {
-    for (T* p = this->first; p != this->last; ++p)
-        p->~T();
+Array2<T, A>::Array2(const Array2<T, A>& a) : vec(a.vec) {
+    first = vec.data();
+    last = first + w * h;
 }
 
 template <class T, class A>
 void Array2<T, A>::fill(const T& val) {
-    destroy_elements();
-    std::uninitialized_fill(this->first, this->last, val);
+    std::fill(vec.begin(), vec.end(), val);
 }
 
 /*! Resize the array in place, but discard any old array
   entries */
 template <class T, class A>
-void Array2<T, A>::resize(int w_, int h_, const T& val) {
-    destroy_elements();
-    Array2Base<T, A>::resize(w_ * h_);
-    std::uninitialized_fill(this->first, this->last, val);
-    w = w_;
-    h = h_;
+void Array2<T, A>::resize(int newWidth, int newHeight) {
+    vec.clear();
+    vec.resize(newWidth * newHeight);
+    first = vec.data();
+    last = first + newWidth * newHeight;
+    w = newWidth;
+    h = newHeight;
 }
 
 template <class T, class A>
-void Array2<T, A>::swap(Array2<T, A>& a2) {
+void Array2<T, A>::swap(Array2<T, A>& a2) noexcept {
     std::swap(this->first, a2.first);
     std::swap(this->last, a2.last);
     std::swap(w, a2.w);
@@ -143,7 +117,7 @@ void Array2<T, A>::swap(Array2<T, A>& a2) {
 }
 
 template <class T, class A>
-void swap(Array2<T, A>& a, Array2<T, A>& b) {
+void swap(Array2<T, A>& a, Array2<T, A>& b) noexcept {
     a.swap(b);
 }
 

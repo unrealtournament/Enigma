@@ -239,8 +239,8 @@ Surface::Surface(SDL_Surface *surface, bool _has_alpha) {
         throw XGeneric("Error: Tried to convert null surface.");
     m_surface = SDL_ConvertSurface(surface, pixel_format, 0);
     SDL_FreeSurface(surface);
-    if(!m_surface)
-        if(lastErrorMessage.empty()) {
+    if(!m_surface) {
+        if (lastErrorMessage.empty()) {
             // Try to throw an error via SDL, i.e. graphical output.
             // However, it might come back! To prevent us from entering
             // an infinite loop, throw an XSDLError only once.
@@ -249,6 +249,7 @@ Surface::Surface(SDL_Surface *surface, bool _has_alpha) {
         } else {
             throw XGeneric(lastErrorMessage);
         }
+    }
 }
 
 
@@ -335,13 +336,13 @@ void Surface::set_brightness(int a) {
     SDL_SetSurfaceColorMod(get_surface(), a, a, a);
 }
 
-Surface *Surface::zoom(int w, int h) {
-    Surface *s_new = MakeSurface(w, h);
-    BlitScaled(get_surface(), NULL, s_new->get_surface(), NULL);
+std::unique_ptr<Surface> Surface::zoom(int w, int h) {
+    std::unique_ptr<Surface> s_new = MakeSurface(w, h);
+    BlitScaled(get_surface(), nullptr, s_new->get_surface(), nullptr);
     return s_new;
 }
 
-Surface *Surface::make_surface(SDL_Surface *sdls, bool _has_alpha) {
+std::unique_ptr<Surface> Surface::make_surface(SDL_Surface *sdls, bool _has_alpha) {
     if(!sdls) {
         fprintf(stderr, "Could not create SDL surface, error message: %s\n", SDL_GetError());
         assert(false);
@@ -350,7 +351,7 @@ Surface *Surface::make_surface(SDL_Surface *sdls, bool _has_alpha) {
     // Note: We may use _has_alpha to choose a different bit depth. I tested
     // Surface32 vs. Surface24 and found that Surface32 is about 0.3% faster
     // on my system. -- AL
-    return new Surface32(sdls, _has_alpha);
+    return std::make_unique<Surface32>(sdls, _has_alpha);
 }
 
 
@@ -376,7 +377,7 @@ ecl::Screen::Screen(SDL_Window *window, int surface_w, int surface_h)
     assert(m_surface);
     assert(m_instance == 0);
     m_instance = this;
-    m_scaler = new ecl::Scaler(m_surface->get_surface(), NULL, SDL_GetWindowSurface(m_window));
+    m_scaler = new ecl::Scaler(m_surface->get_surface(), nullptr, SDL_GetWindowSurface(m_window));
 }
 
 ecl::Screen::~Screen() {
@@ -396,7 +397,7 @@ void ecl::Screen::update_rect(const Rect &r) {
 
 void ecl::Screen::flush_updates() {
     if (update_all_p) {
-        m_scaler->blit_scaled(m_sdlsurface, NULL, SDL_GetWindowSurface(m_window), NULL);
+        m_scaler->blit_scaled(m_sdlsurface, nullptr, SDL_GetWindowSurface(m_window), nullptr);
         SDL_UpdateWindowSurface(m_window);
         update_all_p = false;
     } else if (!m_dirtyrects.empty()) {
@@ -461,8 +462,8 @@ Scaler::Scaler(SDL_Surface* _src, SDL_Rect* _srccrop, SDL_Surface* _dst, ScalerM
     assert(_src);
     assert(_dst);
     mode = _mode;
-    sax = NULL;
-    say = NULL;
+    sax = nullptr;
+    say = nullptr;
     precalculate(_src, _srccrop, _dst);
 }
 
@@ -664,11 +665,11 @@ void Scaler::blit_scaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, 
 
 /* -------------------- Functions -------------------- */
 
-Surface *ecl::Duplicate(const Surface *s) {
+std::unique_ptr<Surface> ecl::Duplicate(const Surface *s) {
     assert(s);
     SDL_Surface *sdls = s->get_surface();
     SDL_Surface *copy = SDL_ConvertSurface(sdls, sdls->format, sdls->flags);
-    return Surface::make_surface(copy);
+    return std::unique_ptr<Surface>(Surface::make_surface(copy));
 }
 
 void ecl::SavePNG(const ecl::Surface *s, const std::string &filename) {
@@ -707,9 +708,9 @@ static SDL_Surface *CropSurface(SDL_Surface *surface, SDL_Rect rect, SDL_PixelFo
     return cropped;
 }
 
-Surface *ecl::Grab(const Surface *s, Rect &r) {
-    if (s == NULL)
-        return NULL;
+std::unique_ptr<Surface> ecl::Grab(const Surface *s, Rect &r) {
+    if (s == nullptr)
+        return nullptr;
 
     int x = 0;
     int y = 0;
@@ -725,15 +726,15 @@ Surface *ecl::Grab(const Surface *s, Rect &r) {
 // LoadImage is already defined as a macro in some Windows header file
 #undef LoadImage
 
-Surface *ecl::LoadImage(const char *filename) {
+std::unique_ptr<Surface> ecl::LoadImage(const char *filename) {
     return Surface::make_surface(IMG_Load(filename));
 }
 
-Surface *ecl::LoadImage(SDL_RWops *src, int freesrc) {
+std::unique_ptr<Surface> ecl::LoadImage(SDL_RWops *src, int freesrc) {
     return Surface::make_surface(IMG_Load_RW(src, freesrc));
 }
 
-Surface *ecl::MakeSurface(int w, int h) {
+std::unique_ptr<Surface> ecl::MakeSurface(int w, int h) {
     SDL_Surface *surface =
         SDL_CreateRGBSurface(0, w, h, 32, 0xff0000, 0xff00, 0xff, 0xff000000);
     if (surface == 0)
@@ -741,7 +742,8 @@ Surface *ecl::MakeSurface(int w, int h) {
     return Surface::make_surface(surface);
 }
 
-Surface *ecl::MakeSurface(void *data, int w, int h, int bipp, int pitch, const RGBA_Mask &mask) {
+std::unique_ptr<Surface> ecl::MakeSurface(void *data, int w, int h, int bipp, int pitch,
+                                          const RGBA_Mask &mask) {
     SDL_Surface *surface =
         SDL_CreateRGBSurfaceFrom(data, w, h, bipp, pitch, mask.r, mask.g, mask.b, mask.a);
     if (surface == 0)
@@ -750,6 +752,6 @@ Surface *ecl::MakeSurface(void *data, int w, int h, int bipp, int pitch, const R
 }
 
 void ecl::BlitScaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect, ScalerMode mode) {
-    Scaler* scaler = new Scaler(src, srcrect, dst, mode);
-    scaler->blit_scaled(src, srcrect, dst, dstrect);
+    Scaler scaler(src, srcrect, dst, mode);
+    scaler.blit_scaled(src, srcrect, dst, dstrect);
 }

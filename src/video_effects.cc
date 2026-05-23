@@ -31,7 +31,7 @@ void FX_Fade(FadeMode mode) {
     const double fadesec = 0.6;
     double v = 255 / fadesec;
 
-    ecl::Surface *buffer = Duplicate(d);
+    std::unique_ptr<ecl::Surface> buffer = Duplicate(d);
 
     double a = mode == FADEIN ? 0 : 255;
 
@@ -42,7 +42,7 @@ void FX_Fade(FadeMode mode) {
 
         box(gc, d->size());
         buffer->set_alpha(int(a));
-        blit(gc, 0, 0, buffer);
+        blit(gc, 0, 0, buffer.get());
         screen->update_all();
         screen->flush_updates();
 
@@ -53,13 +53,12 @@ void FX_Fade(FadeMode mode) {
 
     if (mode == FADEIN) {
         buffer->set_alpha(255);
-        blit(gc, 0, 0, buffer);
+        blit(gc, 0, 0, buffer.get());
     } else {
         box(gc, d->size());
     }
     screen->update_all();
     screen->flush_updates();
-    delete buffer;
 }
 
 void FX_Fly(ecl::Surface *newscr, int originx, int originy) {

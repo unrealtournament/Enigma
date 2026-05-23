@@ -32,7 +32,7 @@ public:
     MouseCursor(ecl::Screen *screen) : screen(screen) { SDL_AddEventWatch(event_filter, this); }
     ~MouseCursor() { SDL_DelEventWatch(event_filter, this); }
 
-    void set_image(ecl::Surface *s, int hotx_, int hoty_);
+    void set_image(std::unique_ptr<ecl::Surface> s, int hotx_, int hoty_);
     void move(int newx, int newy);
     void redraw();  // Redraw if position/image changed
     void draw();    // Draw cursor if visible

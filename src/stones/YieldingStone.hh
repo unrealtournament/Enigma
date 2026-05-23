@@ -30,12 +30,14 @@ namespace enigma {
         
     public:
         YieldingStone();
+        YieldingStone(const YieldingStone &other)
+        : Stone(other), yieldedStone(nullptr), origin(other.origin) {}
         void dispose();
         
     protected:
         Stone *yieldedStone;
         GridPos origin;
-        display::Model *yieldedModel;
+        std::unique_ptr<display::Model> yieldedModel;
         
         void yieldStone(Stone *st);
         void setStone();

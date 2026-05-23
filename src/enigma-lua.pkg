@@ -39,8 +39,6 @@ module enigma
 
     Surface *GetImage(const char *name);
     Surface *GetImage(const char *name, const char *extension);
-    Surface *LoadImage(const char *name);
-    Surface *RegisterImage(const char *name, Surface *s);
     Font    *GetFont(const char *name);
 
     const char *date(const char *format); // format see 'man strftime'

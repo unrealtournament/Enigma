@@ -62,12 +62,11 @@ namespace enigma { namespace gui {
         static void makeSystemPreview(lev::Proxy *levelProxy,
                 const ThumbnailInfo &thumbinfo,
                 const std::string &systemDataPath);
-        ~LevelPreviewCache();
+        ~LevelPreviewCache() = default;
 
-        ecl::Surface *getPreview (lev::Proxy *levelProxy,
-                const ThumbnailInfo &thumbinfo,
-            bool allowGeneration, bool &didGenerate);
-        ecl::Surface *updatePreview (lev::Proxy *levelProxy, const ThumbnailInfo &thumbinfo);
+        ecl::Surface *getPreview(lev::Proxy *levelProxy, const ThumbnailInfo &thumbinfo,
+                                 bool allowGeneration, bool &didGenerate);
+        void updatePreview(lev::Proxy *levelProxy, const ThumbnailInfo &thumbinfo);
         void clear();
     protected:
         LevelPreviewCache();
@@ -77,11 +76,12 @@ namespace enigma { namespace gui {
         /**
          * A mapping of "levelId+levelRelease" to preview surfaces
          */
-        typedef std::map<std::string, ecl::Surface*> PreviewMap;
+        using PreviewMap = std::map<std::string, ecl::Surface *>;
 
         // ---------- Internal methods ----------
 
-        static ecl::Surface *newPreview (lev::Proxy *levelProxy, const ThumbnailInfo &thumbinfo);
+        static std::unique_ptr<ecl::Surface> newPreview(lev::Proxy *levelProxy,
+                                                        const ThumbnailInfo &thumbinfo);
         std::string makePreviewPath(lev::Proxy *levelProxy, const ThumbnailInfo &thumbinfo);
         void savePreview(lev::Proxy *levelProxy, const ThumbnailInfo &thumbinfo, ecl::Surface *s);
 

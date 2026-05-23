@@ -95,24 +95,26 @@ class InvalidFont {};
 class BitmapFont : public Font {
     vector<Rect> char_rects;
     vector<int> advance;
-    Surface *surface;
+    std::unique_ptr<Surface> surface;
 
 public:
-    BitmapFont(Surface *s, const char *descr);
-    ~BitmapFont() { delete surface; }
+    BitmapFont(std::unique_ptr<Surface> s, const char *descr);
+    ~BitmapFont() = default;
 
     int get_lineskip() { return surface->height() + 3; }
     int get_width(char c);
     virtual int get_width(std::string text, Font *altFont = NULL);
     int get_height();
 
-    virtual Surface *render(std::string text, Font *altFont = nullptr, int maxwidth = -1);
+    virtual unique_ptr<Surface> render(std::string text, Font *altFont = nullptr,
+                                       int maxwidth = -1);
     virtual void render(const GC &gc, int x, int y, std::string text, Font *altFont = NULL,
                         int maxwidth = -1);
 };
-}
+}  // namespace
 
-BitmapFont::BitmapFont(Surface *s, const char *descr) : char_rects(256), advance(256), surface(s) {
+BitmapFont::BitmapFont(std::unique_ptr<Surface> s, const char *descr)
+: char_rects(256), advance(256), surface(std::move(s)) {
     // Read and interpret the font description file.
     // expected line format:
     // charno xpos width xadvance
@@ -127,7 +129,7 @@ BitmapFont::BitmapFont(Surface *s, const char *descr) : char_rects(256), advance
         char_rects[c].x = x;
         char_rects[c].w = w;
         char_rects[c].y = 0;
-        char_rects[c].h = s->height();
+        char_rects[c].h = surface->height();
         advance[c] = adv;
         if (adv == 0)
             std::cout << "BitFont 0\n";
@@ -166,8 +168,8 @@ int BitmapFont::get_height() {
     return surface->height();
 }
 
-Surface *BitmapFont::render(std::string text, Font *altFont, int maxwidth) {
-    Surface *s = MakeSurface(get_width(text, altFont), get_height());
+unique_ptr<Surface> BitmapFont::render(std::string text, Font *altFont, int maxwidth) {
+    std::unique_ptr<Surface> s = MakeSurface(get_width(text, altFont), get_height());
     s->set_color_key(0, 0, 0);
     int width = 0;
     int x = 0;
@@ -176,7 +178,7 @@ Surface *BitmapFont::render(std::string text, Font *altFont, int maxwidth) {
         // utf-8 char handling
         int len = utf8NextCharSize(p);  // num of bytes that represents one real character
         if (len == 0) {
-            // a spurious follow up byte
+            // a spurious follow-up byte
             continue;
         }
 
@@ -186,7 +188,7 @@ Surface *BitmapFont::render(std::string text, Font *altFont, int maxwidth) {
                 int charWidth = altFont->get_width(utf8char);
                 width += charWidth;
                 if (maxwidth <= 0 || width < maxwidth) {
-                    altFont->render(GC(s), x, 1, utf8char);
+                    altFont->render(GC(s.get()), x, 1, utf8char);
                     x += altFont->get_width(utf8char);
                 }
             }
@@ -195,7 +197,7 @@ Surface *BitmapFont::render(std::string text, Font *altFont, int maxwidth) {
             int charWidth = get_width(*p);
             width += charWidth;
             if (maxwidth <= 0 || width <= maxwidth) {
-                blit(GC(s), x, 0, surface, char_rects[int(*p)]);
+                blit(GC(s.get()), x, 0, surface.get(), char_rects[int(*p)]);
                 x += charWidth;
             }
         }
@@ -204,14 +206,13 @@ Surface *BitmapFont::render(std::string text, Font *altFont, int maxwidth) {
 }
 
 void BitmapFont::render(const GC &gc, int x, int y, std::string text, Font *altFont, int maxwidth) {
-    Surface *s = render(text, altFont, maxwidth);
-    blit(gc, x, y, s);
-    delete s;
+    unique_ptr<Surface> s = render(text, altFont, maxwidth);
+    blit(gc, x, y, s.get());
 }
 
-Font *ecl::LoadBitmapFont(const char *imgname, const char *descrname) {
-    if (Surface *s = LoadImage(imgname))
-        return new BitmapFont(s, descrname);
+std::unique_ptr<Font> ecl::LoadBitmapFont(const char *imgname, const char *descrname) {
+    if (std::unique_ptr<Surface> s = LoadImage(imgname))
+        return std::make_unique<BitmapFont>(std::move(s), descrname);
     return 0;
 }
 
@@ -227,8 +228,8 @@ class TrueTypeFont : public Font {
     SDL_Color fgcolor;
 
     // Inhibit copying
-    TrueTypeFont(const TrueTypeFont &);
-    TrueTypeFont &operator=(const TrueTypeFont &);
+    TrueTypeFont(const TrueTypeFont &) = delete;
+    TrueTypeFont &operator=(const TrueTypeFont &) = delete;
 
 public:
     TrueTypeFont(TTF_Font *font_, int r, int g, int b);
@@ -239,9 +240,9 @@ public:
     int get_lineskip();
     int get_height();
     int get_width(char c);
-    virtual int get_width(std::string text, Font *altFont = NULL);
+    virtual int get_width(std::string text, Font *altFont = nullptr);
 
-    Surface *render(std::string text, Font *altFont = nullptr, int maxwidth = -1);
+    unique_ptr<Surface> render(std::string text, Font *altFont = nullptr, int maxwidth = -1);
     void render(const GC &gc, int x, int y, std::string text, Font *altFont = nullptr, int maxwidth = -1);
 
 private:
@@ -275,7 +276,7 @@ int TrueTypeFont::get_width(char c) {
     return advance;
 }
 
-Surface *TrueTypeFont::render(std::string text, Font *altFont, int maxwidth) {
+unique_ptr<Surface> TrueTypeFont::render(std::string text, Font *altFont, int maxwidth) {
     // Note: altFont is only used by BitmapFont.
     // TODO: Implement maxwidth. (Not actually used right now.)
     SDL_Color bgcolor = {0, 0, 0, 0};
@@ -301,11 +302,11 @@ int TrueTypeFont::get_width(std::string text, Font *altFont) {
     return w;
 }
 
-Font *ecl::LoadTTF(const char *filename, int ptsize, int r, int g, int b) {
+std::unique_ptr<Font> ecl::LoadTTF(const char *filename, int ptsize, int r, int g, int b) {
     if (!TTF_WasInit() && TTF_Init() == -1) {
         fprintf(stderr, "Couldn't initialize SDL_ttf: %s\n", SDL_GetError());
         exit(1);
     }
     TTF_Font *font = TTF_OpenFont(filename, ptsize);
-    return (font) ? new TrueTypeFont(font, r, g, b) : 0;
+    return font ? std::make_unique<TrueTypeFont>(font, r, g, b) : nullptr;
 }

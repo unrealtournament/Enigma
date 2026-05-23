@@ -59,7 +59,7 @@ public:
     virtual void expose(ModelLayer * /*ml*/, int /*videox*/, int /*videoy*/) {}
     virtual void remove(ModelLayer * /*ml*/) {}
 
-    virtual Model *clone() = 0;
+    virtual std::unique_ptr<Model> clone() = 0;
     
     virtual ecl::Rect boundingBox();
 };
@@ -69,7 +69,7 @@ public:
 void InitModels();
 void ShutdownModels();
 
-Model *MakeModel(const std::string &name);
+std::unique_ptr<Model> MakeModel(const std::string &name);
 
 int DefineImage(const char *name, const char *fname, int xoff, int yoff, int padding);
 int DefineSubImage(const char *name, const char *fname, int xoff, int yoff, ecl::Rect r);
@@ -90,10 +90,10 @@ using enigma::GridLayer;
 using enigma::GridLoc;
 
 Model *SetModel(const GridLoc &l, const std::string &modelname);
-Model *SetModel(const GridLoc &l, Model *m);
+Model *SetModel(const GridLoc &l, std::unique_ptr<Model> m);
 void KillModel(const GridLoc &l);
 Model *GetModel(const GridLoc &l);
-Model *YieldModel(const GridLoc &l);
+std::unique_ptr<Model> YieldModel(const GridLoc &l);
 
 /* -------------------- Scrolling -------------------- */
 
@@ -137,7 +137,7 @@ public:
 
     void kill();
     void move(const ecl::V2 &newpos) const;
-    void replace_model(Model *m) const;
+    void replace_model(std::unique_ptr<Model> m) const;
     Model *get_model() const;
     void set_callback(ModelCallback *cb) const;
     void hide() const;

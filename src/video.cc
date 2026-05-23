@@ -363,7 +363,7 @@ public:
 
     void Screenshot(const std::string &file_name, ecl::Surface *s = 0) override;
 
-    void SetMouseCursor(ecl::Surface *s, int hotx, int hoty) override;
+    void SetMouseCursor(std::unique_ptr<ecl::Surface> s, int hotx, int hoty) override;
     void HideMouse() override;
     void ShowMouse() override;
     int Mousex() override { return cursor->get_x(); }
@@ -720,7 +720,7 @@ bool VideoEngineImpl::IsFullscreen() {
 
 ecl::Surface *VideoEngineImpl::BackBuffer() {
     if (!back_buffer) {
-        back_buffer.reset(Duplicate(screen->get_surface()));
+        back_buffer = Duplicate(screen->get_surface());
     }
     return back_buffer.get();
 }
@@ -733,15 +733,16 @@ void VideoEngineImpl::Screenshot(const std::string &file_name, ecl::Surface *s) 
     }
     if (!s) {
         ecl::Rect rect = GetInfo()->area;
-        ecl::SavePNG(ecl::Grab(screen->get_surface(), rect), file_name);
+        std::unique_ptr<Surface> surface = ecl::Grab(screen->get_surface(), rect);
+        ecl::SavePNG(surface.get(), file_name);
     } else {
         ecl::SavePNG(s, file_name);
     }
     enigma::Log << "Wrote screenshot to '" << file_name << "'\n";
 }
 
-void VideoEngineImpl::SetMouseCursor(ecl::Surface *s, int hotx, int hoty) {
-    cursor->set_image(s, hotx, hoty);
+void VideoEngineImpl::SetMouseCursor(std::unique_ptr<ecl::Surface> s, int hotx, int hoty) {
+    cursor->set_image(std::move(s), hotx, hoty);
     cursor->redraw();
 }
 

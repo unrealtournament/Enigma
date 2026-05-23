@@ -33,7 +33,8 @@ namespace enigma { namespace gui {
         void draw_background(ecl::GC &gc);
 
         gui::Widget *resume, *restart, *options, *info, *scrshot, *abort, *bosskey;
-        ecl::Surface *zoomed, *complete;
+        std::unique_ptr<ecl::Surface> zoomed;
+        std::unique_ptr<ecl::Surface> complete;
         int          zoomxpos, zoomypos; // position to be zoomed
     };
 }} // namespace enigma::gui

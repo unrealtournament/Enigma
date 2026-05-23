@@ -91,17 +91,15 @@ namespace enigma { namespace gui {
                 (shotNumber > 0 ? ecl::strf("#%d", shotNumber) : "") + ".png";
         std::string fullPath;
         if (app.resourceFS->findFile(filename, fullPath)) {
-            ecl::Surface * image = ecl::LoadImage(fullPath.c_str());
+            std::unique_ptr<Surface> image = ecl::LoadImage(fullPath.c_str());
             if (image->width() == vminfo->width && image->height() == vminfo->height) {
-                ecl::blit(gc, 0,0, image);
+                ecl::blit(gc, 0,0, image.get());
             } else {
                 ecl::set_color(gc, 0, 0, 0);
                 ecl::box(gc, 0, 0, vminfo->width, vminfo->height);
-                ecl::Surface * imageZoomed = image->zoom(vminfo->area.w, vminfo->area.h);
-                ecl::blit(gc, vminfo->area.x, vminfo->area.y, imageZoomed);
-                delete imageZoomed;
+                std::unique_ptr<Surface> imageZoomed = image->zoom(vminfo->area.w, vminfo->area.h);
+                ecl::blit(gc, vminfo->area.x, vminfo->area.y, imageZoomed.get());
             }
-            delete image;
         } else {
             blit(gc, vminfo->mbg_offsetx, vminfo->mbg_offsety, enigma::GetImage("menu_bg", ".jpg"));
             Font *f = enigma::GetFont("menufont");

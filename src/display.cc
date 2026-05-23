@@ -106,8 +106,6 @@ StatusBarImpl::StatusBarImpl(const ScreenArea &area)
 }
 
 StatusBarImpl::~StatusBarImpl() {
-    ecl::delete_sequence(m_models.begin(), m_models.end());
-    m_models.clear();
 }
 
 void StatusBarImpl::set_time(double time) {
@@ -181,9 +179,6 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
     int xsize_time = 0;
     int xsize_moves = 0;
     int xsize_modes = 0;
-    Surface *s_time = nullptr;
-    Surface *s_moves = nullptr;
-    Surface *s_modes = nullptr;
     Font *timefont = enigma::GetFont("timefont");
     Font *movesfont = enigma::GetFont("smallfont");
     Font *modesfont = enigma::GetFont("modesfont");
@@ -192,12 +187,11 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
     ScreenArea movesarea = vminfo->sb_movesarea;
 
     // draw modes indicators
-    s_modes = modesfont->render(((cMode ? "c" : "") + basicModes));
+    std::unique_ptr<Surface> s_modes = modesfont->render(((cMode ? "c" : "") + basicModes));
     xsize_modes = s_modes->width();
     x = modesarea.x + modesarea.w - xsize_modes;
     y = modesarea.y;
-    blit(gc, x, y, s_modes);
-    delete s_modes;
+    blit(gc, x, y, s_modes.get());
 
     if (m_showtime_p || m_showcounter_p) {
         int abstime = ecl::round_nearest<int>(fabs(m_leveltime));
@@ -245,6 +239,7 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
                          (showSeconds ? 2 * maxWidthDigit + widthQuote : 0);
         }
 
+        std::unique_ptr<Surface> s_moves;
         if (m_showcounter_p) {
             text = ecl::strf("%d", m_counter);
             s_moves = movesfont->render(text);
@@ -256,7 +251,7 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
                 x = movesarea.x + (movesarea.w - xsize_moves) / 2;
                 y = movesarea.y + (movesarea.h + timefont->get_lineskip()) / 2 -
                     movesfont->get_lineskip() - 4;
-                blit(gc, x, y, s_moves);
+                blit(gc, x, y, s_moves.get());
 
                 x = timearea.x + (movesarea.x - timearea.x - xsize_time) / 2;
                 y = timearea.y + (timearea.h - timefont->get_lineskip()) / 2;
@@ -264,47 +259,42 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
                 x = timearea.x + (timearea.w - xsize_time) / 2;
                 y = timearea.y + (timearea.h - timefont->get_lineskip()) / 2;
             }
+
             // draw time in pixel stable positions
+            std::unique_ptr<Surface> s_time;
             if (showHours) {
                 text = ecl::strf("%d:", hours);
                 s_time = timefont->render(text);
-                blit(gc, x + maxWidthDigit - widthDigit[hours], y, s_time);
-                delete s_time;
+                blit(gc, x + maxWidthDigit - widthDigit[hours], y, s_time.get());
                 x += maxWidthDigit + widthColon;
             }
             if (showMinutes) {
                 text = ecl::strf("%02d", minutes);
                 s_time = timefont->render(text);
-                blit(gc, x + maxWidthDigit - widthDigit[minutes / 10], y, s_time);
+                blit(gc, x + maxWidthDigit - widthDigit[minutes / 10], y, s_time.get());
                 x += 2 * maxWidthDigit;
             } else {
                 text = ecl::strf("%d", minutes);
                 s_time = timefont->render(text);
-                blit(gc, x + maxWidthDigit - widthDigit[minutes % 10], y, s_time);
+                blit(gc, x + maxWidthDigit - widthDigit[minutes % 10], y, s_time.get());
                 x += maxWidthDigit;
             }
-            delete s_time;
             s_time = timefont->render(std::string("'"));
-            blit(gc, x, y, s_time);
+            blit(gc, x, y, s_time.get());
             x += widthApos;
             if (showSeconds) {
-                delete s_time;
                 text = ecl::strf("%02d", seconds);
                 s_time = timefont->render(text);
-                blit(gc, x + maxWidthDigit - widthDigit[seconds / 10], y, s_time);
-                delete s_time;
+                blit(gc, x + maxWidthDigit - widthDigit[seconds / 10], y, s_time.get());
                 x += 2 * maxWidthDigit;
                 s_time = timefont->render(std::string("\""));
-                blit(gc, x, y, s_time);
+                blit(gc, x, y, s_time.get());
             }
         } else {  // only moves
             x = timearea.x + (timearea.w - xsize_moves) / 2;
             y = timearea.y + (timearea.h - movesfont->get_lineskip()) / 2;
-            blit(gc, x, y, s_moves);
+            blit(gc, x, y, s_moves.get());
         }
-
-        delete s_moves;
-        delete s_time;
     }
 
     if (m_text_active) {
@@ -313,7 +303,7 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
         client::Msg_FinishedText();
         int itemsize = static_cast<int>(vminfo->tile_size * 1.125);
         x = m_itemarea.x;
-        for (auto m : m_models) {
+        for (auto &m : m_models) {
             m->draw(gc, x, m_itemarea.y);
             x += itemsize;
         }
@@ -328,7 +318,6 @@ void StatusBarImpl::set_inventory(enigma::Player activePlayer,
         hide_text();
     }
 
-    ecl::delete_sequence(m_models.begin(), m_models.end());
     m_models.clear();
 
     for (auto &modelname : modelnames) {
@@ -365,7 +354,6 @@ void StatusBarImpl::tick(double dtime) {
 }
 
 void StatusBarImpl::new_world() {
-    delete_sequence(m_models.begin(), m_models.end());
     m_models.clear();
     m_leveltime = 0;
     m_text_active = false;
@@ -400,7 +388,7 @@ TextDisplay::TextDisplay(Font &f)
 
 void TextDisplay::set_text(const string &t, bool scrolling, double duration) {
     text = t;
-    textsurface.reset(font.render(text));
+    textsurface = font.render(text);
     pingpong = false;
 
     time = 0;
@@ -580,7 +568,8 @@ void DisplayEngine::new_world(int w, int h) {
     m_height = h;
     m_offset = m_new_offset = V2();
     m_screenoffset[0] = m_screenoffset[1] = 0;
-    m_redrawp.resize(w, h, 1);
+    m_redrawp.resize(w, h);
+    m_redrawp.fill(1);
 
     for (auto &layer : m_layers)
         layer->new_world(w, h);
@@ -793,51 +782,47 @@ DL_Grid::DL_Grid(int redrawsize) : m_models(0, 0), m_redrawsize(redrawsize) {
 }
 
 DL_Grid::~DL_Grid() {
-    delete_sequence(m_models.begin(), m_models.end());
 }
 
 void DL_Grid::new_world(int w, int h) {
     ModelLayer::new_world(w, h);
-    delete_sequence(m_models.begin(), m_models.end());
-    m_models.resize(w, h, nullptr);
+    m_models.resize(w, h);
 }
 
 void DL_Grid::mark_redraw(int x, int y) {
     get_engine()->mark_redraw_area(WorldArea(x, y, m_redrawsize, m_redrawsize));
 }
 
-void DL_Grid::set_model(int x, int y, Model *m) {
+void DL_Grid::set_model(int x, int y, std::unique_ptr<Model> m) {
     if (!(x >= 0 && y >= 0 && (unsigned)x < m_models.width() && (unsigned)y < m_models.height())) {
-        delete m;  // model is owned by DL_Grid!
         return;
     }
 
     if (m_models(x, y) != m) {
-        if (Model *oldm = m_models(x, y)) {
-            oldm->remove(this);
-            delete oldm;
+        Model *oldModel = m_models(x, y).get();
+        Model* newModel = m.get();
+        if (oldModel) {
+            oldModel->remove(this);
         }
         mark_redraw(x, y);
-        m_models(x, y) = m;
-        if (m) {
+        m_models(x, y) = std::move(m);
+        if (newModel) {
             int vx, vy;
             get_engine()->world_to_video(V2(x, y), &vx, &vy);
-            m->expose(this, vx, vy);
+            newModel->expose(this, vx, vy);
         }
     }
 }
 
 Model *DL_Grid::get_model(int x, int y) {
-    return m_models(x, y);
+    return m_models(x, y).get();
 }
 
-Model *DL_Grid::yield_model(int x, int y) {
-    Model *m = get_model(x, y);
-    if (m)
+std::unique_ptr<Model> DL_Grid::yield_model(int x, int y) {
+    if (Model *m = get_model(x, y))
         m->remove(this);
-    m_models(x, y) = nullptr;
     mark_redraw(x, y);
-    return m;
+    return std::move(m_models(x, y));
 }
 
 void DL_Grid::draw(ecl::GC &gc, const WorldArea &a, int destx, int desty) {
@@ -849,7 +834,7 @@ void DL_Grid::draw(ecl::GC &gc, const WorldArea &a, int destx, int desty) {
     for (int x = a.x; x < x2; ++x) {
         int ypos = desty;
         for (int y = a.y; y < y2; ++y) {
-            if (Model *m = m_models(x, y))
+            if (Model *m = m_models(x, y).get())
                 m->draw(gc, xpos, ypos);
             ypos += tileh;
         }
@@ -879,11 +864,9 @@ void SpriteHandle::move(const ecl::V2 &newpos) const {
         layer->move_sprite(id, newpos);
 }
 
-void SpriteHandle::replace_model(Model *m) const {
+void SpriteHandle::replace_model(std::unique_ptr<Model> m) const {
     if (layer)
-        layer->replace_sprite(id, m);
-    else
-        delete m;
+        layer->replace_sprite(id, std::move(m));
 }
 
 Model *SpriteHandle::get_model() const {
@@ -950,7 +933,7 @@ void DL_Sprites::move_sprite(SpriteId id, const ecl::V2 &newpos) {
         sprite->pos = newpos;
         sprite->screenpos[0] = newx;
         sprite->screenpos[1] = newy;
-        if (Anim2d *anim = dynamic_cast<Anim2d *>(sprite->model))
+        if (Anim2d *anim = dynamic_cast<Anim2d *>(sprite->model.get()))
             anim->move(newx, newy);
         update_sprite_region(sprite, true);  // draw new sprite
     }
@@ -975,23 +958,22 @@ SpriteId DL_Sprites::add_sprite(Sprite *sprite, bool isDispensible) {
         *i = sprite;
     }
     get_engine()->world_to_video(sprite->pos, &sprite->screenpos[0], &sprite->screenpos[1]);
-    if (Model *m = sprite->model)
+    if (Model *m = sprite->model.get())
         m->expose(this, sprite->screenpos[0], sprite->screenpos[1]);
     update_sprite_region(sprite, true);
     numsprites += 1;
     return id;
 }
 
-void DL_Sprites::replace_sprite(SpriteId id, Model *m) {
+void DL_Sprites::replace_sprite(SpriteId id, std::unique_ptr<Model> m) {
     Sprite *sprite = sprites[id];
-    if (Model *old = sprite->model) {
+    if (Model *old = sprite->model.get()) {
         update_sprite_region(sprite, false);
         old->remove(this);
-        delete old;
     }
-    sprite->model = m;
-    if (m) {
-        m->expose(this, sprite->screenpos[0], sprite->screenpos[1]);
+    sprite->model = std::move(m);
+    if (sprite->model) {
+        sprite->model->expose(this, sprite->screenpos[0], sprite->screenpos[1]);
         update_sprite_region(sprite, true);
     }
 }
@@ -999,7 +981,7 @@ void DL_Sprites::replace_sprite(SpriteId id, Model *m) {
 void DL_Sprites::kill_sprite(SpriteId id) {
     if (Sprite *sprite = sprites[id]) {
         update_sprite_region(sprite, false);
-        if (Model *m = sprite->model) {
+        if (Model *m = sprite->model.get()) {
             m->remove(this);
         }
         sprites[id] = nullptr;
@@ -1319,11 +1301,11 @@ SDL_Surface *CreateShadowSurface(int w, int h) {
 
 struct StoneShadow {
     ImageQuad images;
-    Surface *image;
+    std::unique_ptr<Surface> image;
     bool in_cache;
 
-    StoneShadow(ImageQuad iq, bool cached)
-    : images(std::move(iq)), image(nullptr), in_cache(cached) {}
+    StoneShadow(ImageQuad images, bool cached)
+    : images(images), in_cache(cached) {}
 };
 
 }  // namespace
@@ -1341,7 +1323,7 @@ public:
 
 private:
     // Private methods.
-    Surface *new_surface();
+    std::unique_ptr<Surface> new_surface();
     StoneShadow *find_in_cache(const ImageQuad &images);
 
     void fill_image(StoneShadow *s);
@@ -1349,9 +1331,9 @@ private:
 
     // Variables
     // Use std::list to maintain LRU cache.
-    std::list<StoneShadow *> m_cache;
+    std::list<std::unique_ptr<StoneShadow>> m_cache;
     int m_tilew, m_tileh;
-    std::vector<Surface *> m_surface_avail;
+    std::vector<std::unique_ptr<Surface>> m_surface_avail;
 };
 
 }  // namespace display
@@ -1366,12 +1348,7 @@ StoneShadowCache::~StoneShadowCache() {
 }
 
 void StoneShadowCache::clear() {
-    for (auto &elem : m_cache) {
-        delete elem->image;
-        delete elem;
-    }
     m_cache.clear();
-    delete_sequence(m_surface_avail.begin(), m_surface_avail.end());
     m_surface_avail.clear();
 }
 
@@ -1382,8 +1359,8 @@ void StoneShadowCache::fill_image(StoneShadow *sh) {
         return;
     }
 
-    Surface *s = new_surface();
-    GC gc(s);
+    std::unique_ptr<Surface> s = new_surface();
+    GC gc(s.get());
     set_color(gc, 255, 255, 255, 0);
     box(gc, s->size());
 
@@ -1395,12 +1372,12 @@ void StoneShadowCache::fill_image(StoneShadow *sh) {
         draw_image(i, gc, -m_tilew, 0);
     if (Image *i = sh->images[3])
         draw_image(i, gc, 0, 0);
-    sh->image = s;
+    sh->image = std::move(s);
 }
 
 void StoneShadowCache::fill_image(StoneShadow *sh, Model *models[4]) {
-    Surface *s = new_surface();
-    GC gc(s);
+    std::unique_ptr<Surface> s = new_surface();
+    GC gc(s.get());
     set_color(gc, 255, 255, 255, 0);
     box(gc, s->size());
     if (models[0])
@@ -1411,13 +1388,13 @@ void StoneShadowCache::fill_image(StoneShadow *sh, Model *models[4]) {
         models[2]->draw_shadow(gc, -m_tilew, 0);
     if (models[3])
         models[3]->draw_shadow(gc, 0, 0);
-    sh->image = s;
+    sh->image = std::move(s);
 }
 
 StoneShadow *StoneShadowCache::find_in_cache(const ImageQuad &images) {
     for (auto i = m_cache.begin(); i != m_cache.end(); ++i) {
         if ((*i)->images == images) {
-            StoneShadow *sh = *i;
+            StoneShadow *sh = (*i).get();
             // Move entry to front of list
             m_cache.splice(m_cache.begin(), m_cache, i);
             return sh;
@@ -1440,7 +1417,7 @@ StoneShadow *StoneShadowCache::retrieve(Model *models[4]) {
         if (!shadow) {
             shadow = new StoneShadow(images, true);
             fill_image(shadow);
-            m_cache.push_front(shadow);
+            m_cache.push_front(std::unique_ptr<StoneShadow>(shadow));
         }
     } else {
         shadow = new StoneShadow(images, false);
@@ -1453,48 +1430,43 @@ void StoneShadowCache::release(StoneShadow *s) {
     if (s->in_cache) {
         // Image is in cache, no need to free anything
     } else {
-        m_surface_avail.push_back(s->image);
+        m_surface_avail.push_back(std::move(s->image));
         delete s;
     }
 }
 
-Surface *StoneShadowCache::new_surface() {
-    Surface *s = nullptr;
+std::unique_ptr<Surface> StoneShadowCache::new_surface() {
+    std::unique_ptr<Surface> s;
     if (m_surface_avail.empty()) {
         SDL_Surface *ss = CreateShadowSurface(m_tilew, m_tileh);
         s = Surface::make_surface(ss);
     } else {
-        s = m_surface_avail.back();
+        s = std::move(m_surface_avail.back());
         m_surface_avail.pop_back();
     }
-    return s;
+    return std::move(s);
 }
 
 /* -------------------- Shadow layer -------------------- */
 
 DL_Shadows::DL_Shadows(DL_Grid *grid, DL_Sprites *sprites)
-: m_grid(grid), m_sprites(sprites), m_cache(nullptr), buffer(nullptr), m_hasactor(0, 0) {
+: m_grid(grid), m_sprites(sprites), m_cache(nullptr), shadow_ckey(0), m_hasactor(0, 0) {
 }
 
 DL_Shadows::~DL_Shadows() {
-    delete m_cache;
-    delete buffer;
 }
 
 void DL_Shadows::new_world(int w, int h) {
-    m_hasactor.resize(w, h, false);
+    m_hasactor.resize(w, h);
+    m_hasactor.fill(false);
 
     DisplayEngine *e = get_engine();
     int tilew = e->get_tilew();
     int tileh = e->get_tileh();
 
-    delete m_cache;
-    m_cache = new StoneShadowCache(tilew, tileh);
+    m_cache = std::make_unique<StoneShadowCache>(tilew, tileh);
 
-    delete buffer;
-
-    SDL_Surface *ss = CreateShadowSurface(tilew, tileh);
-    buffer = Surface::make_surface(ss);
+    buffer = Surface::make_surface(CreateShadowSurface(tilew, tileh));
 }
 
 void DL_Shadows::draw(ecl::GC &gc, const WorldArea &a, int destx, int desty) {
@@ -1563,9 +1535,9 @@ void DL_Shadows::draw(GC &gc, int xpos, int ypos, int x, int y) {
 
     bool hasActor = this->has_actor(x, y);
     if (hasActor || sh->image) {
-        Surface *s = sh->image;
+        Surface *s = sh->image.get();
         if (hasActor) {
-            GC gc2(buffer);
+            GC gc2(buffer.get());
             if (s) {
                 s->lock();
                 buffer->lock();
@@ -1588,7 +1560,7 @@ void DL_Shadows::draw(GC &gc, int xpos, int ypos, int x, int y) {
                     sp->model->draw_shadow(gc2, sx, sy);
                 }
             }
-            blit(gc, xpos, ypos, buffer);
+            blit(gc, xpos, ypos, buffer.get());
         } else {
             blit(gc, xpos, ypos, s);
         }
@@ -1632,18 +1604,19 @@ CommonDisplay::~CommonDisplay() {
     delete m_engine;
 }
 
-Model *CommonDisplay::set_model(const GridLoc &l, Model *m) {
+Model *CommonDisplay::set_model(const GridLoc &l, std::unique_ptr<Model> m) {
     int x = l.pos.x, y = l.pos.y;
 
+    Model *result = m.get();
     switch (l.layer) {
-    case GRID_FLOOR: floor_layer->set_model(x, y, m); break;
-    case GRID_ITEMS: item_layer->set_model(x, y, m); break;
+    case GRID_FLOOR: floor_layer->set_model(x, y, std::move(m)); break;
+    case GRID_ITEMS: item_layer->set_model(x, y, std::move(m)); break;
     case GRID_STONES:
-        stone_layer->set_model(x, y, m);
+        stone_layer->set_model(x, y, std::move(m));
         break;
     case GRID_COUNT: break;
     }
-    return m;
+    return result;
 }
 
 Model *CommonDisplay::get_model(const GridLoc &l) {
@@ -1657,7 +1630,7 @@ Model *CommonDisplay::get_model(const GridLoc &l) {
     return nullptr;
 }
 
-Model *CommonDisplay::yield_model(const GridLoc &l) {
+std::unique_ptr<Model> CommonDisplay::yield_model(const GridLoc &l) {
     int x = l.pos.x, y = l.pos.y;
     switch (l.layer) {
     case GRID_FLOOR: return floor_layer->yield_model(x, y);
@@ -1673,13 +1646,13 @@ RubberHandle CommonDisplay::add_line(V2 p1, V2 p2, unsigned short rc, unsigned s
     return line_layer->add_line(p1, p2, rc, gc, bc, isThick);
 }
 
-SpriteHandle CommonDisplay::add_effect(const V2 &pos, Model *m, bool isDispensible) {
-    auto spr = new Sprite(pos, SPRITE_EFFECT, m);
+SpriteHandle CommonDisplay::add_effect(const V2 &pos, std::unique_ptr<Model> m, bool isDispensible) {
+    auto spr = new Sprite(pos, SPRITE_EFFECT, std::move(m));
     return SpriteHandle(effects_layer, effects_layer->add_sprite(spr, isDispensible));
 }
 
-SpriteHandle CommonDisplay::add_sprite(const V2 &pos, Model *m) {
-    auto spr = new Sprite(pos, SPRITE_ACTOR, m);
+SpriteHandle CommonDisplay::add_sprite(const V2 &pos, std::unique_ptr<Model> m) {
+    auto spr = new Sprite(pos, SPRITE_ACTOR, std::move(m));
     return SpriteHandle(sprite_layer, sprite_layer->add_sprite(spr));
 }
 
@@ -1691,16 +1664,16 @@ void CommonDisplay::redraw() {
     get_engine()->update_screen();
 }
 
-void CommonDisplay::set_floor(int x, int y, Model *m) {
-    floor_layer->set_model(x, y, m);
+void CommonDisplay::set_floor(int x, int y, std::unique_ptr<Model> m) {
+    floor_layer->set_model(x, y, std::move(m));
 }
 
-void CommonDisplay::set_item(int x, int y, Model *m) {
-    item_layer->set_model(x, y, m);
+void CommonDisplay::set_item(int x, int y, std::unique_ptr<Model> m) {
+    item_layer->set_model(x, y, std::move(m));
 }
 
-void CommonDisplay::set_stone(int x, int y, Model *m) {
-    stone_layer->set_model(x, y, m);
+void CommonDisplay::set_stone(int x, int y, std::unique_ptr<Model> m) {
+    stone_layer->set_model(x, y, std::move(m));
 }
 
 //----------------------------------------------------------------------
@@ -1936,23 +1909,25 @@ void display::GetReferencePointCoordinates(int *x, int *y) {
     gamedpy->get_reference_point_coordinates(x, y);
 }
 
-Model *display::SetModel(const GridLoc &l, Model *m) {
-    return gamedpy->set_model(l, m);
+Model* display::SetModel(const GridLoc &l, std::unique_ptr<Model> m) {
+    Model *ptr = m.get();
+    gamedpy->set_model(l, std::move(m));
+    return ptr;
 }
 
-Model *display::SetModel(const GridLoc &l, const string &modelname) {
+Model* display::SetModel(const GridLoc &l, const string &modelname) {
     return SetModel(l, MakeModel(modelname));
 }
 
 void display::KillModel(const GridLoc &l) {
-    delete YieldModel(l);
+    (void)YieldModel(l); // discard result
 }
 
 Model *display::GetModel(const GridLoc &l) {
     return gamedpy->get_model(l);
 }
 
-Model *display::YieldModel(const GridLoc &l) {
+std::unique_ptr<Model> display::YieldModel(const GridLoc &l) {
     return gamedpy->yield_model(l);
 }
 
@@ -1961,8 +1936,8 @@ SpriteHandle display::AddEffect(const V2 &pos, const char *modelname, bool isDis
 }
 
 SpriteHandle display::AddSprite(const V2 &pos, const char *modelname) {
-    Model *m = modelname ? MakeModel(modelname) : nullptr;
-    return gamedpy->add_sprite(pos, m);
+    std::unique_ptr<Model> m = modelname ? MakeModel(modelname) : nullptr;
+    return gamedpy->add_sprite(pos, std::move(m));
 }
 
 void display::ToggleFlag(DisplayFlags flag) {

@@ -162,7 +162,7 @@ class Surface : public Drawable {
 public:
     ~Surface();
 
-    Surface *zoom(int w, int h);
+    std::unique_ptr<Surface> zoom(int w, int h);
 
     void set_color_key(int r, int g, int b);
     void set_alpha(int a);
@@ -199,7 +199,7 @@ public:
     /* ---------- Static methods ---------- */
 
     // Create a new surface.
-    static Surface *make_surface(SDL_Surface *s, bool _has_alpha = true);
+    static std::unique_ptr<Surface> make_surface(SDL_Surface *s, bool _has_alpha = true);
 
 protected:
     // Constructor.
@@ -248,7 +248,7 @@ public:
     /* ---------- Accessors ---------- */
 
     SDL_Window *window() const { return m_window; }
-    Surface *get_surface() const { return m_surface; }
+    Surface *get_surface() const { return m_surface.get(); }
 
     Rect size() const;
     int width() const;
@@ -267,7 +267,7 @@ private:
     static Screen *m_instance;
 
     SDL_Window *m_window;
-    Surface *m_surface;
+    std::unique_ptr<Surface> m_surface;
     SDL_Surface *m_sdlsurface;
     RectList m_dirtyrects;
     bool update_all_p;
@@ -356,14 +356,14 @@ inline void frame(const GC &gc, const Rect &r) {
 /* -------------------- Functions -------------------- */
 
 // Create a new surface.
-Surface *MakeSurface(int w, int h);
+std::unique_ptr<Surface> MakeSurface(int w, int h);
 
 // Create a surface from image data that is already somewhere in memory.
-Surface *MakeSurface(void *data, int w, int h, int bipp, int pitch,
-                     const RGBA_Mask &mask = RGBA_Mask());
+std::unique_ptr<Surface> MakeSurface(void *data, int w, int h, int bipp, int pitch,
+                                     const RGBA_Mask &mask = RGBA_Mask());
 
 // Create a copy of a surface.
-Surface *Duplicate(const Surface *s);
+std::unique_ptr<Surface> Duplicate(const Surface *s);
 
 // Save a surface to a PNG file.
 void SavePNG(const Surface *s, const std::string &filename);
@@ -371,7 +371,7 @@ void SavePNG(const Surface *s, const std::string &filename);
 // Create a new surface from a region of an old one. Performs proper clipping
 // and returns a surface of the appropriate size, which may be smaller than
 // the original size of `r'. The function returns the clipped region in `r'.
-Surface *Grab(const Surface *s, Rect &r);
+std::unique_ptr<Surface> Grab(const Surface *s, Rect &r);
 
 // Convert the surface to the native surface format. A pointer to a new
 // surface is returned; the old one must be deleted by hand once it is no
@@ -379,8 +379,8 @@ Surface *Grab(const Surface *s, Rect &r);
 Surface *DisplayFormat(Surface *s);
 
 // Load an image using SDL_image and convert it to an optimized format.
-Surface *LoadImage(const char *filename);
-Surface *LoadImage(SDL_RWops *src, int freesrc);
+std::unique_ptr<Surface> LoadImage(const char *filename);
+std::unique_ptr<Surface> LoadImage(SDL_RWops *src, int freesrc);
 
 // Overlay a rectangle `rect' in `s' with a transparent colored box.
 void TintRect(Surface *s, Rect rect, Uint8 r, Uint8 g, Uint8 b, Uint8 a);

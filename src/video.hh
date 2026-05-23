@@ -186,7 +186,7 @@ public:
     virtual void Screenshot(const std::string &file_name, ecl::Surface *s = nullptr) = 0;
 
     // ---------- Mouse cursor ----------
-    virtual void SetMouseCursor(ecl::Surface *s, int hotx, int hoty) = 0;
+    virtual void SetMouseCursor(std::unique_ptr<ecl::Surface> s, int hotx, int hoty) = 0;
     virtual void HideMouse() = 0;
     virtual void ShowMouse() = 0;
     virtual int Mousex() = 0;

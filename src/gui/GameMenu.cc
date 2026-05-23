@@ -41,8 +41,7 @@ namespace enigma { namespace gui {
 /* -------------------- GameMenu -------------------- */
     
     GameMenu::GameMenu (int zoomxpos_, int zoomypos_)
-    : zoomed(0), complete(0),
-      zoomxpos(zoomxpos_),
+    : zoomxpos(zoomxpos_),
       zoomypos(zoomypos_)
     {
         const VMInfo *vminfo = video_engine->GetInfo();
@@ -75,8 +74,6 @@ namespace enigma { namespace gui {
     }
     
     GameMenu::~GameMenu() {
-        delete zoomed;
-        delete complete;
     }
     
     void GameMenu::draw_background(ecl::GC &gc) 
@@ -128,14 +125,13 @@ namespace enigma { namespace gui {
             display::RedrawAll(video_engine->GetScreen());
 
             // get the selected part from screen
-            Rect     src_area(game_area.x+x, game_area.y+y, part_width, part_height);
-            Surface *src = Grab(video_engine->GetScreen()->get_surface(), src_area);
+            Rect src_area(game_area.x + x, game_area.y + y, part_width, part_height);
+            std::unique_ptr<Surface> src = Grab(video_engine->GetScreen()->get_surface(), src_area);
 
             zoomed = src->zoom(vminfo->width+1, vminfo->height+1);
-            delete src;
         }
     
-        ecl::blit(gc, 0,0, zoomed);
+        ecl::blit(gc, 0,0, zoomed.get());
     }
 
     static const char *helptext_gamemenu[] = {
@@ -219,7 +215,7 @@ namespace enigma { namespace gui {
             app.bossKeyPressed = true;
         }
         else if (w == scrshot) {
-            video_engine->Screenshot(server::LoadedProxy->getNextScreenshotPath(), complete);
+            video_engine->Screenshot(server::LoadedProxy->getNextScreenshotPath(), complete.get());
         }
     }
 }} // namespace enigma::gui

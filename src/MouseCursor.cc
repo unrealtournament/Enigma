@@ -25,8 +25,8 @@ using namespace enigma;
 
 /* -------------------- MouseCursor -------------------- */
 
-void MouseCursor::set_image(ecl::Surface *s, int hx, int hy) {
-    cursor.reset(s);
+void MouseCursor::set_image(std::unique_ptr<ecl::Surface> s, int hx, int hy) {
+    cursor = std::move(s);
     hotx = hx;
     hoty = hy;
 
@@ -86,7 +86,7 @@ void MouseCursor::init_bg() {
     assert(visible > 0);
     assert(cursor != 0);
 
-    background.reset(ecl::MakeSurface(cursor->width(), cursor->height()));
+    background = ecl::MakeSurface(cursor->width(), cursor->height());
     assert(background);
     grab_bg();
 }

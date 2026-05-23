@@ -80,7 +80,7 @@ public:
 
 private:
     ScreenArea m_itemarea;
-    std::vector<Model *> m_models;
+    std::vector<std::unique_ptr<Model>> m_models;
     enigma::Player player;
     bool m_changedp;
     TextDisplay m_textview;

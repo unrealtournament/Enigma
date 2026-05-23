@@ -212,11 +212,12 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
         Actor *hitman = nullptr;
         if ((objFlags & OBJBIT_MOVABLE) && (impulse.dir != NODIR)) {
             // move stone without disturbing a running animation
-            display::Model *yieldedModel = display::YieldModel(GridLoc(GRID_STONES, get_pos()));
+            std::unique_ptr<display::Model> yieldedModel =
+                    display::YieldModel(GridLoc(GRID_STONES, get_pos()));
             int oldState = state;
             bool didMove = move_stone(impulse.dir);
             state = oldState;
-            display::SetModel(GridLoc(GRID_STONES, get_pos()), yieldedModel);
+            display::SetModel(GridLoc(GRID_STONES, get_pos()), std::move(yieldedModel));
 
             // pulse only if not pushed with a wand
             hitman = dynamic_cast<Actor*>(impulse.sender);

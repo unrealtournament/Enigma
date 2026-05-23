@@ -165,9 +165,9 @@ public:
     DL_Grid(int redrawsize = 1);
     ~DL_Grid();
 
-    void set_model(int x, int y, Model *m);
+    void set_model(int x, int y, std::unique_ptr<Model> m);
     Model *get_model(int x, int y);
-    Model *yield_model(int x, int y);
+    std::unique_ptr<Model> yield_model(int x, int y);
 
 private:
     // DL_Grid interface.
@@ -181,7 +181,7 @@ private:
     virtual int redraw_size() const override { return m_redrawsize; }
 
     // Variables.
-    typedef ecl::Array2<Model *> ModelArray;
+    typedef ecl::Array2<std::unique_ptr<Model>> ModelArray;
     ModelArray m_models;
     int m_redrawsize;
 };
@@ -190,7 +190,7 @@ private:
 
 class Sprite : public ecl::Nocopy {
 public:
-    Model *model;
+    std::unique_ptr<Model> model;
     ecl::V2 pos;
     int screenpos[2];
     SpriteLayer layer;
@@ -198,12 +198,13 @@ public:
     Sprite *above[3];
     Sprite *beneath[3];
 
-    Sprite(ecl::V2 p, SpriteLayer l, Model *m) : model(m), pos(std::move(p)), layer(l), visible(true) {
+    Sprite(ecl::V2 p, SpriteLayer l, std::unique_ptr<Model> m)
+    : model(std::move(m)), pos(p), layer(l), visible(true) {
         screenpos[0] = screenpos[1] = 0;
         above[0] = above[1] = above[2] = nullptr;
         beneath[0] = beneath[1] = beneath[2] = nullptr;
     }
-    ~Sprite() { delete model; }
+    ~Sprite() {}
 };
 
 typedef std::vector<Sprite *> SpriteList;
@@ -222,12 +223,12 @@ public:
     SpriteId add_sprite(Sprite *sprite, bool isDispensible = false);
     void kill_sprite(SpriteId id);
     void move_sprite(SpriteId, const ecl::V2 &newpos);
-    void replace_sprite(SpriteId id, Model *m);
+    void replace_sprite(SpriteId id, std::unique_ptr<Model> m);
 
     void redraw_sprite_region(SpriteId id);
     void draw_sprites(bool shades, ecl::GC &gc, const WorldArea &a);
 
-    Model *get_model(SpriteId id) { return sprites[id]->model; }
+    Model *get_model(SpriteId id) { return sprites[id]->model.get(); }
 
     void set_maxsprites(unsigned m, unsigned c) {
         maxsprites = m;
@@ -277,12 +278,12 @@ private:
     DL_Grid *m_grid;        // Stone models
     DL_Sprites *m_sprites;  // Sprite models
 
-    StoneShadowCache *m_cache;
+    std::unique_ptr<StoneShadowCache> m_cache;
 
     Uint32 shadow_ckey;  // Color key
-    ecl::Surface *buffer;
+    std::unique_ptr<ecl::Surface> buffer;
 
-    ecl::Array2<bool> m_hasactor;
+    ecl::Array2<char> m_hasactor;
 };
 
 /* -------------------- Lines -------------------- */
@@ -332,18 +333,18 @@ public:
     CommonDisplay(const ScreenArea &a = ScreenArea(0, 0, 10, 10));
     ~CommonDisplay();
 
-    Model *set_model(const GridLoc &l, Model *m);
+    Model *set_model(const GridLoc &l, std::unique_ptr<Model> m);
     Model *get_model(const GridLoc &l);
-    Model *yield_model(const GridLoc &l);
+    std::unique_ptr<Model> yield_model(const GridLoc &l);
 
-    void set_floor(int x, int y, Model *m);
-    void set_item(int x, int y, Model *m);
-    void set_stone(int x, int y, Model *m);
+    void set_floor(int x, int y, std::unique_ptr<Model> m);
+    void set_item(int x, int y, std::unique_ptr<Model> m);
+    void set_stone(int x, int y, std::unique_ptr<Model> m);
 
     DisplayEngine *get_engine() const { return m_engine; }
 
-    SpriteHandle add_effect(const ecl::V2 &pos, Model *m, bool isDispensible = false);
-    SpriteHandle add_sprite(const ecl::V2 &pos, Model *m);
+    SpriteHandle add_effect(const ecl::V2 &pos, std::unique_ptr<Model> m, bool isDispensible = false);
+    SpriteHandle add_sprite(const ecl::V2 &pos, std::unique_ptr<Model> m);
 
     RubberHandle add_line(ecl::V2 p1, ecl::V2 p2, unsigned short rc, unsigned short gc,
                           unsigned short bc, bool isThick);

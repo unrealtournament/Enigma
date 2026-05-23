@@ -35,7 +35,7 @@ struct Image {
     ecl::Rect rect;  // location of image inside surface
 
     // Constructors.
-    explicit Image(ecl::Surface *sfc);
+    explicit Image(std::unique_ptr<ecl::Surface> sfc);
     Image(ecl::Surface *sfc, ecl::Rect r);
     Image(const Image& i) = delete;
     Image& operator= (const Image& i) = delete;
@@ -51,13 +51,13 @@ class ImageModel : public Model {
 public:
     // Constructors
     ImageModel(const std::shared_ptr<Image> &image, int xo, int yo);
-    ImageModel(ecl::Surface *s, int xo, int yo);
+    ImageModel(std::unique_ptr<ecl::Surface> s, int xo, int yo);
     ImageModel(ecl::Surface *s, const ecl::Rect &r, int xo, int yo);
     ~ImageModel() override;
 
     // Model interface
     void draw(ecl::GC &gc, int x, int y) override;
-    Model *clone() override;
+    std::unique_ptr<Model> clone() override;
     ecl::Rect boundingBox() override;
     Image *get_image() const { return image.get(); }
 };
@@ -66,7 +66,7 @@ public:
 
 class ShadowModel : public Model {
 public:
-    ShadowModel(Model *m, Model *sh);
+    ShadowModel(std::unique_ptr<Model> m, std::unique_ptr<Model> sh);
     ~ShadowModel() override;
 
     // Model interface
@@ -79,7 +79,7 @@ public:
     void draw(ecl::GC &gc, int x, int y) override;
     void draw_shadow(ecl::GC &gc, int x, int y) override;
     Model *get_shadow() const override;
-    Model *clone() override;
+    std::unique_ptr<Model> clone() override;
 
     ecl::Rect boundingBox() override;
 
@@ -96,7 +96,8 @@ class CompositeModel : public Model {
     std::unique_ptr<Model> foreground;
 
 public:
-    CompositeModel(Model *b, Model *f) : background(b), foreground(f) {}
+    CompositeModel(std::unique_ptr<Model> bg, std::unique_ptr<Model> fg)
+    : background(std::move(bg)), foreground(std::move(fg)) {}
 
     // Animation interface
     void set_callback(ModelCallback *cb) override {
@@ -122,7 +123,9 @@ public:
     void draw_shadow(ecl::GC &gc, int x, int y) override {
         background->draw_shadow(gc, x, y);
     }
-    Model *clone() override { return new CompositeModel(background->clone(), foreground->clone()); }
+    std::unique_ptr<Model> clone() override {
+        return std::make_unique<CompositeModel>(background->clone(), foreground->clone());
+    }
 
     ecl::Rect boundingBox() override { return foreground->boundingBox(); }
 };
@@ -135,7 +138,7 @@ class RandomModel : public Model {
 
 public:
     void add_model(const std::string &name) { modelnames.push_back(name); }
-    Model *clone() override;
+    std::unique_ptr<Model> clone() override;
 };
 
 /* -------------------- AliasModel -------------------- */
@@ -145,7 +148,7 @@ class AliasModel : public Model {
 
 public:
     explicit AliasModel(const std::string &modelname) : name(modelname) {}
-    Model *clone() override;
+    std::unique_ptr<Model> clone() override;
 };
 
 /* -------------------- Animations -------------------- */
@@ -154,7 +157,8 @@ struct AnimFrame {
     std::unique_ptr<Model> model;
     double duration;
 
-    AnimFrame(Model *model, double duration) : model(model), duration(duration) {}
+    AnimFrame(std::unique_ptr<Model> model, double duration)
+    : model(std::move(model)), duration(duration) {}
 };
 
 struct AnimRep {
@@ -167,14 +171,16 @@ struct AnimRep {
 class Anim2d : public Model, public ecl::Nocopy {
 public:
     explicit Anim2d(bool looping);
+    Anim2d(const std::shared_ptr<AnimRep> &rep, const ecl::Rect &bbox);
+
     void set_callback(ModelCallback *cb) override;
 
-    void add_frame(Model *m, double duration);
+    void add_frame(std::unique_ptr<Model> m, double duration);
 
     /* ---------- Model interface ---------- */
     void draw(ecl::GC &gc, int x, int y) override;
     void draw_shadow(ecl::GC &gc, int x, int y) override;
-    Model *clone() override;
+    std::unique_ptr<Model> clone() override;
     void reverse() override;
     void restart() override;
 
@@ -190,9 +196,7 @@ public:
     ecl::Rect boundingBox() override;
 
 private:
-    Anim2d(std::shared_ptr<AnimRep> rep, ecl::Rect &bbox);
-
-    /* ---------- Variables ---------- */
+    // ---------- Variables ----------
     std::shared_ptr<AnimRep> rep;
     unsigned curframe = 0;  // Current frame number
     double frametime = 0;   // Elapsed time since frame was activated

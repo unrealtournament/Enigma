@@ -37,7 +37,8 @@ public:
     virtual int get_width(char c) = 0;  // depreceated ! not utf-8 compatible!
     virtual int get_width(std::string text, Font *altFont = nullptr) = 0;
 
-    virtual Surface *render(std::string text, Font *altFont = nullptr, int maxwidth = -1) = 0;
+    virtual std::unique_ptr<Surface> render(std::string text, Font *altFont = nullptr,
+                                            int maxwidth = -1) = 0;
     virtual void render(const GC &gc, int x, int y, std::string text, Font *altFont = nullptr,
                         int maxwidth = -1) = 0;
 };
@@ -51,15 +52,15 @@ std::string::size_type breakString(Font *font, const std::string &theString,
                                    const std::string &breakChars, int targetWidth);
 
 std::vector<std::string> breakToLines(Font *font, const std::string &theString,
-                                   const std::string &breakChars, int targetWidth);
-
+                                      const std::string &breakChars, int targetWidth);
 
 /** Load a bitmap font with image FILENAME and font metric
   DESCRNAME. */
-Font *LoadBitmapFont(const char *filename, const char *descrname);
+std::unique_ptr<Font> LoadBitmapFont(const char *filename, const char *descrname);
 
 /** Load a TrueType font from FILENAME with size PTSIZE. */
-Font *LoadTTF(const char *filename, int ptsize, int r = 0xff, int g = 0xff, int b = 0xff);
+std::unique_ptr<Font> LoadTTF(const char *filename, int ptsize, int r = 0xff, int g = 0xff,
+                              int b = 0xff);
 
 }  // namespace ecl
 

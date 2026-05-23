@@ -21,6 +21,7 @@
 #include <iostream>
 
 #include "ecl_cache.hh"
+#include "ecl_dict.hh"
 #include "ecl_video.hh"
 #include "file.hh"
 #include "main.hh"
@@ -50,27 +51,27 @@ struct FontDescr {
       b(b_) {}
 };
 
-class FontCache : public ecl::PtrCache<Font> {
-public:
-    Font *acquire(const std::string &name) override {
-        Font *f = nullptr;
+class FontCache : public ecl::Cache<Font> {
+    std::unique_ptr<Font> acquire(const std::string &name) override {
+        std::unique_ptr<Font> font;
         if (m_fonts.has_key(name)) {
             const FontDescr &fd = m_fonts[name];
             if (!fd.ttf_name.empty()) {
-                f = load_ttf(fd.ttf_name, fd.ttf_size, fd.r, fd.g, fd.b);
-                if (f == nullptr) {
+                font = load_ttf(fd.ttf_name, fd.ttf_size, fd.r, fd.g, fd.b);
+                if (font == nullptr) {
                     std::cerr << "Could not load .ttf file " << fd.ttf_name << "\n";
-                    f = load_bmf(fd.bitmap_name);
+                    font = load_bmf(fd.bitmap_name);
                 }
             } else {
-                f = load_bmf(fd.bitmap_name);
+                font = load_bmf(fd.bitmap_name);
             }
         } else {
-            f = load_bmf(name);
+            font = load_bmf(name);
         }
-        return f;
+        return font;
     }
 
+public:
     void define_font(const FontDescr &descr) {
         remove(descr.name);  // remove entry in cache (if any)
         if (m_fonts.has_key(descr.name))
@@ -80,12 +81,12 @@ public:
     }
 
     void clear() {
-        PtrCache<Font>::clear();  // crazy double cache - TODO cleanup
+        Cache::clear();  // crazy double cache - TODO cleanup
         m_fonts.clear();
     }
 
 private:
-    Font *load_bmf(const std::string &name) {
+    std::unique_ptr<Font> load_bmf(const std::string &name) {
         std::string png, bmf;
         if (app.resourceFS->findFile(std::string("fonts/") + name + ".png", png) &&
             app.resourceFS->findFile(std::string("fonts/") + name + ".bmf", bmf)) {
@@ -94,7 +95,7 @@ private:
         return nullptr;
     }
 
-    Font *load_ttf(const std::string &name, int ptsize, int r, int g, int b) {
+    std::unique_ptr<Font> load_ttf(const std::string &name, int ptsize, int r, int g, int b) {
         std::string ttf;
         if (app.resourceFS->findFile(std::string("fonts/") + name, ttf))
             return ecl::LoadTTF(ttf.c_str(), ptsize, r, g, b);
@@ -125,7 +126,7 @@ void ClearFontCache() {
     font_cache.clear();
 }
 
-ecl::Surface *LoadImage(const char *name) {
+std::unique_ptr<ecl::Surface> LoadImage(const char *name) {
     std::string filename;
     if (app.resourceFS->findImageFile(std::string(name) + ".png", filename))
         return ecl::LoadImage(filename.c_str());
@@ -139,9 +140,8 @@ ecl::Surface *GetImage(const char *name, const char *ext) {
     return nullptr;
 }
 
-ecl::Surface *RegisterImage(const char *name, ecl::Surface *s) {
-    image_cache.store(name, s);
-    return s;
+ecl::Surface *RegisterImage(const char *name, std::unique_ptr<ecl::Surface> s) {
+    return image_cache.store(name, std::move(s));
 }
 
 void ClearImageCache() {

@@ -77,7 +77,7 @@ Surface *LevelPreviewCache::getPreview(lev::Proxy *levelProxy, const ThumbnailIn
 
     const VMInfo &vminfo = *video_engine->GetInfo();
     std::string previewSubPath = makePreviewPath(levelProxy, thumbinfo);
-    Surface *surface = 0;
+    Surface* surface = nullptr;
 
     // load preview from file bundled with the level itself
     std::string absLevelPath;
@@ -95,8 +95,8 @@ Surface *LevelPreviewCache::getPreview(lev::Proxy *levelProxy, const ThumbnailIn
             Readfile(ifs, imageData);
         }
         SDL_RWops *imageHandle = SDL_RWFromMem(&(imageData[0]), imageData.size());
-        surface = ecl::LoadImage(imageHandle, 1);
-        imgCache.store(previewSubPath, surface);  // insert in imgCache
+        std::unique_ptr<Surface> newSurface = ecl::LoadImage(imageHandle, 1);
+        surface = imgCache.store(previewSubPath, std::move(newSurface));  // insert in imgCache
     }
 
     // load preview from stored file if possible
@@ -106,9 +106,9 @@ Surface *LevelPreviewCache::getPreview(lev::Proxy *levelProxy, const ThumbnailIn
 
     // generate new preview otherwise
     if (!surface && allowGeneration) {
-        surface = newPreview(levelProxy, thumbinfo);
-        if (surface) {
-            imgCache.store(previewSubPath, surface);      // insert in imgCache
+        std::unique_ptr<ecl::Surface> newSurface = newPreview(levelProxy, thumbinfo);
+        if (newSurface) {
+            surface = imgCache.store(previewSubPath, std::move(newSurface));      // insert in imgCache
             savePreview(levelProxy, thumbinfo, surface);  // save on filesystem
         } else {
             surface = enigma::GetImage(("error" + thumbinfo.suffix).c_str());
@@ -122,10 +122,10 @@ Surface *LevelPreviewCache::getPreview(lev::Proxy *levelProxy, const ThumbnailIn
     return surface;
 }
 
-ecl::Surface *LevelPreviewCache::newPreview(lev::Proxy *levelProxy,
-                                            const ThumbnailInfo &thumbinfo) {
+std::unique_ptr<ecl::Surface> LevelPreviewCache::newPreview(lev::Proxy *levelProxy,
+                                                            const ThumbnailInfo &thumbinfo) {
     const VMInfo &vminfo = *video_engine->GetInfo();
-    Surface *surface = 0;
+    std::unique_ptr<Surface> surface;
     ecl::GC gc(video_engine->BackBuffer());
     if (game::DrawLevelPreview(gc, levelProxy)) {
         SDL_Rect r;
@@ -136,17 +136,15 @@ ecl::Surface *LevelPreviewCache::newPreview(lev::Proxy *levelProxy,
     return surface;
 }
 
-Surface *LevelPreviewCache::updatePreview(lev::Proxy *levelProxy, const ThumbnailInfo &thumbinfo) {
-    if (Surface *surface = newPreview(levelProxy, thumbinfo)) {
+void LevelPreviewCache::updatePreview(lev::Proxy *levelProxy, const ThumbnailInfo &thumbinfo) {
+    if (std::unique_ptr<ecl::Surface> surface = newPreview(levelProxy, thumbinfo)) {
         std::string idx = levelProxy->getId() + ecl::strf("#%d", levelProxy->getReleaseVersion());
-        cache[idx] = surface;
+        cache[idx] = surface.get();
 
         string preview_name = makePreviewPath(levelProxy, thumbinfo);
-        imgCache.store(preview_name, surface);        // insert in imgCache
-        savePreview(levelProxy, thumbinfo, surface);  // save on filesystem
-        return surface;
+        savePreview(levelProxy, thumbinfo, surface.get());  // save on filesystem
+        imgCache.store(preview_name, std::move(surface));        // insert in imgCache
     }
-    return 0;
 }
 
 std::string LevelPreviewCache::makePreviewPath(lev::Proxy *levelProxy,
@@ -179,9 +177,10 @@ void LevelPreviewCache::makeSystemPreview(lev::Proxy *levelProxy, const Thumbnai
     if (ecl::split_path(savePath, &directory, 0) && !ecl::FolderExists(directory)) {
         ecl::FolderCreate(directory);
     }
-    ecl::Surface *s = newPreview(levelProxy, thumbinfo);
-    if (s != nullptr)
-        ecl::SavePNG(s, savePath);
+    std::unique_ptr<ecl::Surface> preview = newPreview(levelProxy, thumbinfo);
+    if (preview)
+        ecl::SavePNG(preview.get(), savePath);
 }
-}
-}  // namespace enigma::gui
+
+}  // namespace gui
+}  // namespace enigma

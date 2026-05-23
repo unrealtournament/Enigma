@@ -19,23 +19,14 @@
 #ifndef ECL_CACHE_HH
 #define ECL_CACHE_HH
 
-/* -------------------- Cache -------------------- */
-
-// A generic class for caching external data. Stored data is owned by the
-// cache and is automatically `release'd on destruction. Missing values are
-// automatically retrieved using the `acquire' method.
-
-#include "ecl_dict.hh"
+#include <unordered_map>
 
 namespace ecl {
 
+// A generic class for caching external data. Stored data is owned by the
+// cache and is automatically deleted as required. Missing values are
+// automatically created using the 'acquire' method.
 template <class T>
-class DeleteDisposer {
-public:
-    static void dispose(T p) { delete p; }
-};
-
-template <class T, class Disposer>
 class Cache {
 public:
     Cache();
@@ -43,76 +34,56 @@ public:
 
     // ---------- Methods ----------
     void clear();
-    T get(const std::string &key);
+    T* get(const std::string &key);
     void remove(const std::string &key);
     unsigned size() const;
-    bool has_key(const std::string &key) const;
 
-protected:
-    T store(const std::string &key, T value);
+    T* store(const std::string &key, std::unique_ptr<T> value);
 
 private:
-    Cache(const Cache &other);
-    Cache &operator=(const Cache &other);
-
-    void release(T value) { Disposer::dispose(value); }
+    Cache(const Cache &other) = delete;
+    Cache &operator=(const Cache &other) = delete;
 
     // ---------- Interface ----------
-    virtual T acquire(const std::string &name) = 0;
+    virtual std::unique_ptr<T> acquire(const std::string &name) = 0;
 
     // ---------- Variables ----------
-    ecl::Dict<T> cache;
+    std::unordered_map<std::string, std::unique_ptr<T>> cache;
 };
 
-template <class T, class D>
-Cache<T, D>::Cache()
-: cache(1223) {
+template <class T>
+Cache<T>::Cache() : cache(1223) {
 }
 
-template <class T, class D>
-void Cache<T, D>::clear() {
-    for (auto & elem : cache)
-        release(elem.second);
+template <class T>
+void Cache<T>::clear() {
     cache.clear();
 }
 
-template <class T, class D>
-void Cache<T, D>::remove(const std::string &key) {
-    cache.remove(key);
-}
-
-template <class T, class D>
-T Cache<T, D>::store(const std::string &key, T value) {
-    cache.insert(key, value);
-    return value;
-}
-
-template <class T, class D>
-T Cache<T, D>::get(const std::string &key) {
+template <class T>
+T *Cache<T>::get(const std::string &key) {
     auto i = cache.find(key);
     if (i != cache.end())
-        return i->second;
-    else
-        return store(key, acquire(key));
+        return i->second.get();
+    return store(key, acquire(key));
 }
 
-template <class T, class D>
-unsigned Cache<T, D>::size() const {
+template <class T>
+void Cache<T>::remove(const std::string &key) {
+    cache.erase(key);
+}
+
+template <class T>
+unsigned Cache<T>::size() const {
     return cache.size();
 }
 
-template <class T, class D>
-bool Cache<T, D>::has_key(const std::string &key) const {
-    return cache.has_key(key);
-}
-
-/* -------------------- PtrCache -------------------- */
-
 template <class T>
-class PtrCache : public Cache<T *, DeleteDisposer<T *> > {
-public:
-    ~PtrCache() { this->clear(); }
-};
+T *Cache<T>::store(const std::string &key, std::unique_ptr<T> value) {
+    T *ptr = value.get();
+    cache[key] = std::move(value);
+    return ptr;
+}
 
 }  // namespace ecl
 
