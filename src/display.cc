@@ -767,7 +767,7 @@ void ModelLayer::tick(double dtime) {
     ModelList &am = m_active_models;
 
     am.remove(nullptr);
-    am.remove_if(std::mem_fn(&Model::is_garbage));
+    am.remove_if(std::mem_fn(&Model::hasFinished));
 
     // Append new active models to list
     am.splice(am.end(), m_active_models_new);
@@ -1043,8 +1043,8 @@ void DL_Sprites::redraw_sprite_region(SpriteId id) {
 
 void DL_Sprites::update_sprite_region(Sprite *s, bool is_add, bool is_redraw_only) {
     if (s && s->model) {
-        Rect r, redrawr;
-        s->model->get_extension(r);
+        Rect redrawr;
+        Rect r = s->model->boundingBox();
         r.x += s->screenpos[0];
         r.y += s->screenpos[1];
         DisplayEngine *e = get_engine();
@@ -1089,7 +1089,7 @@ void DL_Sprites::tick(double dtime) {
         if (!s || !s->model)
             continue;
 
-        if (s->model->is_garbage() && s->layer == SPRITE_EFFECT) {
+        if (s->model->hasFinished() && s->layer == SPRITE_EFFECT) {
             // Only remove effect sprites -- actor sprites remain in
             // the world all the time
             kill_sprite(i);
@@ -1527,7 +1527,7 @@ void DL_Shadows::prepare_draw(const WorldArea &wa) {
     for (auto s : m_sprites->sprites) {
         if (s && s->layer == SPRITE_ACTOR && s->model) {
             Rect r, redrawr;
-            s->model->get_extension(r);
+            r = s->model->boundingBox();
             r.x += s->screenpos[0];
             r.y += s->screenpos[1];
             DisplayEngine *e = get_engine();

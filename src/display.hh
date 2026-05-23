@@ -47,7 +47,7 @@ public:
     virtual void reverse() {}
     virtual void restart() {}
 
-    virtual bool is_garbage() const { return false; }
+    virtual bool hasFinished() const { return false; }
     virtual void tick(double /*dtime*/) {}
     virtual bool has_changed(ecl::Rect & /*changed_region*/) { return false; }
 
@@ -60,7 +60,8 @@ public:
     virtual void remove(ModelLayer * /*ml*/) {}
 
     virtual Model *clone() = 0;
-    virtual void get_extension(ecl::Rect &r);
+    
+    virtual ecl::Rect boundingBox();
 };
 
 /* -------------------- Functions -------------------- */
@@ -76,7 +77,7 @@ void DefineRandModel(const char *name, int n, char **names);
 void DefineShadedModel(const char *name, const char *model, const char *shade);
 void DefineOverlayImage(const char *name, int n, char **images);
 void DefineComposite(const char *name, const char *bgname, const char *fgname);
-void DefineAnim(const char *name, bool loop_p);
+void DefineAnim(const char *name, bool looping);
 void AddFrame(const char *name, const char *model, double time);
 void DefineAlias(const char *name, const char *othername);
 
@@ -104,7 +105,7 @@ enum FollowMode {
     FOLLOW_SMOOTH = 4,           // Follow pixel by pixel
 };
 
-enum FollowTyp {
+enum FollowType {
     FOLLOW_NONE = 0,    // Don't follow any sprite
     FOLLOW_SCROLL = 1,  // Scroll pixelwise
     FOLLOW_FLIP = 2,    // Flip the display to destination

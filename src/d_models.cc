@@ -18,7 +18,6 @@
 #include "d_models.hh"
 
 #include "lua.hh"
-#include "options.hh"
 #include "d_engine.hh"
 #include "ecl_cache.hh"
 #include "ecl_video.hh"
@@ -26,8 +25,6 @@
 #include "main.hh"
 #include "nls.hh"
 #include "gui/ErrorMenu.hh"
-
-#include "SDL_image.h"
 
 #include <cstdio>
 #include <cstring>
@@ -67,22 +64,22 @@ public:
     ModelManager();
     ~ModelManager();
 
-    void define(const std::string name, Model *m);
+    void define(const std::string &name, Model *m);
 
-    /* Create new model of type `name'.  Returns 0 if no such
+    /* Create a new model of type 'name'.  Returns 0 if no such
        model exists. */
     Model *create(const std::string &name);
 
-    /* Remove model definition for `name'. */
+    /* Remove the model definition for 'name'. */
     void remove(const std::string &name);
 
-    bool has_model(const std::string &name) const;
+    bool hasModel(const std::string &name) const;
 
     size_t num_templates() const;
 
 private:
     // Variables
-    typedef ecl::Dict<Model *> ModelMap;
+    using ModelMap = std::unordered_map<std::string, std::unique_ptr<Model>>;
     ModelMap m_templates;
 };
 }
@@ -128,30 +125,23 @@ ModelManager::ModelManager() : m_templates(1069) {
 }
 
 ModelManager::~ModelManager() {
-    delete_map(m_templates.begin(), m_templates.end());
 }
 
-void ModelManager::define(const std::string name, Model *m) {
-    m_templates.insert(name, m);
+void ModelManager::define(const std::string &name, Model *m) {
+    m_templates[name] = std::unique_ptr<Model>(m);
 }
 
 Model *ModelManager::create(const std::string &name) {
     auto i = m_templates.find(name);
-    if (i != m_templates.end())
-        return i->second->clone();
-    return nullptr;
+    return i != m_templates.end() ? i->second->clone() : nullptr;
 }
 
 void ModelManager::remove(const std::string &name) {
-    ModelMap::iterator i = m_templates.find(name);
-    if (i != m_templates.end()) {
-        delete i->second;
-        m_templates.remove(name);
-    }
+    m_templates.erase(name);
 }
 
-bool ModelManager::has_model(const std::string &name) const {
-    return m_templates.has_key(name);
+bool ModelManager::hasModel(const std::string &name) const {
+    return m_templates.find(name) != m_templates.end();
 }
 
 size_t ModelManager::num_templates() const {
@@ -226,9 +216,10 @@ ecl::Surface *display::CropSurface(const ecl::Surface *s, ecl::Rect r) {
     return ecl::Grab(s, r);
 }
 
-/* Register a new model template `m' under the name `name'. */
+/// Register a new model template `m' under the name `name'.
+/// Takes ownership of 'm'.
 void display::DefineModel(const char *name, Model *m) {
-    if (modelmgr->has_model(name)) {
+    if (modelmgr->hasModel(name)) {
         enigma::Log << "Redefining model '" << name << "'\n";
         modelmgr->remove(name);
     }
@@ -236,25 +227,25 @@ void display::DefineModel(const char *name, Model *m) {
 }
 
 Model *display::MakeModel(const std::string &name) {
-    if (Model *m = modelmgr->create(name))
+    if (Model *m = modelmgr->create(name)) {
         return m;
-    else {
+    } else {
         enigma::Log << "Unknown model " << name << std::endl;
         return modelmgr->create("dummy");
     }
 }
 
 int display::DefineImage(const char *name, const char *fname, int xoff, int yoff, int padding) {
-    ecl::Surface *sfc = surface_cache.get(fname);
-    if (!sfc)
+    ecl::Surface *surface = surface_cache.get(fname);
+    if (!surface)
         return 1;
 
-    ecl::Rect r = sfc->size();
+    ecl::Rect r = surface->size();
     r.x += padding;
     r.y += padding;
     r.w -= 2 * padding;
     r.h -= 2 * padding;
-    DefineModel(name, new ImageModel(sfc, r, xoff + padding, yoff + padding));
+    DefineModel(name, new ImageModel(surface, r, xoff + padding, yoff + padding));
     return 0;
 }
 
@@ -320,90 +311,67 @@ void display::DefineAlias(const char *name, const char *othername) {
 }
 
 /* -------------------- Model -------------------- */
-void Model::get_extension(ecl::Rect &r) {
+ecl::Rect Model::boundingBox() {
+    return ecl::Rect();
 }
 
 /* -------------------- Image -------------------- */
 
-Image::Image(ecl::Surface *sfc) : surface(sfc), rect(surface->size()), refcount(1) {
+Image::Image(ecl::Surface *sfc) : surface(sfc), rect(surface->size()) {
 }
 
-Image::Image(ecl::Surface *sfc, ecl::Rect r) : surface(Duplicate(sfc)), rect(r), refcount(1) {
-}
-Image::~Image() {
-    delete surface;
-    surface = nullptr;
+Image::Image(ecl::Surface *sfc, ecl::Rect r) : surface(Duplicate(sfc)), rect(r) {
 }
 
-void display::incref(Image *i) {
-    ++i->refcount;
-}
-
-void display::decref(Image *i) {
-    if (--i->refcount == 0) {
-        delete i;
-    }
-}
-
-void display::draw_image(Image *i, ecl::GC &gc, int x, int y) {
-    blit(gc, x, y, i->surface, i->rect);
+void display::draw_image(Image *image, ecl::GC &gc, int x, int y) {
+    blit(gc, x, y, image->surface.get(), image->rect);
 }
 
 /* -------------------- ImageModel -------------------- */
 
-ImageModel::ImageModel(Image *i, int xo, int yo) : image(i), xoff(xo), yoff(yo) {
+ImageModel::ImageModel(const std::shared_ptr<Image> &image, int xo, int yo)
+: image(image), xoff(xo), yoff(yo) {
     assert(image);
-    incref(image);
 }
 
-ImageModel::ImageModel(ecl::Surface *s, int xo, int yo) : image(new Image(s)), xoff(xo), yoff(yo) {
+ImageModel::ImageModel(ecl::Surface *s, int xo, int yo)
+: image(std::make_shared<Image>(s)), xoff(xo), yoff(yo) {
 }
 
 ImageModel::ImageModel(ecl::Surface *s, const ecl::Rect &r, int xo, int yo)
-: image(new Image(s, r)), xoff(xo), yoff(yo) {
+: image(std::make_shared<Image>(s, r)), xoff(xo), yoff(yo) {
 }
 
 ImageModel::~ImageModel() {
-    decref(image);
 }
 
 void ImageModel::draw(ecl::GC &gc, int x, int y) {
-    draw_image(image, gc, x + xoff, y + yoff);
+    draw_image(image.get(), gc, x + xoff, y + yoff);
 }
 
 Model *ImageModel::clone() {
     return new ImageModel(image, xoff, yoff);
 }
 
-void ImageModel::get_extension(ecl::Rect &r) {
-    r.x = xoff;
-    r.y = yoff;
-    r.w = image->rect.w;
-    r.h = image->rect.h;
+ecl::Rect ImageModel::boundingBox() {
+    return ecl::Rect(xoff, yoff, image->rect.w, image->rect.h);
 }
 
 /* -------------------- ShadowModel -------------------- */
 
-ShadowModel::ShadowModel(Model *m, Model *sh) {
-    model = m;
-    shade = sh;
-    ecl::Rect r1, r2;
-    model->get_extension(r1);
-    shade->get_extension(r2);
-    extension = boundingbox(r1, r2);
+ShadowModel::ShadowModel(Model *m, Model *sh) : model(m), shadow(sh) {
+    bbox = ecl::boundingbox(model->boundingBox(), shadow->boundingBox());
 }
 
 ShadowModel::~ShadowModel() {
-    delete model;
-    delete shade;
 }
 
 void ShadowModel::expose(ModelLayer *ml, int vx, int vy) {
     model->expose(ml, vx, vy);
-    shade->expose(ml, vx, vy);
+    shadow->expose(ml, vx, vy);
 }
 void ShadowModel::remove(ModelLayer *ml) {
-    shade->remove(ml);
+    shadow->remove(ml);
     model->remove(ml);
 }
 
@@ -413,12 +381,12 @@ void ShadowModel::set_callback(ModelCallback *cb) {
 
 void ShadowModel::reverse() {
     model->reverse();
-    shade->reverse();
+    shadow->reverse();
 }
 
 void ShadowModel::restart() {
     model->restart();
-    shade->restart();
+    shadow->restart();
 }
 
 void ShadowModel::draw(ecl::GC &gc, int x, int y) {
@@ -426,19 +394,19 @@ void ShadowModel::draw(ecl::GC &gc, int x, int y) {
 }
 
 void ShadowModel::draw_shadow(ecl::GC &gc, int x, int y) {
-    shade->draw(gc, x, y);
+    shadow->draw(gc, x, y);
 }
 
 Model *ShadowModel::get_shadow() const {
-    return shade;
+    return shadow.get();
 }
 
 Model *ShadowModel::clone() {
-    return new ShadowModel(model->clone(), shade->clone());
+    return new ShadowModel(model->clone(), shadow->clone());
 }
 
-void ShadowModel::get_extension(ecl::Rect &r) {
-    r = extension;
+ecl::Rect ShadowModel::boundingBox() {
+    return bbox;
 }
 
 /* -------------------- RandomModel -------------------- */
@@ -461,27 +429,19 @@ Model *AliasModel::clone() {
 
 /* -------------------- Anim2d -------------------- */
 
-Anim2d::Anim2d(bool loop) : rep(new AnimRep(loop)) {
+Anim2d::Anim2d(bool looping) : rep(std::make_shared<AnimRep>(looping)) {
 }
 
-Anim2d::Anim2d(AnimRep *r, ecl::Rect &ext_r)
-: rep(r),
-  curframe(0),
-  frametime(0),
-  finishedp(false),
-  changedp(false),
-  reversep(false),
-  videox(0),
-  videoy(0),
-  callback(nullptr),
-  extension(ext_r) {
-    rep->refcount++;
+Anim2d::Anim2d(std::shared_ptr<AnimRep> rep, ecl::Rect &bbox) : rep(rep), bbox(bbox) {
     frametime = 0;
 }
 
-Anim2d::~Anim2d() {
-    if (--rep->refcount == 0)
-        delete rep;
+void Anim2d::set_callback(ModelCallback *cb) {
+    callback = cb;
+}
+
+void Anim2d::reverse() {
+    reversep = !reversep;
 }
 
 void Anim2d::restart() {
@@ -492,18 +452,15 @@ void Anim2d::restart() {
 }
 
 void Anim2d::add_frame(Model *m, double duration) {
-    rep->frames.push_back(new AnimFrame(m, duration));
+    rep->frames.push_back(std::make_unique<AnimFrame>(m, duration));
 
     // Cache the bounding box of all frames to ensure that it is constant.
-    ecl::Rect r1, r2;
-    m->get_extension(r1);
-    r2 = extension;
-    extension = boundingbox(r1, r2);
+    bbox = ecl::boundingbox(m->boundingBox(), bbox);
 }
 
 void Anim2d::draw(ecl::GC &gc, int x, int y) {
     if (!finishedp) {
-        AnimFrame *f = rep->frames[curframe];
+        AnimFrame *f = rep->frames[curframe].get();
         f->model->draw(gc, x, y);
         changedp = false;
     }
@@ -511,9 +468,13 @@ void Anim2d::draw(ecl::GC &gc, int x, int y) {
 
 void Anim2d::draw_shadow(ecl::GC &gc, int x, int y) {
     if (!finishedp) {
-        AnimFrame *f = rep->frames[curframe];
+        AnimFrame *f = rep->frames[curframe].get();
         f->model->draw_shadow(gc, x, y);
     }
+}
+
+Model *Anim2d::clone() {
+    return new Anim2d(rep, bbox);
 }
 
 void Anim2d::expose(ModelLayer *ml, int vx, int vy) {
@@ -529,7 +490,7 @@ void Anim2d::remove(ModelLayer *ml) {
 bool Anim2d::has_changed(ecl::Rect &r) {
     bool retval = changedp;
     if (changedp) {
-        get_extension(r);
+        r = boundingBox();
         r.x += videox;
         r.y += videoy;
     }
@@ -541,8 +502,8 @@ void Anim2d::move(int newx, int newy) {
     videoy = newy;
 }
 
-void Anim2d::get_extension(ecl::Rect &r) {
-    r = extension;
+ecl::Rect Anim2d::boundingBox() {
+    return bbox;
 }
 
 void Anim2d::tick(double dtime) {
@@ -557,14 +518,14 @@ void Anim2d::tick(double dtime) {
         if (reversep) {
             if (curframe >= 1)
                 curframe--;
-            else if (rep->loop)
+            else if (rep->looping)
                 curframe = rep->frames.size() - 1;
             else
                 finishedp = true;
         } else {
             if (curframe + 1 < rep->frames.size())
                 curframe++;
-            else if (rep->loop)
+            else if (rep->looping)
                 curframe = 0;
             else
                 finishedp = true;
