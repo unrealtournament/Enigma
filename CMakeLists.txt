@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(Enigma VERSION 1.3)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # Search for additional cmake modules in cmake/
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
