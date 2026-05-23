@@ -56,14 +56,12 @@ extern "C" {
 /* -------------------- Types -------------------- */
 
 namespace {
-class SurfaceCache_Alpha : public PtrCache<Surface> {
-public:
-    Surface *acquire(const std::string &name) override;
+class SurfaceCache_Alpha : public ecl::PtrCache<ecl::Surface> {
+    ecl::Surface *acquire(const std::string &name) override;
 };
 
-class SurfaceCache : public PtrCache<Surface> {
-public:
-    Surface *acquire(const std::string &name) override;
+class SurfaceCache : public ecl::PtrCache<ecl::Surface> {
+    ecl::Surface *acquire(const std::string &name) override;
 };
 
 class ModelManager {
@@ -334,7 +332,7 @@ void Model::get_extension(ecl::Rect &r) {
 Image::Image(ecl::Surface *sfc) : surface(sfc), rect(surface->size()), refcount(1) {
 }
 
-Image::Image(ecl::Surface *sfc, ecl::Rect r) : surface(Duplicate(sfc)), rect(std::move(r)), refcount(1) {
+Image::Image(ecl::Surface *sfc, ecl::Rect r) : surface(Duplicate(sfc)), rect(r), refcount(1) {
 }
 Image::~Image() {
     delete surface;

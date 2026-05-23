@@ -1020,7 +1020,7 @@ void DL_Sprites::draw_sprites(bool drawshadowp, GC &gc, const WorldArea &a) {
         int m = gx % 3;
         Sprite *s = bottomSprites[gx];
         for (; s != nullptr; s = s->above[m]) {
-            if (s && s->model && s->visible) {
+            if (s->model && s->visible) {
                 int sx, sy;
                 get_engine()->world_to_screen(s->pos, &sx, &sy);
                 if (drawshadowp)

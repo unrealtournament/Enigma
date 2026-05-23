@@ -254,7 +254,7 @@ private:
 
 /* -------------------- Shadows -------------------- */
 
-struct StoneShadowCache;
+class StoneShadowCache;
 
 class DL_Shadows : public DisplayLayer {
 public:
@@ -268,10 +268,8 @@ public:
 
 private:
     /* ---------- Private functions ---------- */
-    void shadow_blit(ecl::Surface *scr, int x, int y, ecl::Surface *shadows, ecl::Rect r);
-
     bool has_actor(int x, int y);
-    virtual void prepare_draw(const WorldArea &) override;
+    void prepare_draw(const WorldArea &) override;
 
     Model *get_shadow_model(int x, int y);
 
@@ -292,11 +290,11 @@ private:
 struct Line {
     ecl::V2 start, end;
     ecl::V2 oldstart, oldend;
-    int r, g, b;
-    bool thick;
+    int r = 0, g = 0, b = 0;
+    bool thick = false;
 
     Line(ecl::V2 start, ecl::V2 end, int red, int green, int blue, bool isThick)
-    : start(std::move(start)), end(std::move(end)), r(red), g(green), b(blue), thick(isThick) {}
+    : start(start), end(end), r(red), g(green), b(blue), thick(isThick) {}
     Line() {}
 };
 

@@ -101,7 +101,12 @@ public:
     friend class Iter<value_type>;
     friend class Iter<const value_type>;
 
-    Dict(size_type table_size = 257);
+    explicit Dict(size_type table_size = 257);
+
+    // Copying isn't implemented yet
+    Dict(const Dict<T> &d) = delete;
+    Dict &operator=(const Dict<T> &d) = delete;
+
     ~Dict();
 
     size_type size() const { return nentries; }
@@ -150,11 +155,6 @@ private:
     // ----------  Variables ----------
     size_type nentries;  // Number of entries
     std::vector<Entry *> buckets;
-
-private:
-    // Copying not implemented yet
-    Dict(const Dict<T> &d) = delete;
-    Dict &operator=(const Dict<T> &d) = delete;
 };
 
 /* -------------------- Dict implementation -------------------- */
