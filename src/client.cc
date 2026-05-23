@@ -475,9 +475,10 @@ void Client::on_keydown(SDL_Event &e) {
             }
             break;
         case SDLK_RETURN: {
-            ScopedInputGrab(false);
-            video_engine->ToggleFullscreen();
-            sdl::FlushEvents();
+            // Deactivated due to crashes, at least on Windows.
+            //ScopedInputGrab(false);
+            //video_engine->ToggleFullscreen();
+            //sdl::FlushEvents();
         } break;
         default: break;
         };
@@ -786,7 +787,7 @@ void Client::level_finished() {
 
     // Work around int overflow
     double level_time_dbl = (double)(m_total_game_time) + (double)(server::AddSecondsToScore);
-    int level_time = ecl::round_nearest<int>(level_time_dbl);
+    int level_time = std::max(ecl::round_nearest<int>(level_time_dbl), 1);
 
     std::string text;
     bool timehunt_restart = false;

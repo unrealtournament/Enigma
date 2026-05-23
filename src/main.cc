@@ -462,14 +462,16 @@ void Application::init(int argc, char **argv)
         lua::Dofile(L, "levels/index_user.lua");
         if (!ap.levelnames.empty()) {
             lev::Index::registerIndex(new lev::VolatileIndex(INDEX_STARTUP_PACK_NAME,
-                    INDEX_EVERY_GROUP, ap.levelnames, INDEX_STARTUP_PACK_LOCATION));
+                    INDEX_STARTUP_PACK_DESCRIPTION, INDEX_EVERY_GROUP, ap.levelnames,
+                    INDEX_STARTUP_PACK_LOCATION));
             lev::Index::setCurrentIndex(INDEX_STARTUP_PACK_NAME);
         }
         std::vector<std::string> emptyList;
         lev::Index::registerIndex(new lev::VolatileIndex(INDEX_SEARCH_PACK_NAME,
-                    INDEX_DEFAULT_GROUP, emptyList, INDEX_SEARCH_PACK_LOCATION));
+                    INDEX_SEARCH_PACK_DESCRIPTION, INDEX_DEFAULT_GROUP, emptyList,
+                    INDEX_SEARCH_PACK_LOCATION));
     }
-
+    lev::Index::deleteEmptyGroups();
     lev::Proxy::countLevels();
 
     // ----- Initialize sound tables -- needs sound, oxyd, video (error messages!)
@@ -994,6 +996,14 @@ int main(int argc, char **argv)
         return 0;
     }
     catch (XFrontend &e) {
+        cerr << "Error: " << e.what() << endl;
+        std::string message = _("Fatal error that caused the application to quit:\n\n");
+        if (app.errorInit) {
+            gui::ErrorMenu m(message + e.what(), N_("Quit"));
+            m.manage();
+        }
+    }
+    catch (XSDLError &e) {
         cerr << "Error: " << e.what() << endl;
         std::string message = _("Fatal error that caused the application to quit:\n\n");
         if (app.errorInit) {

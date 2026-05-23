@@ -5,7 +5,7 @@
       <el:identity el:title="" el:id="lib/libsoko"/>
       <el:version el:score="1" el:release="1" el:revision="8" el:status="released"/>
       <el:author el:name="Enigma Team" el:email="" el:homepage=""/>
-      <el:copyright>Copyright © 2007, 2008, 2009 Enigma Team</el:copyright>
+      <el:copyright>Copyright © 2007, 2008, 2009, 2025 Enigma Team</el:copyright>
       <el:license el:type="GPL v2.0 or above" el:open="true"/>
       <el:compatibility el:enigma="1.10">
         <el:dependency el:path="lib/liblua" el:id="lib/liblua" el:release="1" el:preload="true"/>
@@ -46,6 +46,8 @@ lib.soko.resolver_info = {}
 lib.soko.ti_defined = {}
 lib.soko.area = {}
 lib.soko.endphase_started = false
+lib.soko.is_chessoban = false
+lib.soko.actor = "ac_marble"
 lib.soko.initially_completed_goals = 0
 lib.soko.goal_hook = GOAL_HOOK_DEFAULT
 
@@ -186,7 +188,8 @@ setmetatable(lib.soko.area, lib.soko.area_metatable)
 -- See also: Landau function g(n) for determining the maximal
 --           order of an element in the symmetric group S(n).
 --
-function lib.soko.number_from_level(map, list_length)
+function lib.soko.number_from_level(map, mindesign, maxdesign)
+    local list_length = maxdesign - mindesign + 1
     local j = list_length + 1
     local l = 2
     local b
@@ -208,12 +211,13 @@ function lib.soko.number_from_level(map, list_length)
             end
         end
     until (b == 0) or (j == 1)
-    return j
+    return j + mindesign - 1
 end
 
-function lib.soko.design_from_description(map, design_description, maxdesignnumber)
+function lib.soko.design_from_description(map, design_description, mindesign, maxdesign)
     assert_type(design_description, "lib.soko.design_from_description second argument", 2, "nil", "positive integer", "table")
-    assert_type(maxdesignnumber, "lib.soko.design_from_description third argument", 2, "nil", "positive integer")
+    assert_type(mindesign, "lib.soko.design_from_description third argument", 2, "nil", "positive integer")
+    assert_type(maxdesign, "lib.soko.design_from_description fourth argument", 2, "nil", "positive integer")
     -- choose design
     local design = {}
     if type(design_description) == "number" then
@@ -223,7 +227,7 @@ function lib.soko.design_from_description(map, design_description, maxdesignnumb
     else
         assert_type(map, "lib.soko.design_from_description first argument", 2, "map")
         design = lib.lua.deep_copy(lib.soko_designlist.list[lib.soko.number_from_level(
-                     map, maxdesignnumber or MAXDESIGN[1.1])])
+                     map, mindesign or 1, maxdesign or MAXDESIGN[1.1])])
     end
     if (design == nil) then
         error("The requested design is not available -- maybe you tried to run "
@@ -235,6 +239,14 @@ function lib.soko.design_from_description(map, design_description, maxdesignnumb
     end
     if design.endp == nil then
         design.endp = {}
+    end
+    if lib.soko.is_chessoban then
+        -- st_chess does not activate it_shogun_s, so we have to replace it by it_trigger.
+        -- Note that st_shogun_s will still work on it_trigger, so mixing both stone types
+        -- will still work.
+        if design.goal == "it_shogun_s" then
+            design.goal = "it_trigger"
+        end
     end
     return design
 end
@@ -310,10 +322,12 @@ function lib.soko.define_tiles(design)
 
     set_ti("O ", {"st_oxyd", "oxyd#", flavor = design.oxyd or lib.soko_designlist.default.oxyd})
     if design.white then
-        set_ti("@ ", {"#ac_marble_white", "marble#", owner = YIN, controllers = CTRL_YIN})
+        lib.soko.actor = lib.soko.actor.."_white"
+        set_ti("@ ", {"#"..lib.soko.actor, "marble#", owner = YIN, controllers = CTRL_YIN})
         set_ti("n ", {"st_chess_white"})
     else
-        set_ti("@ ", {"#ac_marble", "marble#"})
+        lib.soko.actor = lib.soko.actor.."_black"
+        set_ti("@ ", {"#"..lib.soko.actor, "marble#"})
         set_ti("n ", {"st_chess"})
     end    
 end
@@ -566,9 +580,8 @@ function lib_soko_endphase()
             elseif (type(v) == "table") and string.find(v[1], "ac_") then
                 wo[marbles] = v
             elseif v == "rubberball" then
-                local kind = cond(design.white, "#ac_marble", "#ac_marble_white")
                 for j = 1, #marbles do
-                    wo[marbles[j]] = {kind, "rubberball_" .. j, controllers = CTRL_NONE}
+                    wo[marbles[j]] = {"#"..lib.soko.actor, "rubberball_" .. j, controllers = CTRL_NONE}
                     wo:add({"ot_rubberband", anchor1 = "rubberball_" .. j,
                         anchor2 = marbles[j], strength = 50})
                 end
@@ -958,7 +971,8 @@ end
 -- Syntax:
 --   create_sokoball(multilevel, sublevel_number, args)
 -- with
---   args = { design = DESIGNARG, maxdesign = MAXDESIGNNUMBER }
+--   args = { design = DESIGNARG, maxdesign = MAXARG, mindesign = MINARG,
+--            chessoban = CHESSOBANARG, actor = ACTORARG }
 --
 -- create_sokoball creates a sokoball-level from the string MULTILEVEL.
 -- This string can be a multilevel, in which case SUBLEVEL_NUMBER
@@ -968,30 +982,49 @@ end
 -- design entries. A missing entry will be interpreted as the entry
 -- from lib.soko_designlist.default. If the DESIGN variable is omitted,
 -- a check-number is created from the level which uniquely* determines
--- a design from the design list, with MAXDESIGNNUMBER as highest
--- possible design number. *Uniquely means: The design might change
--- when the design list is enlarged.
--- Returns width and height of new level.
+-- a design from the design list, a number between MINARG (default 1)
+-- and MAXARG (default depends on libsoko_designlist).
+-- *Uniquely means: The design might change when the design list is enlarged.
+-- If CHESSOBANARG is set to true (default is false), certain replacements
+-- will be applied to the given design to enable the use of st_chess
+-- instead of regular boxes. (The monolevel still needs to use "n" and/or
+-- "N" to position those st_chess.) If the string ACTORARG is given
+-- (default is "ac_marble"), it defines the kind of actor to be used
+-- instead of ac_marble. Note that there have to exist black and white
+-- variants (ACTORARG.."_black" and ACTORARG.."_white") as otherwise
+-- there would be no interaction with st_chess.
 --
 function lib.soko.create_sokoball(multilevel, sublevel_number, args)
     assert_type(multilevel, "lib.soko.create_sokoball first argument", 2, "non-empty string")
     assert_type(sublevel_number, "lib.soko.create_sokoball second argument", 2, "nil", "positive integer")
     assert_type(args, "lib.soko.create_sokoball third argument", 2, "table", "nil")
     local designarg = nil
-    local maxdesignnumber = nil
+    local maxdesign = nil
+    local mindesign = nil
     for key, entry in pairs(args or {}) do
         if key == "design" then
             assert_type(entry, "lib.soko.create_sokoball argument \"design\"", 2, "nil", "positive integer", "table")
             designarg = entry
         elseif key == "maxdesign" then
             assert_type(entry, "lib.soko.create_sokoball argument \"maxdesign\"", 2, "nil", "positive integer")
-            maxdesignnumber = entry
+            maxdesign = entry
+        elseif key == "mindesign" then
+            assert_type(entry, "lib.soko.create_sokoball argument \"mindesign\"", 2, "nil", "positive integer")
+            mindesign = entry or 1
+        elseif key == "chessoban" then
+            assert_type(entry, "lib.soko.create_sokoball argument \"chessoban\"", 2, "nil", "boolean")
+            if entry == true then   -- is_chessoban is false by default
+                lib.soko.is_chessoban = true
+            end
+        elseif key == "actor" then
+            assert_type(entry, "lib.soko.create_sokoball argument \"actor\"", 2, "nil", "string")
+            lib.soko.actor = entry or "ac_marble"
         else
             error("lib.soko: Unsupported argument " .. key .. " to create_sokoball.", 2)
         end
     end
     local small_map = lib.import.map_sokoban(multilevel, sublevel_number)
-    local design = lib.soko.design_from_description(small_map, designarg, maxdesignnumber)
+    local design = lib.soko.design_from_description(small_map, designarg, mindesign, maxdesign)
     -- Extend map to 20x13 if possible, throw an error if level exceeds
     -- MAX_HEIGHT. We add three additional rows, which are used to surround
     -- the level with "virtual" positions in lib.soko.area; these are set
@@ -1020,17 +1053,9 @@ function lib.soko.create_sokoball(multilevel, sublevel_number, args)
     wo["CrackSpreading"] = 0.0
     
     lib.soko.define_tiles(design)
-    
     wo(res.composer(lib.soko.resolver), "  ", map)
     lib.soko.setup_attributes_and_polists(map)
     lib.soko.prepare_endphase(map, design)
-    
-    -- If we have a chessoban, make sure all goals are it_trigger.
-    -- (Remember that st_shogun can press it_trigger as well.)
-    if #no["chess#*"] ~= 0 then
-        wo[lib.soko.polist.goal] = {"it_trigger", "trigger#",
-             target = "lib_soko_goal_trigger", safeaction = true}
-    end
     
     wo:add({"ot_counter", "goal_counter", safeaction = true,
             state = lib.soko.initially_completed_goals,

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no" ?>
+<el:level xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://enigma-game.org/schema/level/1 level.xsd"
+  xmlns:el="http://enigma-game.org/schema/level/1">
+  <el:protected >
+    <el:info el:type="level">
+      <el:identity el:title="Liger" 
+        el:subtitle="A Labyrinth by M. Liger"
+        el:id="20060717lab006"/>
+      <el:version el:score="1" el:release="1" el:revision="1" el:status="released"/>
+      <el:author  el:name="Ulf Stegemann" el:email="ulf-enigma@zeitform.de"
+        el:homepage="http://ulf.zeitform.de"/>
+      <el:copyright>Copyright © 2006 Ulf Stegemann</el:copyright>
+      <el:license el:type="GPL v2.0 or above" el:open="true"/>
+      <el:compatibility el:enigma="1.20"/>
+      <el:modes el:easy="true" el:single="true" el:network="false" el:control="force"
+        el:scoreunit="duration" el:scoretarget="time"/>
+      <el:comments>
+        <el:code>API 2 conversion by Andreas in September 2025</el:code>
+      </el:comments>
+      <el:score el:easy="00:30" el:difficult="00:42"/>
+    </el:info>
+    <el:luamain><![CDATA[
+
+-- GENERAL --
+wo["ConserveLevel"] = false
+wo["ProvideExtralifes"] = false
+wo["FollowGrid"] = false
+wo["FollowMethod"] = FOLLOW_SCROLL
+
+-- TILES --
+if not wo["IsDifficult"] then
+   ti["w"] = ti{"fl_water"} .. ti{"st_invisible"}
+   wo["SlopeStrength"] = 50
+else
+   ti["w"] = {"fl_water"}
+   wo["SlopeStrength"] = 5
+end
+
+ti[" "] = {"fl_lawn"}
+ti["s"] = {"fl_sand"}
+ti["X"] = {"st_oxyd_a"}
+ti["o"] = {"#ac_pearl_white"}
+
+ti["1"] = {"fl_slope_ps"}
+ti["2"] = {"fl_slope_pn"}
+ti["3"] = {"fl_slope_pe"}
+ti["4"] = {"fl_slope_pw"}
+ti["5"] = {"fl_slope_ose"}
+ti["6"] = {"fl_slope_osw"}
+ti["7"] = {"fl_slope_one"}
+ti["8"] = {"fl_slope_onw"}
+ti["9"] = {"fl_slope_ise"}
+ti["z"] = {"fl_slope_ine"}
+ti["e"] = {"fl_slope_isw"}
+ti["t"] = {"fl_slope_inw"}
+
+-- LANDSCAPE MAP --
+w, h = wo(ti, " ", {
+   "                                                            ",
+   "                                                            ",
+   "                                                            ",
+   "                                                            ",
+   "                                                            ",
+   "                                                            ",
+   "      ssssssssssssssssssssssssssssssssssssssssssssssss      ",
+   "      swwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwws      ",
+   "      sw51111111111111111116w51111111111111111111116ws      ",
+   "      sw3t2222222222222222z4w3t2222222222222222222z4ws      ",
+   "      sw34wwwwwwwwwwwwwwww34w34wwwwwwwwwwwwwwwwwww34ws      ",
+   "      sw34w51111111111116w34w34w51111111111111116w34ws      ",
+   "      sw34w3t2222222222z4w34w34w3t2222222222222z4w34ws      ",
+   "      sw34w34wwwwwwwwww34w34w34w34wwwwwwwwwwwww34w34ws      ",
+   "      sw34w34w51111116w34w34w34w3e111111111116w34w34ws      ",
+   "      sw34w34w3t2222z4w34w34w34w722222222222z4w34w34ws      ",
+   "      sw34w34w34wwww34w34w34w34wwwwwwwwwwwww34w34w34ws      ",
+   "      sw34w34w34w51194w34w34w3e111111111111194w34w34ws      ",
+   "      sw34w34w34w3t228w34w34w72222222222222228w34w34ws      ",
+   "      sw34w34w34w34wwww34w34wwwwwwwwwwwwwwwwwww34w34ws      ",
+   "      sw34w34w34w34w51194w3e111111111111111111194w34ws      ",
+   "      sw34w34w34w34w3t228w72222222222222222222228w34ws      ",
+   "      sw34w34w34w34w34wwwwwwwwwwwwwwwwwwwwwwwwwwww34ws      ",
+   "      sw34w34w34w34w34w51111111111111111111111116w34ws      ",
+   "      sw34w34w34w34w34w3t2222222222222222222222z4w34ws      ",
+   "      sw34w34w34w34w34w34wwwwwwwwwwwwwwwwwwwwww34w34ws      ",
+   "      sw34w3e194w34w34w34w51111111111111111116w34w34ws      ",
+   "      sw34w72228w34w34w34w3t2222222222222222z4w34w34ws      ",
+   "      sw34wwwwwww34w34w34w34wwwwwwwwwwwwwwww34w34w34ws      ",
+   "      sw3e111111194w34w34w34w51111111111111194w34w34ws      ",
+   "      sw72222222228wXXw34w34w3t222222222222228w34w34ws      ",
+   "      swwwwwwwwwwwwwwww34w34w34wwwwwwwwwwwwwwww34w34ws      ",
+   "      sw51111111111111194w34w34w51111111111111194w34ws      ",
+   "      sw3t222222222222228w34w34w3t222222222222228w34ws      ",
+   "      sw34wwwwwwwwwwwwwwww34w34w34wwwwwwwwwwwwwwww34ws      ",
+   "      sw3e111111111111111194w34w3e111111111111111194ws      ",
+   "      sw72222222222222222228w34w72222222222222222228ws      ",
+   "      swwwwwwwwwwwwwwwwwwwwww34wwwwwwwwwwwwwwwwwwwwwws      ",
+   "      ssssssssssssssssssssssssssssssssssssssssssssssss      ",
+   "                                                            ",
+   "                             o                              ",
+   "                                                            ",
+   "                                                            ",
+   "                                                            ",
+   "                                                            "
+})
+
+    ]]></el:luamain>
+    <el:i18n>
+      <el:string el:key="title">
+        <el:english el:translate="false"/>
+      </el:string>
+      <el:string el:key="subtitle">
+        <el:english el:translate="true"/>
+        <el:translation el:lang="de">Ein Labyrinth von M. Liger</el:translation>
+      </el:string>
+     </el:i18n>
+  </el:protected>
+</el:level>
