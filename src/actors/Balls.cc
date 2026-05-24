@@ -127,7 +127,7 @@ namespace enigma {
         // Shield, booze and invisibility can be activated in all states except DEAD
 
         if (state != DEAD) {
-            if (m.message == "_shield" && getAttr("owner").getType() != Value::DEFAULT &&  getAttr("owner") ==  (int)m.value) {
+            if (m.message == "_shield" && getAttr("owner") && getAttr("owner") == m.value.toInt()) {
                 m_shield_rest_time += SHIELD_TIME;
                 update_halo();
                 return true;
@@ -137,7 +137,7 @@ namespace enigma {
                 return true;
             }
             else if (m.message == "_booze") {
-                m_drunk_rest_time += (int)m.value; // Drunken for 5 more seconds
+                m_drunk_rest_time += m.value.toInt(); // Drunken for 5 more seconds
                 return true;
             }
         }
@@ -582,7 +582,7 @@ namespace enigma {
     }
 
     int Marble::traitsIdx() const {
-        return getAttr("color");
+        return getAttr("color").toInt();
     }
 
     ActorTraits Marble::traits[3] = {
@@ -612,7 +612,7 @@ namespace enigma {
     }
 
     int Pearl::traitsIdx() const {
-        return getAttr("color");
+        return getAttr("color").toInt();
     }
 
     ActorTraits Pearl::traits[3] = {

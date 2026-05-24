@@ -42,7 +42,7 @@ namespace enigma {
 void StoneImpulse::setAttr(const std::string& key, const Value &val) {
         if (key == "hollow") {
             if (!isDisplayable()) {
-                if (val.to_bool()) {
+                if (val.toBool()) {
                     objFlags |= OBJBIT_HOLLOW;
                     objFlags &= ~OBJBIT_MOVABLE;
                     objFlags &= ~OBJBIT_STEADY;
@@ -51,7 +51,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
             }
         } else if (key == "movable") {
             if (!isDisplayable()) {
-                if (val.to_bool()) {
+                if (val.toBool()) {
                     objFlags |= OBJBIT_MOVABLE;
                     objFlags &= ~OBJBIT_HOLLOW;
                 } else
@@ -59,7 +59,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
             }
         } else if (key == "steady") {
             if (!isDisplayable()) {
-                if (val.to_bool()) {
+                if (val.toBool()) {
                     objFlags |= OBJBIT_STEADY;
                     objFlags &= ~OBJBIT_HOLLOW;
                 } else
@@ -86,7 +86,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
     }
 
     Value StoneImpulse::message(const Message &m) {
-        if (m.message == "_trigger" && m.value.to_bool()) {
+        if (m.message == "_trigger" && m.value.toBool()) {
             Direction incoming = NODIR;
             if (m.sender != nullptr)
                 incoming = direction_fromto(dynamic_cast<GridObject *>(m.sender)->get_pos(), get_pos());
@@ -96,7 +96,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
             }
             setIState(EXPANDING, incoming);
             return Value();
-        } else if (m.message == "signal" && (to_double(m.value) != 0 ||
+        } else if (m.message == "signal" && (m.value.toDouble() != 0 ||
                 (server::EnigmaCompatibility < 1.10 /*&& m.value.getType() == Value::NIL*/))) { // hack for old trigger without value
             setIState(EXPANDING);
             return Value();
@@ -296,8 +296,8 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
 
     void StoneImpulse::propagateImpulse(const Impulse& impulse) {
         if (!impulse.byWire && impulse.dir != NODIR) {
-            ObjectList olist = getAttr("fellows");
-            int sourceId = getDefaultedAttr("$impulse_source", 0);
+            ObjectList olist = getAttr("fellows").toObjectList();
+            int sourceId = getDefaultedAttr("$impulse_source", 0).toInt();
             for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it) {
                 Stone *fellow = dynamic_cast<Stone *>(*it);
                 if (fellow != nullptr && fellow->getId() != sourceId) {

@@ -37,16 +37,16 @@ namespace enigma {
     
     void WormHole::setAttr(const std::string &key, const Value &val) {
         if (key == "range") {
-            double range = (val.getType() == Value::NIL) ? server::WormholeRange : (double)val;
+            double range = (val.getType() == Value::NIL) ? server::WormholeRange : val.toDouble();
             squareRange = range * range;
         } else if (key == "strength") {
-            correctedStrength = 0.6 * ((val.getType() == Value::NIL) ? server::WormholeForce : (double)val);
+            correctedStrength = 0.6 * ((val.getType() == Value::NIL) ? server::WormholeForce : val.toDouble());
         }
         Item::setAttr(key, val);
     }
     
     Value WormHole::message(const Message &m) {
-        if (m.message == "_updateglobals" && m.value.to_string() == "it_wormhole") {
+        if (m.message == "_updateglobals" && m.value.toString() == "it_wormhole") {
             if (getAttr("range").getType() == Value::DEFAULT) {
                 squareRange = server::WormholeRange * server::WormholeRange;
             }
@@ -110,14 +110,14 @@ namespace enigma {
             if (getDestinationByIndex(0, targetpos)) {
                 client::Msg_Sparkle(get_pos().center());
                 sound_event("warp");
-                double latency = getAttr("interval");
+                double latency = getAttr("interval").toDouble();
                 if (latency > 0) {
                     state |= 2;  // mark engaged
                     GameTimer.set_alarm(this, latency, false);
                     init_model();
                 }
                 state |= 4;  // mark warping
-                bool isScissor = to_bool(getAttr("scissor")) || server::GameCompatibility != GAMET_ENIGMA;
+                bool isScissor = getAttr("scissor").toBool() || server::GameCompatibility != GAMET_ENIGMA;
                 if (isScissor)
                     SendMessage(actor, "disconnect");
                 WarpActor(actor, targetpos[0], targetpos[1], false);

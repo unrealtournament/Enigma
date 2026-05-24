@@ -225,7 +225,7 @@ Inventory *player::GetInventory(int iplayer) {
 
 Inventory *player::GetInventory(Actor *a) {
     if (Value v = a->getAttr("owner"))
-        return GetInventory((int)v);
+        return GetInventory(v.toInt());
     return nullptr;
 }
 
@@ -381,10 +381,10 @@ void player::CheckDeadActors() {
         for (auto a : actors) {
             std::string essId;
             if (Value v = a->getAttr("essential_id"))
-                essId = v.to_string();
+                essId = v.toString();
             else
                 essId = a->get_traits().name;
-            int essential = a->getAttr("essential");
+            int essential = a->getAttr("essential").toInt();
             // count number of necessary actors per kind
             if (essential == 2)
                 --essMap[essId];
@@ -500,7 +500,7 @@ void player::InhibitPickup(bool flag) {
 Inventory *player::MayPickup(Actor *a, Item *it, bool allowFlying) {
     int iplayer = -1;
     if (Value v = a->getAttr("owner"))
-        iplayer = v;
+        iplayer = v.toInt();
     if (iplayer < 0 || (unsigned)iplayer >= players.size()) {
         return nullptr;
     }

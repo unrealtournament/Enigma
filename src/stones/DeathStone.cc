@@ -39,7 +39,7 @@ namespace enigma {
         
     void DeathStone::setAttr(const std::string& key, const Value &val) {
         if (key == "invisible") {
-            if (val.to_bool() != ((objFlags & OBJBIT_INVISIBLE) != 0)) {
+            if (val.toBool() != ((objFlags & OBJBIT_INVISIBLE) != 0)) {
                 // change of visibility
                 objFlags ^= OBJBIT_INVISIBLE;
                 if (isDisplayable())
@@ -49,7 +49,7 @@ namespace enigma {
                 objFlags &= ~OBJBIT_MOVABLE;    // there is no invisible movable death
         } else if (key == "movable") {
             GameTimer.remove_alarm(this);
-            if (val.to_bool()) {
+            if (val.toBool()) {
                 objFlags |= OBJBIT_MOVABLE;
                 if (objFlags & OBJBIT_INVISIBLE)  // there is no invisible movable death
                     objFlags &= ~OBJBIT_INVISIBLE;
@@ -80,7 +80,7 @@ namespace enigma {
             if (state == IDLE)   // avoid restart of animations
                 init_model();
             return Value();
-        } else if (m.message == "_trigger" && !m.value.to_bool() && (objFlags & OBJBIT_MOVABLE)) {
+        } else if (m.message == "_trigger" && !m.value.toBool() && (objFlags & OBJBIT_MOVABLE)) {
             Direction incoming = NODIR;
             if (m.sender != nullptr)
                 incoming = direction_fromto(dynamic_cast<GridObject *>(m.sender)->get_pos(), get_pos());
@@ -159,7 +159,7 @@ namespace enigma {
     }
 
     void DeathStone::setAlarm() {
-        double dt = (double)getAttr("interval");
+        double dt = getAttr("interval").toDouble();
         if (dt > 0) {
             dt *= DoubleRand(0.8, 1.2);
             GameTimer.set_alarm(this, dt, false);

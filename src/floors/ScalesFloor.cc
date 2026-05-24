@@ -39,7 +39,7 @@ namespace enigma {
         
     void ScalesFloor::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
-            std::string flavor = val.to_string();
+            std::string flavor = val.toString();
             ASSERT(flavor == "brick" || flavor == "bridgewood" || flavor == "concrete" || flavor == "darkgray" || flavor == "gray" || flavor == "platinum", XLevelRuntime, "ScalesFloor illegal flavor value");
             Floor::setAttr("flavor", val);
             Floor::setAttr("burnable", flavor == "bridgewood");
@@ -75,7 +75,7 @@ namespace enigma {
             updateIState();
         } else if (m.message == "_add_mass" ) {
             if (server::WorldInitialized) {
-                double mass = (double)getAttr("$mass") + (double)m.value;
+                double mass = getAttr("$mass").toDouble() + m.value.toDouble();
                 Floor::setAttr("$mass", mass);
                 updateIState();
             }
@@ -88,7 +88,7 @@ namespace enigma {
     }
     
     std::string ScalesFloor::getModelName() const {
-        return "fl_scales_" + getAttr("flavor").to_string() + ((state==ON) ? "_pressed" : "_released");
+        return "fl_scales_" + getAttr("flavor").toString() + ((state==ON) ? "_pressed" : "_released");
     }
     
     void ScalesFloor::on_creation(GridPos p) {
@@ -112,7 +112,7 @@ namespace enigma {
     }
     
     bool ScalesFloor::weightActors() {
-        double mass = getAttr("$mass");
+        double mass = getAttr("$mass").toDouble();
         std::vector<Actor *> actors;
         GetActorsInsideField(get_pos(), actors);
         for (std::vector<Actor *>::iterator itr = actors.begin(); itr != actors.end(); ++itr) {
@@ -120,7 +120,7 @@ namespace enigma {
                 mass += (*itr)->get_actorinfo()->mass;
             }
         }
-        return mass >= (double)getAttr("min");
+        return mass >= getAttr("min").toDouble();
     }
     
     void ScalesFloor::updateIState(bool refuseAction) {

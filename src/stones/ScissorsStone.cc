@@ -57,7 +57,7 @@ namespace enigma {
         sound_event("scissors");
         set_anim("st_scissors_snip");
         // Cut connections and (if successful) perform action-target pair.
-        if (SendMessage(sc.actor, "disconnect").to_bool())
+        if (SendMessage(sc.actor, "disconnect").toBool())
             performAction(true);
         // Break adjacent st_document
         for (int i = WEST; i <= NORTH; i++) {
@@ -66,7 +66,7 @@ namespace enigma {
             }
         }
         // Break fellow st_document
-        ObjectList olist = getAttr("fellows");
+        ObjectList olist = getAttr("fellows").toObjectList();
         for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it) {
             Stone *fellow = dynamic_cast<Stone *>(*it);
             if (fellow != nullptr)

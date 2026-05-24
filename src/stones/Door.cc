@@ -35,21 +35,21 @@ namespace enigma {
     void Door::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") { 
             Stone::setAttr(key, val);
-            if (val.to_string() != "d")
+            if (val.toString() != "d")
                 Stone::setAttr("faces", "nesw");
             if (isDisplayable() && state <= OPEN)
                 init_model();    // need to redisplay after attribute set
             return;
-        } else if (key == "faces" && getAttr("flavor").to_string() == "d") {
+        } else if (key == "faces" && getAttr("flavor").toString() == "d") {
             Stone::setAttr(key, val);
-            std::string faces = Stone::getAttr(key).to_string();
+            std::string faces = Stone::getAttr(key).toString();
             ASSERT(faces == "ns" || faces == "ew", XLevelRuntime, "Door type d supports only face 'ns' and 'ew'");
         }
         Stone::setAttr(key, val);
     }
     
     Value Door::message(const Message &m) {
-        if (m.message == "ignite" && getAttr("flavor").to_string() == "c" && server::GameCompatibility == GAMET_OXYD1) {
+        if (m.message == "ignite" && getAttr("flavor").toString() == "c" && server::GameCompatibility == GAMET_OXYD1) {
             if (isDisplayable())
                 KillStone(get_pos());  // TODO animation & sound
             return Value();
@@ -105,7 +105,7 @@ namespace enigma {
     }
     
     bool Door::allowsSpreading(Direction dir, bool isFlood) const {
-        return state != CLOSED || (dir != NODIR ? !has_dir(getFaces(), dir) : (getAttr("flavor").to_string() == "d"));
+        return state != CLOSED || (dir != NODIR ? !has_dir(getFaces(), dir) : (getAttr("flavor").toString() == "d"));
     }
     
     StoneResponse Door::collision_response(const StoneContact &sc) {
@@ -124,7 +124,7 @@ namespace enigma {
     }
     
     void Door::actor_hit(const StoneContact &sc) {
-        if ((getAttr("flavor").to_string() == "d") and (state == CLOSED)) {
+        if ((getAttr("flavor").toString() == "d") and (state == CLOSED)) {
             // door knocking
             Item *it = GetItem(get_pos());
             if (it != nullptr && server::GameCompatibility != GAMET_PEROXYD
@@ -136,7 +136,7 @@ namespace enigma {
     }
     
     const char *Door::collision_sound() { 
-        return (getAttr("flavor").to_string() == "d") ? "electric" : Stone::collision_sound(); 
+        return (getAttr("flavor").toString() == "d") ? "electric" : Stone::collision_sound(); 
     }
     
     FreezeStatusBits Door::get_freeze_bits() {
@@ -144,7 +144,7 @@ namespace enigma {
     }
     
     std::string Door::model_basename() {
-        std::string flavor = getAttr("flavor").to_string();
+        std::string flavor = getAttr("flavor").toString();
         if (flavor != "d")
             return std::string("st_door_") + flavor;
         else
@@ -168,14 +168,14 @@ namespace enigma {
                     MaybeRecalcLight(get_pos()); // maybe superfluous
                     break;
                 case OPENING:
-                    sound_event((getAttr("flavor").to_string() == "d") ? "dooropen" : "");
+                    sound_event((getAttr("flavor").toString() == "d") ? "dooropen" : "");
                     if (state == CLOSING)
                         get_model()->reverse();
                     else
                         set_anim(basename+"_opening");
                     break;
                 case CLOSING:
-                    sound_event((getAttr("flavor").to_string() == "d") ? "doorclose" : "");
+                    sound_event((getAttr("flavor").toString() == "d") ? "doorclose" : "");
                     if (state == OPENING)
                         get_model()->reverse();
                     else

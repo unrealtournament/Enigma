@@ -87,7 +87,7 @@ namespace enigma {
     unsigned short OxydStone::groupId(Value v) {
         ASSERT(levelOxyds.size() < 32, XLevelRuntime, "Oxyd shuffle rule - error more than 32 oxyds");
         
-        ObjectList objects = v;
+        ObjectList objects = v.toObjectList();
         uint32_t groupOxydMask = 0;
         unsigned count = 0;
         for (ObjectList::iterator i = objects.begin(); i != objects.end(); ++i) {
@@ -124,8 +124,8 @@ namespace enigma {
         size_t  isize = levelOxyds.size();
         // count color usage
         for (size_t i=0; i<isize; ++i) {
-            int color = levelOxyds[i]->getAttr("oxydcolor");
-            bool declineShuffle = to_bool(levelOxyds[i]->getAttr("noshuffle"));
+            int color = levelOxyds[i]->getAttr("oxydcolor").toInt();
+            bool declineShuffle = levelOxyds[i]->getAttr("noshuffle").toBool();
             if (color >= 0 && color < numColors) {
                 colorsUsageCount[color]++;
                 if (declineShuffle) colorsUsageCountNoShuffle[color]++;
@@ -223,7 +223,7 @@ namespace enigma {
         size_t  isize = levelOxyds.size();
         for (size_t i=0; i<isize; ++i) {
             OxydStone *candidate = levelOxyds[i];
-            if (candidate->state == CLOSED && !to_bool(candidate->getAttr("noshuffle"))) {
+            if (candidate->state == CLOSED && !candidate->getAttr("noshuffle").toBool()) {
                 closedOxyds.push_back(i);
             }
         }
@@ -268,9 +268,10 @@ namespace enigma {
             uint32_t noshufflePseudoMask = 0; 
             for (int i = 0; i < numOxyds; i++) {
                 OxydStone *candidate = levelOxyds[i];
-                if ((int)candidate->getAttr("oxydcolor") < AUTO && 
-                        to_bool(candidate->getAttr("noshuffle")))
+                if (candidate->getAttr("oxydcolor").toInt() < AUTO &&
+                        candidate->getAttr("noshuffle").toBool()) {
                     noshufflePseudoMask |= 1 << i;
+                }
             }
             
             // evaluate all group members that are shared with another group
@@ -313,7 +314,7 @@ namespace enigma {
         uint32_t notClosedPseudoMask = 0; 
         for (int i = 0; i < numOxyds; i++) {
             OxydStone *candidate = levelOxyds[i];
-            if ((int)candidate->getAttr("oxydcolor") < AUTO && candidate->state != CLOSED)
+            if (candidate->getAttr("oxydcolor").toInt() < AUTO && candidate->state != CLOSED)
                 notClosedPseudoMask |= 1 << i;
         }
         second.freeOxydsMask &= ~notClosedPseudoMask;
@@ -358,10 +359,11 @@ namespace enigma {
             if (top.selOxyd2Mask != 0) {
                 OxydStone *o1 = levelOxyds[oxydId(top.selOxyd1Mask)];
                 OxydStone *o2 = levelOxyds[oxydId(top.selOxyd2Mask)];
-                if ((to_bool(o1->getAttr("noshuffle")) || o1->state != CLOSED) &&
-                        (to_bool(o2->getAttr("noshuffle")) || o2->state != CLOSED) &&
-                        (int)(o1->getAttr("oxydcolor")) >= 0 &&  (int)(o2->getAttr("oxydcolor")) >= 0 &&
-                        (int)o1->getAttr("oxydcolor") != (int)o2->getAttr("oxydcolor")) {
+                if ((o1->getAttr("noshuffle").toBool() || o1->state != CLOSED)
+                    && (o2->getAttr("noshuffle").toBool() || o2->state != CLOSED)
+                    && (o1->getAttr("oxydcolor").toInt()) >= 0
+                    && o2->getAttr("oxydcolor").toInt() >= 0
+                    && o1->getAttr("oxydcolor").toInt() != o2->getAttr("oxydcolor").toInt()) {
                     logBadFrameCount++;
                     return 0;
                 }
@@ -526,7 +528,7 @@ namespace enigma {
         // opened oxyd pairs first
         for (;next.openedOxydIndex < numOxyds; next.openedOxydIndex++) {
             if (levelOxyds[next.openedOxydIndex]->state == OPEN_PAIR) {
-                int c = levelOxyds[next.openedOxydIndex]->getAttr("oxydcolor");
+                int c = levelOxyds[next.openedOxydIndex]->getAttr("oxydcolor").toInt();
                 for (int i = next.openedOxydIndex+1; i < numOxyds; i++) {
                     if (levelOxyds[i]->getAttr("oxydcolor") == c) {
                         next.selOxyd1Mask = 1 << next.openedOxydIndex;
@@ -545,14 +547,14 @@ namespace enigma {
         // it is essential to select known pairs first
         for (;next.fixedcolorOxydIndex < numOxyds; next.fixedcolorOxydIndex++) {
             OxydStone *candidate1 = levelOxyds[next.fixedcolorOxydIndex];
-            int color1 = candidate1->getAttr("oxydcolor");
-            if ((int)candidate1->getAttr("oxydcolor") > AUTO && (
-                    to_bool(candidate1->getAttr("noshuffle")) || candidate1->state == OPENING ||
-                    candidate1->state == CLOSING || candidate1->state == OPEN_SINGLE )) {
+            int color1 = candidate1->getAttr("oxydcolor").toInt();
+            if (candidate1->getAttr("oxydcolor").toInt() > AUTO
+                && (candidate1->getAttr("noshuffle").toBool() || candidate1->state == OPENING
+                    || candidate1->state == CLOSING || candidate1->state == OPEN_SINGLE)) {
                 for (int i = next.fixedcolorOxydIndex+1; i < numOxyds; i++) {
                     OxydStone *candidate2 = levelOxyds[i];
                     if (candidate2->getAttr("oxydcolor") == color1 && (
-                            to_bool(candidate2->getAttr("noshuffle")) || candidate2->state == OPENING ||
+                            candidate2->getAttr("noshuffle").toBool() || candidate2->state == OPENING ||
                             candidate2->state == CLOSING || candidate2->state == OPEN_SINGLE)) {
                         next.selOxyd1Mask = 1 << next.fixedcolorOxydIndex;
                         next.selOxyd2Mask = 1 << i;
@@ -572,8 +574,7 @@ namespace enigma {
         // fast handling of oxyd pairs mandatory due to min rules 
         // bypass on existing noshuffles, bypass on COUNT & ALL solutions
         if (logFlag < COUNT && !oddUnshuffledColor) {
-            for (std::list<Rule>::iterator itr = singleRulesMin.begin();
-                    itr != singleRulesMin.end(); ++itr) {
+            for (auto itr = singleRulesMin.begin(); itr != singleRulesMin.end(); ++itr) {
                 // rule not yet fulfilled and group is disjoint in remaining members to all other groups 
                 if ((top.rulesLimit[(*itr).ruleId] > 0) && 
                         ((groupsSharedMembers[(*itr).groupId1] & top.freeOxydsMask) == 0)) {
@@ -643,9 +644,10 @@ namespace enigma {
         // check that minFreeOxydId is not a noshuffle standard oxyd that can not
         // be recolored to a pseudo!
         OxydStone *pseudocandidate = levelOxyds[minFreeOxydId];
-        if (next.freePseudoCount > 0 && ((int)pseudocandidate->getAttr("oxydcolor") < AUTO || 
-                (!(to_bool(pseudocandidate->getAttr("noshuffle"))) &&
-                pseudocandidate->state == CLOSED))) {
+        if (next.freePseudoCount > 0
+                && (pseudocandidate->getAttr("oxydcolor").toInt() < AUTO
+                        || (!pseudocandidate->getAttr("noshuffle").toBool()
+                                && pseudocandidate->state == CLOSED))) {
             next.selOxyd1Mask = 1 << minFreeOxydId;
             next.selOxyd2Mask = 0;
             shuffleStack.push_back(next);    // add copy of next frame
@@ -696,21 +698,21 @@ namespace enigma {
                     OxydStone *oxyd2 = levelOxyds[oxydId((*itr).selOxyd2Mask)];
                     int c = AUTO;
                     if (oxyd1->state == OPEN_PAIR) {
-                        // a pair of opened oxyds - we need not to recolor
+                        // a pair of opened oxyds - we don't need to recolor,
                         // but we need to register the used color
-                        c = oxyd1->getAttr("oxydcolor");
+                        c = oxyd1->getAttr("oxydcolor").toInt();
                         colorsRemainCount[c] -= 2;                        
                         (*itr).isColored = true;
                     }
-                    else if (to_bool(oxyd1->getAttr("noshuffle")) || oxyd1->state != CLOSED) {
+                    else if (oxyd1->getAttr("noshuffle").toBool() || oxyd1->state != CLOSED) {
                         // a standard oxyd (pseudo is impossible) that requires a color
-                        c = oxyd1->getAttr("oxydcolor");
+                        c = oxyd1->getAttr("oxydcolor").toInt();
                         oxyd2->setAttr("oxydcolor", c);
                         colorsRemainCount[c] -= 2;
                         (*itr).isColored = true;
                     }
-                    else if (to_bool(oxyd2->getAttr("noshuffle")) || oxyd2->state != CLOSED) {
-                        c = oxyd2->getAttr("oxydcolor");
+                    else if (oxyd2->getAttr("noshuffle").toBool() || oxyd2->state != CLOSED) {
+                        c = oxyd2->getAttr("oxydcolor").toInt();
                         oxyd1->setAttr("oxydcolor", c);
                         colorsRemainCount[c] -= 2;
                         (*itr).isColored = true;
@@ -881,7 +883,7 @@ namespace enigma {
         } else if (m.message == "shuffle") {
             shuffleColors();
             return Value();
-        } else if ((m.message == "_trigger"  && m.value.to_bool()) || m.message == "_cannonball") {
+        } else if ((m.message == "_trigger"  && m.value.toBool()) || m.message == "_cannonball") {
             tryOpen();   // just internal messages on displayable oxyds
             return Value();
         } else if (m.message == "_init") {
@@ -894,8 +896,8 @@ namespace enigma {
                 objFlags &= ~OBJBIT_CLOSED;
             } else if (objFlags & OBJBIT_OPENPAIR) {
                 state = OPEN_PAIR;
-                std::string flavor(getAttr("flavor"));
-                int color(getDefaultedAttr("oxydcolor", 0));
+                std::string flavor = getAttr("flavor").toString();
+                int color = getDefaultedAttr("oxydcolor", 0).toInt();
                 set_model(ecl::strf("st_oxyd%s%d_open", flavor.c_str(), color));
                 objFlags &= ~OBJBIT_OPENPAIR;
             }
@@ -964,7 +966,7 @@ namespace enigma {
     }
     
     bool OxydStone::is_removable() const {
-        return !getAttr("static").to_bool();
+        return !getAttr("static").toBool();
     }
     
     void OxydStone::animcb() {
@@ -1000,8 +1002,8 @@ namespace enigma {
     }
     
     void OxydStone::setClosedModel(bool isInitial) {
-        std::string flavor(getDefaultedAttr("flavor", "a"));
-        int c = getAttr("oxydcolor");
+        std::string flavor = getDefaultedAttr("flavor", "a").toString();
+        int c = getAttr("oxydcolor").toInt();
         if (flavor == "e" && !isInitial && (int)c != FAKE)
             set_model(ecl::strf("st_oxyd%s%d", flavor.c_str(), c));
         else
@@ -1017,7 +1019,7 @@ namespace enigma {
         
         // check for a blocking pseudo
         for (InstanceVector::iterator itr = levelOxyds.begin(); itr != levelOxyds.end(); ++itr) {
-            if ((*itr)->state != CLOSED && (int)((*itr)->getAttr("oxydcolor")) < AUTO) {
+            if ((*itr)->state != CLOSED && (*itr)->getAttr("oxydcolor").toInt() < AUTO) {
                 // a pseudo is blocking any opening of other oxyds
                 // this is necessary as the bold reshuffle can take place only after
                 // finishing its closing animation!
@@ -1030,7 +1032,7 @@ namespace enigma {
             }
         }
         
-        int mycolor = getAttr("oxydcolor");    
+        int mycolor = getAttr("oxydcolor").toInt();
         if ((int)mycolor < AUTO) {
             // pseudo open
             if (isSingleOpened) {
@@ -1075,7 +1077,7 @@ namespace enigma {
     
     void OxydStone::closeAllStandardOxyds() {
         for (unsigned i=0; i<levelOxyds.size(); ++i)
-            if ((int)(levelOxyds[i]->getAttr("oxydcolor")) >= AUTO) {
+            if (levelOxyds[i]->getAttr("oxydcolor").toInt() >= AUTO) {
                     levelOxyds[i]->set_iState(CLOSING);
             }
     }
@@ -1097,8 +1099,8 @@ namespace enigma {
             return;
         }
         
-        std::string flavor(getDefaultedAttr("flavor","a"));
-        std::string color = ecl::strf("%d", (int)getDefaultedAttr("oxydcolor", 0));
+        std::string flavor = getDefaultedAttr("flavor","a").toString();
+        std::string color = ecl::strf("%d", getDefaultedAttr("oxydcolor", 0).toInt());
     
         std::string basemodelname = std::string("st_oxyd") + flavor;
         std::string modelname = basemodelname + color;
@@ -1112,7 +1114,7 @@ namespace enigma {
     
         switch (newState) {
             case CLOSED:
-                if ((int)getAttr("oxydcolor") == BOLD) {
+                if (getAttr("oxydcolor").toInt() == BOLD) {
                     shuffleColors();    // shuffle all closed oxyds including itself
                     didShuffle = true;
                 }
@@ -1120,13 +1122,13 @@ namespace enigma {
                 break;
         
             case OPEN_SINGLE:
-                if ((int)getAttr("oxydcolor") <= QUAKE) {
+                if (getAttr("oxydcolor").toInt() <= QUAKE) {
                     set_anim(basemodelname + "_pseudo" + color);
-                    if ((int)getAttr("oxydcolor") == QUAKE) {
+                    if (getAttr("oxydcolor").toInt() == QUAKE) {
                         closeAllStandardOxyds();
                         didQuake = true;
                         sound_event("quake");
-                    } else if ((int)getAttr("oxydcolor") == BOLD) {
+                    } else if (getAttr("oxydcolor").toInt() == BOLD) {
                         sound_event("shuffle");
                     }
                 } else
@@ -1176,18 +1178,18 @@ namespace enigma {
                 break;
         }
         // perform action and transformations
-        if (((int)getAttr("oxydcolor") > AUTO && oldExtState != externalState() && oldExtState == 0) // just one action on pair opening
+        if ((getAttr("oxydcolor").toInt() > AUTO && oldExtState != externalState() && oldExtState == 0) // just one action on pair opening
                 || didShuffle || didQuake) {
             performAction(externalState() != 0);
-        } else if ((int)getAttr("oxydcolor") > AUTO && oldExtState == 2 && oldExtState == externalState()) {
+        } else if (getAttr("oxydcolor").toInt() > AUTO && oldExtState == 2 && oldExtState == externalState()) {
             // transformations after pair opening finished
-            if (Value v = getAttr("selection")) {
-                TokenList tl = v;
+            if (Value v = getAttr("selection"); !v.isDefault()) {
+                TokenList tl = v.toTokenList();
                 ASSERT(tl.size() > 0 && tl.size() <= 2 , XLevelRuntime,"Oxyd stone with illegal 'selection' attribute");
                 sound_event("stonetransform");
-                std::string firstname = tl.front().to_string();
-                std::string lastname = tl.back().to_string();
-                GridObject *pairedoxyd = dynamic_cast<GridObject *>(getObject(getAttr("$pairid")));
+                std::string firstname = tl.front().toString();
+                std::string lastname = tl.back().toString();
+                GridObject *pairedoxyd = dynamic_cast<GridObject *>(getObject(getAttr("$pairid").toInt()));
                 if (pairedoxyd != nullptr) {
                     if (firstname.find('=') == 0) {
                         if (lua::CallFunc(lua::LevelState(), "enigma.settile", firstname.substr(1), pairedoxyd)) {

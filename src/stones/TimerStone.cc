@@ -66,7 +66,7 @@ namespace enigma {
     }
     
     void TimerStone::init_model() {
-        if (getAttr("invisible").to_bool()) {
+        if (getAttr("invisible").toBool()) {
             set_model("invisible");
         } else {
             set_model(state == OFF ? "st_timeroff" : "st_timer");
@@ -81,7 +81,7 @@ namespace enigma {
     void TimerStone::alarm() {
         bool actionValue = (state == ON_TRUE);
         state ^= 1;   // toggle between ON_TRUE and ON_FALSE
-        if(!getAttr("loop").to_bool()) {
+        if(!getAttr("loop").toBool()) {
             setState(OFF);
             if (isDisplayable())
                 init_model();
@@ -92,7 +92,7 @@ namespace enigma {
     void TimerStone::updateAlarm() {
         if (state == ON) {
             state = ON_TRUE;
-            GameTimer.set_alarm(this, (double)getAttr("interval"), getAttr("loop").to_bool());
+            GameTimer.set_alarm(this, getAttr("interval").toDouble(), getAttr("loop").toBool());
         }
     }
 

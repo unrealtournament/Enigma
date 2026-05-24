@@ -62,7 +62,7 @@ namespace enigma {
             for (std::vector<Item *>::iterator itr = contents.begin(); itr != contents.end(); ++itr) {
                 Value v = (*itr)->getAttr("mass");
                 if (v.getType() == Value::DOUBLE)
-                    mass += (double)v; 
+                    mass += v.toDouble();
             }
             return mass;
         } else
@@ -130,7 +130,7 @@ namespace enigma {
         if (getOwner().getType() == Value::NIL)
             it->setOwnerPos(get_pos());  // item is at same position as bag
         else
-            it->setOwner(getOwner());
+            it->setOwner(getOwner().toInt());
     }
 
     bool BagItem::is_empty() const {

@@ -29,12 +29,17 @@ namespace enigma {
     
     Value FourSwitch::message(const Message &m) {
         if (m.message == "signal") {
-            if ((((int)(m.value)) % 2 == 1) || (server::GameCompatibility == enigma::GAMET_ENIGMA
-                    && (server::EnigmaCompatibility < 1.10))) // Enigma 1.00 did turn on 0, too
+            if (m.value.toInt() % 2 == 1
+                    || (server::GameCompatibility == enigma::GAMET_ENIGMA
+                            && server::EnigmaCompatibility < 1.10))
+                // Enigma 1.00 did turn on 0, too
+            {
                 turn();
+            }
             return Value();
-        } else if (m.message == "_trigger") {
-            if (m.value.to_bool() == false)
+        }
+        if (m.message == "_trigger") {
+            if (m.value.toBool() == false)
                 turn();
             return Value();
         }
@@ -43,7 +48,7 @@ namespace enigma {
     
     Value FourSwitch::invertActionValue(const Value &val) const {
         if (val.getType() == Value::DOUBLE) {
-            return 3 - (int)val;     // invert direction for Enigma 1.00 like signal values
+            return 3 - val.toInt();     // invert direction for Enigma 1.00 like signal values
         }
         return Stone::invertActionValue(val);
     }
@@ -77,7 +82,7 @@ namespace enigma {
         if (num == 0)   // do not perform actions if not turning at all - may occur on set state
             return;
         
-        bool isGlobalTarget = getAttr("target");   // destinguish state dependent target_0,... 
+        bool isGlobalTarget = getAttr("target").toBool();   // destinguish state dependent target_0,...
         
         if (isDisplayable()) {
             if (!m_inactive_so_far && !isGlobalTarget) {
@@ -86,7 +91,7 @@ namespace enigma {
                 m_inactive_so_far = false;
         }
 
-        bool clockwise = !(getDefaultedAttr("counterclock", false).to_bool());
+        bool clockwise = !(getDefaultedAttr("counterclock", false).toBool());
         for (int i = 0; i < num; i++)
             if (clockwise || fixedClockwise)
                 state = rotate_cw((Direction)state);

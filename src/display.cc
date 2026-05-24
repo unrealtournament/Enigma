@@ -1731,29 +1731,29 @@ void GameDisplay::set_follow_mode(FollowMode m) {
 }
 
 void GameDisplay::updateFollowMode() {
-    if (!server::FollowGrid)
+    if (!server::FollowGrid) {
         set_follower(new Follower_Smooth(get_engine()));
-    else if (server::FollowMethod == FOLLOW_NONE)
+    } else if (server::FollowMethod == FOLLOW_NONE) {
         set_follower(nullptr);
-    else if (server::FollowMethod == FOLLOW_FLIP) {
-        if (server::FollowThreshold.getType() == Value::DOUBLE)
-            set_follower(new Follower_Screen(get_engine(), (double)server::FollowThreshold,
-                                             (double)server::FollowThreshold));
-        else
-            set_follower(new Follower_Screen(get_engine(), ecl::V2(server::FollowThreshold)[0],
-                                             ecl::V2(server::FollowThreshold)[1]));
-    } else if ((server::FollowThreshold.getType() == Value::DOUBLE) &&
-               ((double)server::FollowThreshold == 0.5) &&
-               (server::FollowAction == Value(ecl::V2(9.5, 6))))
+    } else if (server::FollowMethod == FOLLOW_FLIP) {
+        if (server::FollowThreshold.getType() == Value::DOUBLE) {
+            set_follower(new Follower_Screen(get_engine(), server::FollowThreshold.toDouble(),
+                    server::FollowThreshold.toDouble()));
+        } else {
+            set_follower(new Follower_Screen(get_engine(), server::FollowThreshold.toVec()[0],
+                    server::FollowThreshold.toVec()[1]));
+        }
+    } else if (server::FollowThreshold.getType() == Value::DOUBLE
+            && server::FollowThreshold.toDouble() == 0.5
+            && server::FollowAction == Value(ecl::V2(9.5, 6))) {
         set_follower(new Follower_Scrolling(get_engine(), false));
-    else {
-        if (server::FollowThreshold.getType() == Value::DOUBLE)
-            set_follower(new Follower_Scrolling(get_engine(), true, (double)server::FollowThreshold,
-                                                (double)server::FollowThreshold));
-        else
-            set_follower(new Follower_Scrolling(get_engine(), true,
-                                                ecl::V2(server::FollowThreshold)[0],
-                                                ecl::V2(server::FollowThreshold)[1]));
+    } else if (server::FollowThreshold.getType() == Value::DOUBLE) {
+        set_follower(new Follower_Scrolling(get_engine(), true, server::FollowThreshold.toDouble(),
+                server::FollowThreshold.toDouble()));
+    } else {
+        set_follower(new Follower_Scrolling(get_engine(), true,
+                ecl::V2(server::FollowThreshold.toVec())[0],
+                ecl::V2(server::FollowThreshold.toVec())[1]));
     }
     get_engine()->mark_redraw_screen();
 }

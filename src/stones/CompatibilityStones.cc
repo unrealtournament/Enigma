@@ -32,9 +32,7 @@ namespace enigma {
     }
     
     void DongleStone::actor_hit(const StoneContact &sc) {
-        if (sc.actor->getAttr("owner") && 
-            sc.actor->get_vel() * sc.normal < -4)
-        {
+        if (sc.actor->getAttr("owner") && sc.actor->get_vel() * sc.normal < -4) {
             KillStone(get_pos());
             client::Msg_ShowText("We don't sell books..", false, 2.0);
         }
@@ -54,7 +52,7 @@ namespace enigma {
     
     StoneResponse DummyStone::collision_response(const StoneContact &/*sc*/) {
         static int lastCode = -1;
-        int        code     = getAttr("code");
+        int        code     = getAttr("code").toInt();
         if (code != lastCode) {
             Log << ecl::strf("Collision with stone 0x%02x\n", code);
             lastCode = code;

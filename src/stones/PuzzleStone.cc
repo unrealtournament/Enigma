@@ -44,7 +44,7 @@ namespace enigma {
 
     void PuzzleStone::setAttr(const std::string& key, const Value &val) {
         if (key == "hollow") {
-            if (val.to_bool() != (bool)(objFlags & OBJBIT_HOLLOW)) {
+            if (val.toBool() != (bool)(objFlags & OBJBIT_HOLLOW)) {
                 objFlags ^= OBJBIT_HOLLOW;
             }
             return;
@@ -74,7 +74,7 @@ namespace enigma {
 
             Direction dir = to_direction(m.value);
             PuzzleList c;
-            int size = findLine(c, dir, (int)getAttr("color"));
+            int size = findLine(c, dir, getAttr("color").toInt());
 
             // warning("received 'scramble'. dir=%s size=%i", to_suffix(dir).c_str(), size);
 
@@ -158,7 +158,7 @@ namespace enigma {
                 if (p == get_pos() && (addDirs & NORTHBIT)) rotateLine(NORTH);
                 if (p == get_pos() && (addDirs & EASTBIT))  rotateLine(EAST);
                 
-                if (p != get_pos() && GetStone(p)->getAttr("hollow").to_bool()) {
+                if (p != get_pos() && GetStone(p)->getAttr("hollow").toBool()) {
                     // we are still enlighted via hollow successor
                     objFlags |= to_bits(direction_fromto(p, get_pos()));
                 }
@@ -284,13 +284,13 @@ namespace enigma {
                     throw XLevelRuntime(std::string("fallen puzzle set tile failed:\n")+lua::LastError(lua::LevelState()));
                 }
             } else if (server::FallenPuzzle == "it_strip" || server::FallenPuzzle == "it_pipe") {
-                std::string con = getAttr("connections").to_string();
+                std::string con = getAttr("connections").toString();
                 if (Item * it = GetItem(p)) {
                     if (it->getClass() == server::FallenPuzzle) {
                         if (server::FallenPuzzle == "it_strip")
-                            con += it->getAttr("connections").to_string();
+                            con += it->getAttr("connections").toString();
                         else  // pipe - keep old connections
-                            con = it->getAttr("connections").to_string();                        
+                            con = it->getAttr("connections").toString();                        
                     }
                 }
                 Item *it = MakeItem(server::FallenPuzzle.c_str());
@@ -348,7 +348,7 @@ namespace enigma {
         PuzzleList todo;
         todo.push_back(this);
         markPuzzle(true);
-        int color = getAttr("color");
+        int color = getAttr("color").toInt();
 
         while (!todo.empty()) {
             PuzzleStone *pz = todo.back();
@@ -386,7 +386,7 @@ namespace enigma {
         PuzzleList todo;
         todo.push_back(this);
         markPuzzle(true);
-        int color = getAttr("color");
+        int color = getAttr("color").toInt();
 
         while (!todo.empty()) {
             PuzzleStone *pz = todo.back();
@@ -548,7 +548,7 @@ namespace enigma {
 
     void PuzzleStone::explodeStone() {
         GridPos p = get_pos();
-        int color = getAttr("color");
+        int color = getAttr("color").toInt();
 
         // exchange puzzle stone with explosion
         sound_event("stonedestroy");
@@ -607,7 +607,7 @@ namespace enigma {
     void PuzzleStone::rotateLine(Direction dir, bool forward) {
         if (dir != NODIR) {
             PuzzleList line;
-            int size = findLine(line, dir, (int)getAttr("color"));
+            int size = findLine(line, dir, getAttr("color").toInt());
             if (size >= 2) {
                 rotateLine(line, forward);
             }

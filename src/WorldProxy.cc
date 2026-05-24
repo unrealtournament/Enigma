@@ -146,28 +146,28 @@ namespace enigma {
 
     void WorldProxy::setAttr(const std::string &key, const Value &val) {
         if (key == "AddSecondsToScore") {
-            if ((int)(val) > 32000)
+            if (val.toInt() > 32000)
                 server::AddSecondsToScore = 32000;
-            else if ((int)(val) < -32000)
+            else if (val.toInt() < -32000)
                 server::AddSecondsToScore = -32000;
             else
-                server::AddSecondsToScore = (int)(val);
+                server::AddSecondsToScore = val.toInt();
         } else if (key == "AllowSingleOxyds") {
-            server::AllowSingleOxyds = val.to_bool();
+            server::AllowSingleOxyds = val.toBool();
         } else if (key == "AllowSuicide") {
-            server::AllowSuicide = val.to_bool();
+            server::AllowSuicide = val.toBool();
         } else if (key == "AutoRespawn") {
-            server::AutoRespawn = val.to_bool();
+            server::AutoRespawn = val.toBool();
         } else if (key == "TogglePlayerOnDeath") {
-            server::AllowTogglePlayer = val.to_bool();
+            server::AllowTogglePlayer = val.toBool();
         } else if (key == "ConserveLevel") {
-            server::ConserveLevel = val.to_bool();
+            server::ConserveLevel = val.toBool();
         } else if (key == "FollowAction") {
             server::FollowAction = val;
             display::UpdateFollowMode();
         } else if (key == "FollowGrid") {
             bool wasGrid = server::FollowGrid;
-            server::FollowGrid = val.to_bool();
+            server::FollowGrid = val.toBool();
             if (wasGrid && !server::FollowGrid) {
                 server::FollowMethod = display::FOLLOW_SCROLL;
                 server::FollowThreshold = 0;
@@ -179,7 +179,7 @@ namespace enigma {
             display::UpdateFollowMode();
         } else if (key == "FollowMethod") {
             int oldMethod = server::FollowMethod;
-            server::FollowMethod = val;
+            server::FollowMethod = val.toInt();
             if ( oldMethod != server::FollowMethod) {
                 if (server::FollowMethod == display::FOLLOW_FLIP) {
                     server::FollowThreshold = 0.5;
@@ -195,78 +195,78 @@ namespace enigma {
             server::FollowThreshold = val;
             display::UpdateFollowMode();
         } else if (key == "ProvideExtralifes") {
-            bool newFlag = val.to_bool();
+            bool newFlag = val.toBool();
             ASSERT(server::ProvideExtralifes || !newFlag, XLevelRuntime, 
                 "Attribute 'ProvideExtralifes': toggling from false to true not allowed");
             server::ProvideExtralifes = newFlag;
         } else if (key == "InfiniteReincarnation") {
-            server::InfiniteReincarnation = val.to_bool();            
+            server::InfiniteReincarnation = val.toBool();
         } else if (key == "ShowMoves") {
-            server::ShowMoves = val.to_bool();
+            server::ShowMoves = val.toBool();
             display::GetStatusBar()->show_move_counter (server::ShowMoves);
         } else if (key == "SublevelTitle") {
-            server::SublevelTitle = val.to_string();
+            server::SublevelTitle = val.toString();
         } else if (key == "SurviveFinish") {
-            server::SurviveFinish = val.to_bool();
+            server::SurviveFinish = val.toBool();
         } else if (key == "CrackSpreading") {
-            server::CrackSpreading = val;
+            server::CrackSpreading = val.toDouble();
         } else if (key == "ActorimpulseStrength") {
-            server::BumperForce = val;
+            server::BumperForce = val.toDouble();
         } else if (key == "ElectricStrength") {
-            server::ElectricForce = val;
+            server::ElectricForce = val.toDouble();
         } else if (key == "ExtralifeGlasses") {
-            server::ExtralifeGlasses = val;
+            server::ExtralifeGlasses = val.toInt();
         } else if (key == "FallenPuzzle") {
-            server::FallenPuzzle = val.to_string();
+            server::FallenPuzzle = val.toString();
         } else if (key == "Fragility") {
-            server::Fragility = val;
+            server::Fragility = val.toDouble();
         } else if (key == "FrictionStrength") {
-            server::FrictionFactor = val;
+            server::FrictionFactor = val.toDouble();
         } else if (key == "GlobalForce") {
-            server::ConstantForce = val;
+            server::ConstantForce = val.toVec();
         } else if (key == "MeditationStrength") {
-            server::HoleForce = val;
+            server::HoleForce = val.toDouble();
         } else if (key == "MagnetStrength") {
-            server::MagnetForce = val;
+            server::MagnetForce = val.toDouble();
             BroadcastMessage("_updateglobals", "it_magnet", GRID_ITEMS_BIT);
         } else if (key == "MagnetRange") {
-            server::MagnetRange = val;
+            server::MagnetRange = val.toDouble();
             BroadcastMessage("_updateglobals", "it_magnet", GRID_ITEMS_BIT);
         } else if (key == "MaxOxydColor") {
-            server::MaxOxydColor = val;
+            server::MaxOxydColor = val.toInt();
             ASSERT(server::MaxOxydColor >= 0 && server::MaxOxydColor < OxydStone::COLORCOUNT, XLevelRuntime,
                     "Attribute 'MaxOxydColor' value is out of range.");
         } else if (key == "RubberViolationStrength") {
-            server::RubberViolationStrength = val;
+            server::RubberViolationStrength = val.toDouble();
         } else if (key == "SlopeStrength") {
-            server::SlopeForce = val;
+            server::SlopeForce = val.toDouble();
         } else if (key == "SubSoil") {
-            server::SubSoil = val;
+            server::SubSoil = val.toInt();
             ASSERT(server::SubSoil >= 0 && server::SubSoil <= 2, XLevelRuntime,
                     "Attribute 'SubSoil' value is out of range.");
         } else if (key == "SwampSinkTime") {
             if (val.getType() == Value::NIL)
                 server::SwampSinkSpeed = 0;
-            else if ((double)val == 0)
+            else if (val.toDouble() == 0)
                 server::SwampSinkSpeed = 10000;
             else {
                 ASSERT((double)val > 0, XLevelRuntime, "SwampSinkTime less zero");
-                server::SwampSinkSpeed = 7.0 / (double)val;
+                server::SwampSinkSpeed = 7.0 / val.toDouble();
             }
         } else if (key == "WaterSinkTime") {
             if (val.getType() == Value::NIL)
                 server::WaterSinkSpeed = 0;
-            else if ((double)val == 0)
+            else if (val.toDouble() == 0)
                 server::WaterSinkSpeed = 10000;
             else {
                 ASSERT((double)val > 0, XLevelRuntime, "SwampSinkTime less zero");
-                server::WaterSinkSpeed = 7.0 / (double)val;
+                server::WaterSinkSpeed = 7.0 / val.toDouble();
             }
         } else if (key == "WormholeStrength") {
-            server::WormholeForce = val;
+            server::WormholeForce = val.toDouble();
             BroadcastMessage("_updateglobals", "it_wormhole", GRID_ITEMS_BIT);
         } else if (key == "WormholeRange") {
-            server::WormholeRange = val;
+            server::WormholeRange = val.toDouble();
             BroadcastMessage("_updateglobals", "it_wormhole", GRID_ITEMS_BIT);
         } else
             ASSERT(false, XLevelRuntime, ecl::strf("Attempt to set not existing global attribute '%s'.", key.c_str()).c_str());

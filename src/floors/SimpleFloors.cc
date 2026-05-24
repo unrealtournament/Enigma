@@ -54,7 +54,7 @@ namespace enigma {
     }
 
     void DummyFloor::actor_contact(Actor *) {
-        int code = getAttr("code");
+        int code = getAttr("code").toInt();
         Log << ecl::strf("Entering floor 0x%x\n", code);
     }
 
@@ -69,7 +69,7 @@ namespace enigma {
     }
     
     std::string FakeFloor::getModelName() const {
-        return "fl_fake_" + getAttr("flavor").to_string();
+        return "fl_fake_" + getAttr("flavor").toString();
     }
     
 /* -------------------- Ice -------------------- */
@@ -92,7 +92,7 @@ namespace enigma {
     }
     
     std::string InverseFloor::getModelName() const {
-        return "fl_inverse_" + getAttr("flavor").to_string();
+        return "fl_inverse_" + getAttr("flavor").toString();
     }
 
 /* -------------------- Space -------------------- */
@@ -145,7 +145,7 @@ namespace enigma {
     
     void YinyangFloor::setAttr(const std::string &key, const Value &val) {
         if (key == "invisible") {
-            objFlags = (objFlags & ~OBJBIT_INVISIBLE) | (val.to_bool() ? OBJBIT_INVISIBLE : 0);
+            objFlags = (objFlags & ~OBJBIT_INVISIBLE) | (val.toBool() ? OBJBIT_INVISIBLE : 0);
             if (isDisplayable())
                 init_model();
             return;

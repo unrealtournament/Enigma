@@ -37,37 +37,37 @@ namespace enigma {
     void Rubberband::setAttr(const std::string &key, const Value &val) {
         if (key == "anchor1") {
             Actor *old = anchor1;
-            anchor1 = dynamic_cast<Actor *>((Object *)val);
+            anchor1 = dynamic_cast<Actor *>(val.toObject());
             ASSERT(anchor1 != nullptr, XLevelRuntime, "Rubberband: 'anchor1' is no actor");
             ASSERT(anchor1 != anchor2.ac, XLevelRuntime, "Rubberband: 'anchor1' is identical to 'anchor2'");
             switchAnchor(old, anchor1, anchor2Object());
         } else if (key == "anchor2") {
             Object * old = anchor2Object();
-            Object * obj = val;
+            Object * obj = val.toObject();
             if (obj != nullptr && obj->getObjectType() == Object::ACTOR) {
-                anchor2.ac = dynamic_cast<Actor *>((Object *)val);
+                anchor2.ac = dynamic_cast<Actor *>(val.toObject());
                 ASSERT(anchor1 != anchor2.ac, XLevelRuntime, "Rubberband: 'anchor1' is identical to 'anchor2'");
                 objFlags &= ~OBJBIT_STONE;
                 switchAnchor(old, anchor2.ac, anchor1);
             } else if (obj != nullptr && obj->getObjectType() == Object::STONE) {
-                anchor2.st = dynamic_cast<Stone *>((Object *)val);
+                anchor2.st = dynamic_cast<Stone *>(val.toObject());
                 objFlags |= OBJBIT_STONE;
                 switchAnchor(old, anchor2.st, anchor1);
             } else
                 ASSERT(false, XLevelRuntime, "Rubberband: 'anchor2' is neither actor nor stone");
         } else if (key == "strength") {
-            strength =  (val.getType() == Value::NIL) ? 10.0 : (double)val;
+            strength =  (val.getType() == Value::NIL) ? 10.0 : val.toDouble();
         } else if (key == "length") {
-            outerThreshold = (val.getType() == Value::NIL) ? 1.0 : (double)val;
+            outerThreshold = (val.getType() == Value::NIL) ? 1.0 : val.toDouble();
             ASSERT((outerThreshold >= 0) || (outerThreshold == -1.0), XLevelRuntime, "Rubberband: length is negative");
         } else if (key == "threshold") {
-            innerThreshold = val;
+            innerThreshold = val.toDouble();
             ASSERT(innerThreshold >= 0, XLevelRuntime, "Rubberband: inner threshold is negative");
         } else if (key == "max") {
-            maxLength = val;
+            maxLength = val.toDouble();
             ASSERT((maxLength >= 0) && (maxLength == 0 || maxLength >= minLength), XLevelRuntime, "Rubberband: max length is negative or less min");
         } else if (key == "min") {
-            minLength = val;
+            minLength = val.toDouble();
             ASSERT((minLength >= 0) && (maxLength == 0 || maxLength >= minLength), XLevelRuntime, "Rubberband: min length is negative or greater max");
         }
         Other::setAttr(key, val);
@@ -175,7 +175,7 @@ namespace enigma {
             ecl::V2 vn = normalize(v);
             bool isMax = (len > maxLength - eps);
             bool isMin = (len < minLength + eps);
-            ObjectList rl = anchor1->getAttr("rubbers");
+            ObjectList rl = anchor1->getAttr("rubbers").toObjectList();
             int numRubbers =rl.size();
 
             // neutralize other force componentes in rubber direction
@@ -227,8 +227,8 @@ namespace enigma {
                 isMax = (len > (maxLength - minLength)/2);
                 isMin = !isMax;
             }
-            ObjectList rl1 = anchor1->getAttr("rubbers");
-            ObjectList rl2 = anchor2.ac->getAttr("rubbers");
+            ObjectList rl1 = anchor1->getAttr("rubbers").toObjectList();
+            ObjectList rl2 = anchor2.ac->getAttr("rubbers").toObjectList();
             int numRubbers = rl1.size() + rl2.size() - 1;
 
             // redistribute other force components in rubber direction according
@@ -296,18 +296,18 @@ namespace enigma {
 
     void Rubberband::switchAnchor(Object *oldAnchor, Object *newAnchor, Object *otherAnchor) {
         if (oldAnchor != nullptr) {
-            ObjectList olist = oldAnchor->getAttr("rubbers");
+            ObjectList olist = oldAnchor->getAttr("rubbers").toObjectList();
             olist.remove(this);
             oldAnchor->setAttr("rubbers", olist);
             if (otherAnchor != nullptr) {
                 // remove both anchors from each others fellows list
-                olist = oldAnchor->getAttr("fellows");
+                olist = oldAnchor->getAttr("fellows").toObjectList();
                 ObjectList::iterator it = find(olist.begin(), olist.end(), otherAnchor);
                 if (it != olist.end()) {
                     olist.erase(it);
                 }
                 oldAnchor->setAttr("fellows", olist);
-                olist = otherAnchor->getAttr("fellows");
+                olist = otherAnchor->getAttr("fellows").toObjectList();
                 it = find(olist.begin(), olist.end(), oldAnchor);
                 if (it != olist.end()) {
                     olist.erase(it);
@@ -319,14 +319,14 @@ namespace enigma {
             ObjectList olist;
             if (otherAnchor != nullptr) {
                 // check on existing rubberbands between anchors
-                olist = newAnchor->getAttr("fellows");
+                olist = newAnchor->getAttr("fellows").toObjectList();
                 ObjectList::iterator it = find(olist.begin(), olist.end(), otherAnchor);
                 if (it != olist.end()) {
                     // we do not allow two rubberbands between identical anchors!
                     // - the user can't see it
                     // - danger of automatic addition of infinte rubberbands, that cause the engine to stop
                     // - danger of contradicting min, max values
-                    olist = newAnchor->getAttr("rubbers");
+                    olist = newAnchor->getAttr("rubbers").toObjectList();
                     for (it = olist.begin(); it != olist.end(); ++it) {
                         Rubberband *oldRubber = dynamic_cast<Rubberband *>(*it);
                         if (otherAnchor == oldRubber->anchor1 || otherAnchor == oldRubber->anchor2Object()) {
@@ -337,14 +337,14 @@ namespace enigma {
                 }
 
                 // add both anchors to each others fellows list
-                olist = newAnchor->getAttr("fellows");
+                olist = newAnchor->getAttr("fellows").toObjectList();
                 olist.push_back(otherAnchor);
                 newAnchor->setAttr("fellows", olist);
-                olist = otherAnchor->getAttr("fellows");
+                olist = otherAnchor->getAttr("fellows").toObjectList();
                 olist.push_back(newAnchor);
                 otherAnchor->setAttr("fellows", olist);
             }
-            olist = newAnchor->getAttr("rubbers");
+            olist = newAnchor->getAttr("rubbers").toObjectList();
             olist.push_back(this);
             newAnchor->setAttr("rubbers", olist);
         }

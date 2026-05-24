@@ -113,7 +113,7 @@ namespace enigma {
 
     void BlockerItem::actor_leave(Actor *a) {
         if (Value v = getAttr("autoclose")) {
-            if (v.to_bool()) {
+            if (v.toBool()) {
                 setState(0);     // close
             }
         }

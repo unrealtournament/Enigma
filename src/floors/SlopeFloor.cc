@@ -37,7 +37,7 @@ namespace enigma {
         
     void SlopeFloor::setAttr(const std::string& key, const Value &val) {
         if (key == "shape") {
-            std::string shape = val.to_string();
+            std::string shape = val.toString();
             if (shape == "" || shape == "pw" || shape == "ps" || shape == "pe" || shape == "pn" ||
                     shape == "inw" || shape == "isw" || shape == "ise" || shape == "ine" || 
                     shape == "onw" || shape == "osw" || shape == "ose" || shape == "one" || 
@@ -48,17 +48,17 @@ namespace enigma {
                 init_model();
             }
         } else if (key == "slope") {
-            int slope = val;
+            int slope = val.toInt();
             if (slope >= -1 && slope <= 7)
                 state = slope;
         } else if (key == "strength") {
-            var_floorforce[0] = val;
+            var_floorforce[0] = val.toDouble();
             objFlags = (objFlags & ~OBJBIT_FORCE) | OBJBIT_STRENGTH;
         } else if (key == "force_x") {
-            var_floorforce[0] = val;
+            var_floorforce[0] = val.toDouble();
             objFlags = (objFlags & ~OBJBIT_STRENGTH) | OBJBIT_FORCE;
         } else if (key == "force_y") {
-            var_floorforce[1] = val;
+            var_floorforce[1] = val.toDouble();
             objFlags = (objFlags & ~OBJBIT_STRENGTH) | OBJBIT_FORCE;
         } else
             Floor::setAttr(key, val);
@@ -78,7 +78,7 @@ namespace enigma {
     }
     
     std::string SlopeFloor::getModelName() const {
-        std::string shape = getAttr("shape").to_string();
+        std::string shape = getAttr("shape").toString();
         if (shape == "")
             return "fl_slope";
         else

@@ -35,7 +35,7 @@ namespace enigma {
         
     void ActorImpulseStone::setAttr(const std::string& key, const Value &val) {
         if (key == "invisible") {
-            if (val.to_bool() != ((objFlags & OBJBIT_INVISIBLE) != 0)) {
+            if (val.toBool() != ((objFlags & OBJBIT_INVISIBLE) != 0)) {
                 // change of visibility
                 objFlags ^= OBJBIT_INVISIBLE;
                 if (isDisplayable())
@@ -59,7 +59,7 @@ namespace enigma {
         } else if (m.message == "_trigger") {
             // a boulder that we will send back
             Object *boulder = m.sender;
-            if (boulder != nullptr && m.value.to_bool()) {
+            if (boulder != nullptr && m.value.toBool()) {
                 boulder->setAttr("orientation", reverse(to_direction(boulder->getAttr("orientation"))));
                 sound_event("bumper");
                 state = PULSING;
@@ -70,7 +70,7 @@ namespace enigma {
             return Value();
         } else if (server::GameCompatibility != GAMET_ENIGMA) {
             // Oxyd* usage of ActorImpulseStone as a signal multiplier
-            ObjectList ol = getAttr("$!oxyd!destinations");
+            ObjectList ol = getAttr("$!oxyd!destinations").toObjectList();
             
             if (m.message == "_init" && ol.size() > 0) {
                 setAttr("$signalidx", 0);
@@ -78,7 +78,7 @@ namespace enigma {
                 return Value();
             } else if (m.message == "signal") {
                 int i = 0;
-                int signalidx = getAttr("$signalidx");
+                int signalidx = getAttr("$signalidx").toInt();
                 bool didBreak = false;
                 for (ObjectList::iterator oit = ol.begin(); oit != ol.end(); ++oit, i++) {
                     if (i == signalidx) {
@@ -131,7 +131,7 @@ namespace enigma {
             // actor_hit is called before reflect, but the force added below
             // is applied to actor after the reflection.
 
-            double forcefac = getDefaultedAttr("strength", server::BumperForce);
+            double forcefac = getDefaultedAttr("strength", server::BumperForce).toDouble();
 
             ecl::V2 vec = normalize(sc.actor->get_pos() - get_pos().center());
             sc.actor->add_force(distortedVelocity(vec, forcefac));                

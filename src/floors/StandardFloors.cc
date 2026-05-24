@@ -114,7 +114,7 @@ namespace enigma {
     }
     
     std::string StandardFloor::getModelName() const {
-        bool isFramed = (getAttr("faces").to_string() == "nesw");
+        bool isFramed = (getAttr("faces").toString() == "nesw");
         return ((StandardFloorNames[state].submodel.length() > 0) ? StandardFloorNames[state].submodel :
                 StandardFloorNames[state].classname) +  (isFramed ? "_framed" : "");
     }

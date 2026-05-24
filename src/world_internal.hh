@@ -176,7 +176,7 @@ public:
         Floor *f = Layer<Floor>::yield(p);
         if (f != nullptr) {
             if (Value v = f->getAttr("name")) {
-                NamePosition(p, v.to_string());
+                NamePosition(p, v.toString());
             }
         }
         return f;
@@ -186,7 +186,7 @@ public:
         Floor *f = get(p);
         if (f != nullptr) {
             if (Value v = f->getAttr("name")) {
-                NamePosition(p, v.to_string());
+                NamePosition(p, v.toString());
             }
         }
         Layer<Floor>::set(p, x);

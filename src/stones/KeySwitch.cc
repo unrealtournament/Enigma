@@ -31,7 +31,7 @@ namespace enigma {
         if (key == "target") {
             Stone::setAttr("destination", val);
         } else if (key == "invisible") {
-            if (isDisplayable() && (getAttr("invisible").to_bool() != val.to_bool())) {
+            if (isDisplayable() && (getAttr("invisible").toBool() != val.toBool())) {
                 Stone::setAttr(key, val);
                 init_model();
                 return; 
@@ -58,13 +58,14 @@ namespace enigma {
                 init_model();
                 performAction(state);
             }
-        } else
+        } else {
             state = extState;
+        }
     }
 
     void KeySwitch::init_model() {
-        bool showCode = !getAttr("invisible").to_bool();
-        int code = getAttr("code");
+        bool showCode = !getAttr("invisible").toBool();
+        int code = getAttr("code").toInt();
         if (showCode && code >= 1 && code <= 8)
             set_model(ecl::strf("st_key_%d_%s", code, state == ON ? "on" : "off"));
         else
@@ -83,7 +84,7 @@ namespace enigma {
             bool safe = true;
             ecl::V2 dest;
             int idx = 0;
-            if (server::EnigmaCompatibility >= 1.10 && getAttr("secure").to_bool()) {
+            if (server::EnigmaCompatibility >= 1.10 && getAttr("secure").toBool()) {
                 while (getDestinationByIndex(idx++, dest)) {
                     if (apos == (GridPos)dest)
                         safe = false;
@@ -100,7 +101,7 @@ namespace enigma {
                     }
                 } else if (check_matching_key(inv)) {
                     Item * it  = inv->yield_first();
-                    if (!(it->getAttr("invisible").to_bool()))
+                    if (!(it->getAttr("invisible").toBool()))
                         setAttr("invisible", false);
                     DisposeObject(it);
                     toggle = true;

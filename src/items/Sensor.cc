@@ -56,12 +56,12 @@ namespace enigma {
     
     void Sensor::setAttr(const std::string& key, const Value &val) {
         if (key == "invisible") {
-            objFlags = (objFlags & ~OBJBIT_INVISIBLE) | (val.to_bool() ? OBJBIT_INVISIBLE : 0);
+            objFlags = (objFlags & ~OBJBIT_INVISIBLE) | (val.toBool() ? OBJBIT_INVISIBLE : 0);
             if (isDisplayable())
                 init_model();
             return;
         } else if (key == "exit") {
-            objFlags = (objFlags & ~OBJBIT_EXIT) | (val.to_bool() ? OBJBIT_EXIT : 0);
+            objFlags = (objFlags & ~OBJBIT_EXIT) | (val.toBool() ? OBJBIT_EXIT : 0);
             if (isDisplayable())
                 init_model();
             return;
@@ -108,7 +108,7 @@ namespace enigma {
     }
 
     int Sensor::traitsIdx() const {
-        int idx = getAttr("inverse").to_bool() ? 1 : 0;
+        int idx = getAttr("inverse").toBool() ? 1 : 0;
         if (objFlags & OBJBIT_ISFILTER)
             idx +=2;
         if (objFlags & OBJBIT_EXIT)

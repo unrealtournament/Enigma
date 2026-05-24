@@ -127,13 +127,13 @@ namespace enigma {
             CoverFloor(move(pos, EAST), "fl_wood_framed");
             CoverFloor(move(pos, SOUTH), "fl_wood_framed");
             CoverFloor(move(pos, WEST), "fl_wood_framed");
-            TokenList tl = getAttr("selection");
+            TokenList tl = getAttr("selection").toTokenList();
             if (tl.size() > 0) {
                 // First decide which tile to set.
                 int idx = enigma::IntegerRand(1, tl.size()) - 1;
                 TokenList::iterator itr = tl.begin();
                 for (int i = 0; i < idx; i++, ++itr);
-                std::string name = (*itr).to_string();
+                std::string name = (*itr).toString();
                 // Now kill the box.
                 KillStone(get_pos());
                 // Set the new tile or item. An earlier item might be overwritten.

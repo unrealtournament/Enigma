@@ -34,7 +34,7 @@ namespace enigma {
 
         Value v = olda->getAttr("owner");
         if (v) {
-            player::ReplaceActor((int)v, olda, newa);
+            player::ReplaceActor(v.toInt(), olda, newa);
         }
 
         AddActor(olda->get_pos()[0], olda->get_pos()[1], newa);
@@ -79,7 +79,7 @@ namespace enigma {
     ItemAction Drop::activate(Actor *a, GridPos) {
         const double ROTOR_LIFETIME = 5.0;
 
-        int     iplayer = a->getAttr("owner");
+        int     iplayer = a->getAttr("owner").toInt();
         ActorID theid   = get_id (a);
 
         if (theid == ac_marble_black || theid == ac_marble_white) {
@@ -93,7 +93,7 @@ namespace enigma {
             rotor->setAttr("essential", a->getAttr("essential"));
             std::string essId;
             if (Value v = a->getAttr("essential_id")) {
-                essId = v.to_string();
+                essId = v.toString();
             } else {
                 essId = a->get_traits().name;
             }

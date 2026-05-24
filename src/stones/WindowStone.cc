@@ -35,8 +35,8 @@ namespace enigma {
     
     void WindowStone::setAttr(const std::string &key, const Value &val) {
         if (key == "secure") {
-            if (val.to_bool() != (objFlags & OBJBIT_SECURE)) {
-                if (val.to_bool()) {
+            if (val.toBool() != (objFlags & OBJBIT_SECURE)) {
+                if (val.toBool()) {
                     objFlags |= OBJBIT_SECURE;
                 } else {
                     objFlags &= ~OBJBIT_SECURE;
@@ -47,7 +47,7 @@ namespace enigma {
             }
         } else if (key == "scratches") {
             int d = NODIRBIT;
-            std::string vs(val);
+            std::string vs = val.toString();
             if (vs.find('n') != std::string::npos) d |= NORTHBIT;
             if (vs.find('e') != std::string::npos) d |= EASTBIT;
             if (vs.find('s') != std::string::npos) d |= SOUTHBIT;
@@ -80,7 +80,7 @@ namespace enigma {
         if (m.message == "inner_pull" ) {
             return Value(tryInnerPull(to_direction(m.value)));
         } else if (m.message == "_explosion") {
-            GridPos expl = m.value;
+            GridPos expl = m.value.toGridPos();
             DirectionBits faces = getFaces();
             DirectionBits scratchDirs = (DirectionBits)((objFlags & OBJBIT_SCRATCHDIRS) >> 24);
             if ((faces & WESTBIT) && ((move(get_pos(), WEST) == expl) || (get_pos() == expl)) 

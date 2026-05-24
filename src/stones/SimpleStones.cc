@@ -41,7 +41,7 @@ namespace enigma {
 
 void BlurStone::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
-            std::string fs = val.to_string();
+            std::string fs = val.toString();
             if (fs == "straight") state = STRAIGHT;
             else if (fs == "cross") state = CROSS;
             else if (fs == "magic") state = MAGIC;
@@ -120,7 +120,7 @@ void ChargeStone::setAttr(const std::string& key, const Value &val) {
 
     Value ChargeStone::getAttr(const std::string &key) const {
         if (key == "$chargesign") {             // used by validator to identify charge stone subkinds
-            double charge = getAttr("charge");
+            double charge = getAttr("charge").toDouble();
             return (charge == 0) ? 0 : ((charge > 0.0) ? 1 : -1);
         } else
             return Stone::getAttr(key);
@@ -135,7 +135,7 @@ void ChargeStone::setAttr(const std::string& key, const Value &val) {
     }
     
     void ChargeStone::init_model() {
-        double charge = getAttr("charge");
+        double charge = getAttr("charge").toDouble();
         set_model(ecl::strf("st_charge_%s", (charge == 0) ? "zero" : ((charge > 0.0) ? "plus" : "minus")).c_str());
     }
     
@@ -144,7 +144,7 @@ void ChargeStone::setAttr(const std::string& key, const Value &val) {
     }
     
     void ChargeStone::actor_hit(const StoneContact &sc) {
-        double charge = getAttr("charge");
+        double charge = getAttr("charge").toDouble();
         sc.actor->setAttr("charge", charge);
         set_anim(ecl::strf("st_charge_%s_anim", (charge == 0) ? "zero" : ((charge > 0.0) ? "plus" : "minus")).c_str());
     }
@@ -185,7 +185,7 @@ void ChargeStone::setAttr(const std::string& key, const Value &val) {
 
 void GrateStone::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
-            std::string fs = val.to_string();
+            std::string fs = val.toString();
             if (fs == "cross") state = CROSS;
             else if (fs == "framed") state = FRAMED;
             else ASSERT(false, XLevelRuntime, ecl::strf("Grate stone set known flavor%s", fs.c_str()).c_str());
@@ -267,7 +267,7 @@ void GrateStone::setAttr(const std::string& key, const Value &val) {
             if (state == IDLE) {
                 state = ACTIVE;
                 init_model();
-                if (getAttr("instant").to_bool())
+                if (getAttr("instant").toBool())
                     switchPlayer();
             }
             return Value();
@@ -304,9 +304,9 @@ void GrateStone::setAttr(const std::string& key, const Value &val) {
     }
     
     void YinyangStone::animcb() {
-        state =  (getAttr("loop").to_bool()) ? IDLE : INACTIVE;
+        state =  (getAttr("loop").toBool()) ? IDLE : INACTIVE;
         init_model();
-        if (!getAttr("instant").to_bool())
+        if (!getAttr("instant").toBool())
             switchPlayer();
     }
     
@@ -314,7 +314,7 @@ void GrateStone::setAttr(const std::string& key, const Value &val) {
         if (state == IDLE) {
             state = ACTIVE;
             init_model();
-            if (getAttr("instant").to_bool())
+            if (getAttr("instant").toBool())
                 switchPlayer();
         }
     }
@@ -359,7 +359,7 @@ void GrateStone::setAttr(const std::string& key, const Value &val) {
         if (state != IDLE)
             return;
         if (Value v = getAttr("text")) {
-            std::string txt(v);
+            std::string txt = v.toString();
             // translate text
             txt = server::LoadedProxy->getLocalizedString(txt);
             client::Msg_ShowDocument(txt, true);
@@ -369,7 +369,7 @@ void GrateStone::setAttr(const std::string& key, const Value &val) {
                 SendMessage(st, "_paper");
             }
         }
-        ObjectList olist = getAttr("fellows");
+        ObjectList olist = getAttr("fellows").toObjectList();
         for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it) {
             Stone *fellow = dynamic_cast<Stone *>(*it);
             if (fellow != nullptr)
@@ -419,7 +419,7 @@ void GrateStone::setAttr(const std::string& key, const Value &val) {
                 SendMessage(st, "_pebble");
             }
         }
-        ObjectList olist = getAttr("fellows");
+        ObjectList olist = getAttr("fellows").toObjectList();
         for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it) {
             Stone *fellow = dynamic_cast<Stone *>(*it);
             if (fellow != nullptr)

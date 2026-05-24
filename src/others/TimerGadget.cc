@@ -65,7 +65,7 @@ namespace enigma {
     void TimerGadget::alarm() {
         bool actionValue = (state == ON_TRUE);
         state ^= 1;   // toggle between ON_TRUE and ON_FALSE
-        if(!getAttr("loop").to_bool()) {
+        if(!getAttr("loop").toBool()) {
             setState(OFF);
         }
         performAction(actionValue);
@@ -74,7 +74,7 @@ namespace enigma {
     void TimerGadget::updateAlarm() {
         if (state == ON) {
             state = ON_TRUE;
-            GameTimer.set_alarm(this, (double)getAttr("interval"), getAttr("loop").to_bool());
+            GameTimer.set_alarm(this, getAttr("interval").toDouble(), getAttr("loop").toBool());
         }
     }
 

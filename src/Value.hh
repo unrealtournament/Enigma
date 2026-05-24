@@ -81,12 +81,12 @@ namespace enigma {
          */
         enum Type { 
             DEFAULT,  ///< Pseudotype for a not existing attribute that should
-                      ///< cause the default behaviour of the object
+                      ///< cause the default behavior of the object
             NIL,      ///< Value that is equivalent to Lua "nil". It represents
                       ///< an invalid value
             BOOL,     ///< Value that represents bool values "true" and "false".
             DOUBLE,   ///< Value is numerical and can take a "double". It is used
-                      ///< for other numericals values like "int", too.
+                      ///< for other numerical values like "int", too.
             STRING,   ///< Value is a string. Such a string may encode another
                       ///< type that has no native representation in Value
             OBJECT,   ///< Value is an object id. The id is a persistent object
@@ -109,7 +109,7 @@ namespace enigma {
         Value(bool b);                 ///< Constructor for BOOL value
         Value(Object *obj);            ///< Constructor for OBJECT value that properly
                                        ///< represents a persistent reference to an object
-        Value(ObjectList aList);       ///< Constructor for OBJECT value that properly
+        Value(const ObjectList &aList);       ///< Constructor for OBJECT value that properly
                                        ///< represents a set of objects
         Value(TokenList aList);        ///< Constructor for TOKENS value that properly
                                        ///< represents a list of tokens
@@ -149,66 +149,54 @@ namespace enigma {
          * This happens when a "getAttr()" call did not find a concrete value.
          * All other value types that represent explicit given values return "true".
          * The main usage is the common pattern <code>if (Value v = getAttr("key"))</code>.
-         * 
+         *
          * Note: this conversion does not return the result of a boolean stored
-         * in the value. If a concrete value contains a boolean this test
+         * in the value. If a concrete value contains a Boolean, this test
          * returns always "true", even if the boolean is "false" and the value
          * is of type NIL.
          */
-        operator bool() const;
+        explicit operator bool() const;
         
         /**
          * Conversion of a value to a double. String values are interpreted as
          * a double like it is done by LUA. All other values default to a double
          * value of 0.0.
          */
-        operator double() const;
+        double toDouble() const;
          
         /**
-         * Conversion of a value to a int. String values are interpreted as
+         * Conversion of a value to an int. String values are interpreted as
          * a int like it is done by LUA. All other values default to a int
          * value of 0.
          */
-        operator int() const;
-        
+        int toInt() const;
+
         /**
          * Conversion of a value to an object reference. All values besides valid
          * object values default to a nullptr.
          */
-        operator Object *() const;
+        Object *toObject() const;
         
         /**
          * Conversion of a value to an object set.
          */
-        operator ObjectList() const;
+        ObjectList toObjectList() const;
         
         /**
          * Conversion of a value to a list of tokens.
          */
-        operator TokenList() const;
+        TokenList toTokenList() const;
         
         /**
          * Conversion of a value to a position vector.
          */
-        operator ecl::V2() const;
+        ecl::V2 toVec() const;
         
         /**
          * Conversion of a value to a grid position.
          */
-        operator GridPos() const;
+        GridPos toGridPos() const;
         
-        /**
-         * Conversion of a value to a <code>char *</code> just for initialization
-         * of a std::string. Numerical values are converted to a string like it
-         * id done by LUA. All other values default to an empty string.
-         * 
-         * Note that the returned pointer may be volatile and
-         * cannot be used for any further usage besides immediate initialization of
-         * a string object. For all other purposes use the <code>to_string()</code> method to
-         * receive a non-volatile copy of the string.
-         */
-        operator const char*() const;
-
         void assign(double d);       ///< Reset value to a DOUBLE
         void assign(const char* s);  ///< Reset value to a STRING with a copy of
                                      ///< the given string
@@ -223,17 +211,17 @@ namespace enigma {
         bool isDefault() const;                 ///< Returns true if type is DEFAULT
         
         /**
-         * Returns a std::string with convertion of numerical values. All other
-         * values default to an empty string.
+         * Convert a value to a string. Numerical values are converted to a string as
+         * is done by LUA. All other values default to an empty string.
          */
-        std::string to_string() const;
+        std::string toString() const;
         
         /**
          * Returns the LUA compatible boolean representation of the value.
          * <code>false</code> is returned for a NIL value and <code>true</code>
          * for any other value.
          */
-        bool to_bool() const;
+        bool toBool() const;
         
         /**
          * Returns the value converted to a vector position with a centering of all
@@ -262,11 +250,6 @@ namespace enigma {
         } val;
     };
 
-
-    bool        to_bool(const Value &v);        ///< Synonym for v.to_bool()
-    int         to_int(const Value &v);         ///< Synonym for (int)v
-    double      to_double(const Value &v);      ///< Synonym for (double)v
-    std::string to_string(const Value &v);      ///< Synonym for v.to_string()
     Direction   to_direction (const Value &v);  ///< Casting of value to Direction
 
 } // namespace enigma

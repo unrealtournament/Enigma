@@ -54,7 +54,7 @@ namespace enigma {
     }
     
     void CannonBall::postAddition() {
-        pos = getAttr("$position");
+        pos = getAttr("$position").toVec();
         sprite = display::AddEffect(pos, "ac_cannonball");
         sprite.set_callback(this);
     }
@@ -64,7 +64,7 @@ namespace enigma {
     }
     
     void CannonBall::tick(double dt) {
-        pos += (ecl::V2)getAttr("$ball_velocity") * dt;
+        pos += getAttr("$ball_velocity").toVec() * dt;
         sprite.move(pos);
     }
     

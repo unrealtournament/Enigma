@@ -34,7 +34,7 @@ namespace enigma {
     
     void MagicStone::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
-            std::string fl = val.to_string();
+            std::string fl = val.toString();
             if (fl == "brick") state = BRICK;
             else if (fl == "oxyda") state = OXYDA;
             else if (fl == "oxydc") state = OXYDC;

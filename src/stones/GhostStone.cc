@@ -32,7 +32,7 @@ namespace enigma {
     
     void GhostStone::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
-            std::string fl = val.to_string();
+            std::string fl = val.toString();
             if (fl == "purplemarble") state = PURPLEMARBLE;
             else if (fl == "greenbrown") state = GREENBROWN;
             else if (fl == "break") state = BREAK;

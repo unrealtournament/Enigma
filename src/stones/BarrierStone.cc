@@ -35,7 +35,7 @@ namespace enigma {
     void BarrierStone::setAttr(const std::string &key, const Value &val) {
         Stone::setAttr(key, val);
         if (key == "flavor") {
-            std::string flavor = val.to_string();
+            std::string flavor = val.toString();
             Item *it = nullptr;
             if (flavor != "all") {
                 it = dynamic_cast<Item *>(GetObjectTemplate(flavor));
@@ -48,11 +48,11 @@ namespace enigma {
     }
     
     void BarrierStone::init_model() {
-        set_model("st_barrier_" + getAttr("flavor").to_string());
+        set_model("st_barrier_" + getAttr("flavor").toString());
     }
     
     bool BarrierStone::is_removable() const {
-        return !getAttr("static").to_bool();
+        return !getAttr("static").toBool();
     }
     
     bool BarrierStone::is_sticky (const Actor *) const {
@@ -61,7 +61,7 @@ namespace enigma {
     
     StoneResponse BarrierStone::collision_response(const StoneContact &sc) {
         assert(sc.actor);
-        std::string flavor(getAttr("flavor"));
+        std::string flavor = getAttr("flavor").toString();
         enigma::Inventory *inv = player::GetInventory(sc.actor);
         if (flavor == "all") {
             if (inv && inv->size() > 0)

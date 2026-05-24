@@ -155,7 +155,7 @@ namespace enigma {
             if (isDisplayable())
                 init_model();
         } else if (state == VANISHING) {
-            ObjectList actors = getAttr("$frozen_actors");
+            ObjectList actors = getAttr("$frozen_actors").toObjectList();
             for (ObjectList::iterator itr = actors.begin(); itr != actors.end(); ++itr)
                 SendMessage(*itr, "_revive");
             setStone();

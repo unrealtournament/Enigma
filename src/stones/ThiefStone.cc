@@ -42,7 +42,7 @@ namespace enigma {
     
     Value ThiefStone::message(const Message &m) {
         if (m.message == "signal" && server::GameCompatibility != GAMET_ENIGMA) {
-            performAction(!m.value.to_bool());  // inverse signal multiplier
+            performAction(!m.value.toBool());  // inverse signal multiplier
             return Value();
         } else if (m.message == "_capture" && (state == IDLE || state == DRUNKEN) && isDisplayable()) {            
             // add items on grid pos that can be picked up to our bag
@@ -131,7 +131,7 @@ namespace enigma {
         if (Actor *victim = dynamic_cast<Actor *>(Object::getObject(victimId))) {
             if (Value owner = victim->getAttr("owner")) {
                 if (!(victim->has_shield())) {
-                    enigma::Inventory *inv = player::GetInventory(owner);
+                    enigma::Inventory *inv = player::GetInventory(owner.toInt());
                     if (inv && inv->size() > 0) {
                         if (bag == nullptr) {
                             bag = MakeItem("it_bag");

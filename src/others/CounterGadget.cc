@@ -32,14 +32,14 @@ namespace enigma {
 
     void CounterGadget::setAttr(const std::string &key, const Value &val) {
         if (key == "state") {
-            state = val;
+            state = val.toInt();
         }
         Other::setAttr(key, val);
     }
     
     Value CounterGadget::message(const Message &m) {
         if (m.message == "signal") {
-            if (m.value.to_bool()) {
+            if (m.value.toBool()) {
                 state++;
             } else {
                 state--;

@@ -49,25 +49,25 @@ namespace enigma {
         bool lightChange = false;
         bool handled = false;
         if (key == "movable") {
-            if (val.to_bool() != ((objFlags & OBJBIT_MOVABLE) != 0)) {
+            if (val.toBool() != ((objFlags & OBJBIT_MOVABLE) != 0)) {
                 objFlags ^=  OBJBIT_MOVABLE;
                 newModel = true;
                 handled = true;
             }
         } else if (key == "flavor") {
-            if (val.to_string() == "triangle" && !(objFlags & OBJBIT_TRIANGLE)) {
+            if (val.toString() == "triangle" && !(objFlags & OBJBIT_TRIANGLE)) {
                 objFlags |= OBJBIT_TRIANGLE;
                 objFlags &= ~OBJBIT_SIDE;
                 newModel = true;
                 lightChange = true;
                 handled = true;
-            } else if (val.to_string() == "slab" && ((objFlags & OBJBIT_TRIANGLE) || (objFlags & OBJBIT_SIDE))) {
+            } else if (val.toString() == "slab" && ((objFlags & OBJBIT_TRIANGLE) || (objFlags & OBJBIT_SIDE))) {
                 objFlags &= ~OBJBIT_TRIANGLE;
                 objFlags &= ~OBJBIT_SIDE;
                 newModel = true;
                 lightChange = true;
                 handled = true;
-            } else if (val.to_string() == "sheets" && ((objFlags & OBJBIT_TRIANGLE) || !(objFlags & OBJBIT_SIDE))) {
+            } else if (val.toString() == "sheets" && ((objFlags & OBJBIT_TRIANGLE) || !(objFlags & OBJBIT_SIDE))) {
                 objFlags &= ~OBJBIT_TRIANGLE;
                 objFlags |= OBJBIT_SIDE;
                 objFlags |= OBJBIT_PANE;  // sheets are always semi transparent
@@ -76,7 +76,7 @@ namespace enigma {
                 handled = true;
             }
         } else if (key == "orientation") {
-            int orientation = val;
+            int orientation = val.toInt();
             // random orientation
             if (orientation == -2)
                 orientation = IntegerRand(minState(), maxState());
@@ -86,7 +86,7 @@ namespace enigma {
                 handled = true;
             }
         } else if (key == "transparent") {
-            if ((val.to_bool() != ((objFlags & OBJBIT_PANE) != 0)) && !(objFlags & OBJBIT_SIDE)) {
+            if ((val.toBool() != ((objFlags & OBJBIT_PANE) != 0)) && !(objFlags & OBJBIT_SIDE)) {
                 objFlags ^=  OBJBIT_PANE;
                 newModel = true;
                 lightChange = true;
@@ -123,8 +123,8 @@ namespace enigma {
             setAttr("state", m.value);   // enforce value check
             return Value();
         } else if ((m.message == "turn" || m.message == "turnback")) {
-            setAttr("state", ((m.message == "turn" && !getAttr("counterclock").to_bool()) || 
-                              (m.message == "turnback" && getAttr("counterclock").to_bool()))
+            setAttr("state", ((m.message == "turn" && !getAttr("counterclock").toBool()) || 
+                              (m.message == "turnback" && getAttr("counterclock").toBool()))
                     ? rotate_cw((Direction)state) : rotate_ccw((Direction)state));
             return Value();
         } else if (m.message == "signal") {
@@ -132,7 +132,7 @@ namespace enigma {
                 toggleState();
             else if (m.value == 0 && server::GameCompatibility != GAMET_ENIGMA)
                 // rotate mirror in opposite direction
-                setState(!getAttr("counterclock").to_bool() ? rotate_ccw((Direction)state) : rotate_cw((Direction)state));
+                setState(!getAttr("counterclock").toBool() ? rotate_ccw((Direction)state) : rotate_cw((Direction)state));
             return Value();
         } else if (m.message == "_trigger") {
             if (m.value == 1)
@@ -160,7 +160,7 @@ namespace enigma {
      }
     
     void MirrorStone::toggleState() {
-        setState(!getAttr("counterclock").to_bool() ? rotate_cw((Direction)state) : rotate_ccw((Direction)state));
+        setState(!getAttr("counterclock").toBool() ? rotate_cw((Direction)state) : rotate_ccw((Direction)state));
     }
 
     void MirrorStone::init_model()  {
@@ -236,7 +236,7 @@ namespace enigma {
         if (objFlags & OBJBIT_MOVABLE)
             maybe_push_stone(sc);
         if (player::WieldedItemIs (sc.actor, "it_wrench")) 
-            setState(!getAttr("counterclock").to_bool() ? rotate_ccw((Direction)state) : rotate_cw((Direction)state));
+            setState(!getAttr("counterclock").toBool() ? rotate_ccw((Direction)state) : rotate_cw((Direction)state));
         else
             toggleState();
     }

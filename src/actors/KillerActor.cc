@@ -48,7 +48,7 @@ namespace enigma {
     }
     
     int Killer::traitsIdx() const {
-        return getAttr("color");
+        return getAttr("color").toInt();
     }
 
     ActorTraits Killer::traits[2] = {

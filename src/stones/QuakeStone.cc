@@ -33,7 +33,7 @@ namespace enigma {
     
     Value QuakeStone::message(const Message &m) {
         if (m.message == "toggle" || (m.message == "signal" && m.value != 0) ||
-                (m.message == "_trigger" && m.value.to_bool())) {
+                (m.message == "_trigger" && m.value.toBool())) {
             setState(ACTIVE);
             return Value();
         } else if (m.message == "ignite" || m.message == "_explosion") { 

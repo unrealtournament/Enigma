@@ -36,26 +36,26 @@ namespace enigma {
     
 /* -------------------- Value implementation -------------------- */
 
-    Value::Value() : type (NIL) {
+    Value::Value() : type(NIL), val() {
     }
-    
+
     Value::Value(const char* str) : type (STRING) {
         val.str = new char[strlen(str)+1];
         strcpy(val.str, str);
     }
     
-    Value::Value(double d) : type (DOUBLE) {
-         val.dval[0] = d;
+    Value::Value(double d) : type(DOUBLE), val() {
+        val.dval[0] = d;
     }
-    
-    Value::Value(int i) : type (DOUBLE) {
-         val.dval[0] = i;
+
+    Value::Value(int i) : type(DOUBLE), val() {
+        val.dval[0] = i;
     }
-    
-    Value::Value(bool b) : type (BOOL) {
-         val.dval[0] = b;
+
+    Value::Value(bool b) : type(BOOL), val() {
+        val.dval[0] = b;
     }
-    
+
     Value::Value(Object *obj) : type (OBJECT) {
         if (obj != nullptr) {
             Value v = obj->getAttr("name");
@@ -69,16 +69,16 @@ namespace enigma {
              val.dval[0] = 0;
     }
     
-    Value::Value(ObjectList aList) : type (GROUP) {
+    Value::Value(const ObjectList &aList) : type (GROUP) {
         std::string descriptor;
-        ObjectList::iterator it;
+        ObjectList::const_iterator it;
         for (it = aList.begin(); it != aList.end(); ++it) {
-            if (*it == nullptr)
+            if (*it == nullptr) {
                 descriptor.append("#0,");
-            else {
+            } else {
                 Value v = (*it)->getAttr("name");
                 if (v && v.type == STRING && strcmp(v.val.str, "") != 0) {
-                    descriptor.append(v);
+                    descriptor.append(v.toString());
                     descriptor.append(",");
                 } else {
                     descriptor.append(ecl::strf("#%d,", (*it)->getId()));
@@ -98,14 +98,14 @@ namespace enigma {
                 case STRING :
                 case NAMEDOBJECT :
                     ASSERT((*it).val.str[0] != 0, XLevelRuntime, "TokenList: illegal empty string value");                
-                    descriptor.append((*it).val.str);
+                    descriptor.append(it->val.str);
                     break;
                 case OBJECT :
                     descriptor.append(ecl::strf("#%d", (int)((*it).val.dval[0])));
                     break;
                 case GROUP :
                     descriptor.append("%");
-                    descriptor.append((*it).val.str);
+                    descriptor.append(it->val.str);
                     break;
                 default :
                     ASSERT(false, XLevelRuntime, "TokenList: illegal value type");
@@ -119,16 +119,16 @@ namespace enigma {
 //        Log << "Value TokenList '" << descriptor << "'\n";
     }
     
-    Value::Value(ecl::V2 pos) : type (POSITION) {
-         val.dval[0] = pos[0];
-         val.dval[1] = pos[1];
+    Value::Value(ecl::V2 pos) : type(POSITION), val() {
+        val.dval[0] = pos[0];
+        val.dval[1] = pos[1];
     }
-    
-    Value::Value(GridPos gpos) : type (GRIDPOS) {
-         val.dval[0] = gpos.x;
-         val.dval[1] = gpos.y;
+
+    Value::Value(GridPos gpos) : type(GRIDPOS), val() {
+        val.dval[0] = gpos.x;
+        val.dval[1] = gpos.y;
     }
-    
+
     Value::Value(Type t) : type (t) {
         switch (t) {
             case POSITION :
@@ -201,21 +201,18 @@ namespace enigma {
     bool Value::operator==(const Value& other) const {
         if (type != other.type)
             return false;
-        else
-            switch (type) {
-                case DOUBLE :
-                case BOOL :
-                case OBJECT :
-                    return val.dval[0] == other.val.dval[0];
-                case STRING :
-                case GROUP :
-                case TOKENS :
-                case NAMEDOBJECT :
-                    return strcmp(val.str, other.val.str) == 0;
-                case POSITION :
-                case GRIDPOS :
-                    return (val.dval[0] == other.val.dval[0]) && (val.dval[1] == other.val.dval[1]);
-            }
+        switch (type) {
+            case DOUBLE:
+            case BOOL:
+            case OBJECT: return val.dval[0] == other.val.dval[0];
+            case STRING:
+            case GROUP:
+            case TOKENS:
+            case NAMEDOBJECT: return strcmp(val.str, other.val.str) == 0;
+            case POSITION:
+            case GRIDPOS:
+                return (val.dval[0] == other.val.dval[0]) && (val.dval[1] == other.val.dval[1]);
+        }
         return true;
     }
     
@@ -224,29 +221,26 @@ namespace enigma {
     }
     
     bool Value::operator==(int i) const {
-        return (int) *this == i;
+        return toInt() == i;
     }
     
     bool Value::operator!=(int i) const {
-        return (int) *this != i;
+        return toInt() != i;
     }
     
     bool Value::operator<=(int i) const {
-        return (int) *this <= i;
+        return toInt() <= i;
     }
     
     bool Value::operator>=(int i) const {
-        return (int) *this >= i;
+        return toInt() >= i;
     }
     
     Value::operator bool() const {
-        if (isDefault())
-            return false;
-        else
-            return true;
+        return !isDefault();
     }
-    
-    Value::operator double() const {
+
+    double Value::toDouble() const {
         switch (type) {
             case DOUBLE: 
                 return val.dval[0];
@@ -259,7 +253,7 @@ namespace enigma {
         }
     }
     
-    Value::operator int() const {
+    int Value::toInt() const {
         switch (type) {
             case DOUBLE:
                 return round_nearest<int>(val.dval[0]);
@@ -274,7 +268,7 @@ namespace enigma {
         }
     }
     
-    Value::operator Object *() const {
+    Object *Value::toObject() const {
         switch (type) {
             case OBJECT:
                 return Object::getObject(round_nearest<int>(val.dval[0]));
@@ -286,11 +280,11 @@ namespace enigma {
         }
     }
     
-    Value::operator ObjectList() const {
+    ObjectList Value::toObjectList() const {
         return getObjectList(nullptr);
     }
     
-    Value::operator TokenList() const {
+    TokenList Value::toTokenList() const {
         TokenList result;
         switch (type) {
             case OBJECT:
@@ -301,7 +295,7 @@ namespace enigma {
             case GRIDPOS:
                 result.push_back(*this);
                 break;
-            case TOKENS:
+            case TOKENS: {
                 std::vector<std::string> vs;
                 ecl::split_copy(std::string(val.str), ';', back_inserter(vs));
                 for (std::vector<std::string>::iterator it = vs.begin(); it != vs.end(); ++it) {
@@ -324,12 +318,16 @@ namespace enigma {
                     }
                 }
                 break;
+            }
+            case DEFAULT: break;
+            case NIL: break;
+            case BOOL: break;
+            case DOUBLE: break;
         }
         return result;
     }
     
-    Value::operator ecl::V2() const {
-        Object *obj = nullptr;
+    ecl::V2 Value::toVec() const {
         switch (type) {
             case POSITION:
             case GRIDPOS:
@@ -337,44 +335,29 @@ namespace enigma {
             case NAMEDOBJECT:
             case STRING:
             case OBJECT:
-                obj = *this;
-                if (obj != nullptr)
+                if (Object* obj = toObject()) {
                     switch (obj->getObjectType()) {
-                        case Object::STONE :
-                        case Object::FLOOR :
-                        case Object::ITEM  :
-                            return dynamic_cast<GridObject *>(obj)->getOwnerPos();
-                        case Object::ACTOR :
-                            return dynamic_cast<Actor *>(obj)->get_pos();
+                        case Object::STONE:
+                        case Object::FLOOR:
+                        case Object::ITEM:
+                            return dynamic_cast<GridObject*>(obj)->getOwnerPos().toVec();
+                        case Object::ACTOR: return dynamic_cast<Actor*>(obj)->get_pos();
+                        default: break;
                     }
-                else if (type != OBJECT)
-                    return GetNamedPosition(val.str);
+                } else if (type != OBJECT) {
+                    return GetNamedPosition(val.str).toVec();
+                }
+            default:
+                break;
         }
         // all other cases
         return ecl::V2(-1, -1);
     }
     
-    Value::operator GridPos() const {
-        ecl::V2 pos = *this;
-        return GridPos(pos);
+    GridPos Value::toGridPos() const {
+        return GridPos(toVec());
     }
-    
-    Value::operator const char*() const {
-        static std::string s;
-        switch (type) {
-            case Value::DOUBLE:
-                s = ecl::strf("%g", val.dval[0]);  // need drop of trailing zeros and point for int
-                return s.c_str();
-            case Value::STRING: 
-                return val.str;
-            case Value::NIL:
-            case Value::DEFAULT:
-            default: 
-                s.clear();
-                return s.c_str();
-        }
-    }
-    
+
     void Value::assign(const char* s) {
         clear();
         type = STRING;
@@ -422,11 +405,19 @@ namespace enigma {
         return type == DEFAULT;
     }
     
-    std::string Value::to_string() const{
-        return std::string(*this);
+    std::string Value::toString() const {
+        switch (type) {
+            case Value::DOUBLE: {
+                return ecl::strf("%g", val.dval[0]);  // need drop of trailing zeros and point for int
+            }
+            case Value::STRING: return val.str;
+            case Value::NIL:
+            case Value::DEFAULT:
+            default: return "";
+        }
     }
     
-    bool Value::to_bool() const {
+    bool Value::toBool() const {
         switch (type) {
             case BOOL :
             case DOUBLE :
@@ -449,7 +440,7 @@ namespace enigma {
             case NAMEDOBJECT:
             case STRING:
             case OBJECT:
-                obj = *this;
+                obj = toObject();
                 if (obj != nullptr)
                     switch (obj->getObjectType()) {
                         case Object::STONE :
@@ -482,7 +473,7 @@ namespace enigma {
                 // else it is a single object name - fall through
             case NAMEDOBJECT:
             case OBJECT:
-                result.push_back(*this);
+                result.push_back(toObject());
                 break;
             case GROUP:
                 std::vector<std::string> vs;
@@ -535,9 +526,10 @@ namespace enigma {
     }
     
     bool Value::finalizeNearestObjectReference(Object *reference) {
-        if (type == STRING && std::string(val.str).find("@@") != 0 && std::string(val.str).find("@") == 0
-                && std::string(val.str).find_first_of("*?") != std::string::npos) {
-            //
+        if (type != STRING)
+            return false;
+        if (std::string str = toString(); str.find("@@") != 0 && str.find("@") == 0
+                && str.find_first_of("*?") != std::string::npos) {
             ObjectList result = GetNamedGroup(val.str, reference);
             clear();
             if (!result.empty() && result.front() != nullptr) {
@@ -564,24 +556,8 @@ namespace enigma {
             return false;
     }
     
-    int to_int(const Value &v) {
-        return v;
-    }
-    
-    bool to_bool(const Value &v) {
-        return v.to_bool();
-    }
-    
-    double to_double(const Value &v) {
-        return v;
-    }
-    
-    std::string to_string(const Value &v) {
-        return v.to_string();
-    }
-    
     Direction to_direction (const Value &v) {
-        int val = Clamp(to_int(v), -1, 3);
+        int val = Clamp(v.toInt(), -1, 3);
         return static_cast<Direction>(val);
     }
     

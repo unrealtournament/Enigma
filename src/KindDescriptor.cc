@@ -118,7 +118,7 @@ namespace enigma {
     }
     
     Value KindDescriptor::getDefaultValue(std::string key) {
-        std::map<std::string, AttributeDescriptor *>::iterator it = attributes.find(key);
+        auto it = attributes.find(key);
         if (it == attributes.end())
             return Value(Value::DEFAULT);
         else {
@@ -131,7 +131,7 @@ namespace enigma {
     }
     
     std::string KindDescriptor::getKind(const Object *obj) {
-        for(std::list<KindDescriptor *>::iterator it = subKinds.begin(); it != subKinds.end(); ++it) {
+        for (auto it = subKinds.begin(); it != subKinds.end(); ++it) {
             if (!(*it)->isInitOnly && (*it)->validateObject(obj))
                 return (*it)->kind;
         }
@@ -192,7 +192,7 @@ namespace enigma {
             if (it->second->isReadable()) Log << "r";
             if (it->second->isWritable()) Log << "w";
             if (it->second->getType() == VAL_INT && it->second->getValue() != Value())
-                Log << " : " << (int)(it->second->getValue());
+                Log << " : " << it->second->getValue().toInt();
             Log << "\n";
         }
     }

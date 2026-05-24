@@ -35,7 +35,7 @@ namespace enigma {
     Value Trigger::message (const Message &m) {
         if (m.message == "signal" && (server::GameCompatibility != GAMET_ENIGMA ||
                 server::EnigmaCompatibility < 1.10)) {
-            performAction(m.value.to_bool());  // convert 1/0 values to true/false
+            performAction(m.value.toBool());  // convert 1/0 values to true/false
             return Value();
         } else if (m.message == "_init") {
             // the state count at init is wrong as some actors on the grid may
@@ -52,13 +52,13 @@ namespace enigma {
                 init_model();
             return Value();
         } else if (m.message == "_jumping" ) {
-            updateIState(m.value.to_bool() ? -1 : +1);
+            updateIState(m.value.toBool() ? -1 : +1);
         } else if (m.message == "_dying" ) {
             Actor *ac = dynamic_cast<Actor *>(m.sender);
             if (ac != nullptr) {
-                if (m.value.to_bool() && !ac->is_flying())
+                if (m.value.toBool() && !ac->is_flying())
                     updateIState(-1);
-                else if (!m.value.to_bool())
+                else if (!m.value.toBool())
                     updateIState(+1);
             }
         }
@@ -82,7 +82,7 @@ namespace enigma {
     }
 
     void Trigger::init_model() {
-        if (getAttr("invisible").to_bool())
+        if (getAttr("invisible").toBool())
             set_model("invisible");
         else if (state != 0)
             set_model("it_trigger_down");

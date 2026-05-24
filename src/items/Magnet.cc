@@ -36,16 +36,16 @@ namespace enigma {
     
     void Magnet::setAttr(const std::string &key, const Value &val) {
         if (key == "range") {
-            double range = (val.getType() == Value::NIL) ? server::MagnetRange : (double)val;
+            double range = (val.getType() == Value::NIL) ? server::MagnetRange : val.toDouble();
             squareRange = range * range;
         } else if (key == "strength") {
-            correctedStrength = 0.6 * ((val.getType() == Value::NIL) ? server::MagnetForce : (double)val);
+            correctedStrength = 0.6 * ((val.getType() == Value::NIL) ? server::MagnetForce : val.toDouble());
         }
         Item::setAttr(key, val);
     }
     
     Value Magnet::message(const Message &m) {
-        if (m.message == "_updateglobals" && m.value.to_string() == "it_magnet") {
+        if (m.message == "_updateglobals" && m.value.toString() == "it_magnet") {
             if (getAttr("range").getType() == Value::DEFAULT) {
                 squareRange = server::MagnetRange * server::MagnetRange;
             }

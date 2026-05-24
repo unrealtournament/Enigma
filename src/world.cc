@@ -327,7 +327,7 @@ void World::name_object(Object *obj, const std::string &name) {
 void World::unname(Object *obj) {
     ASSERT(obj, XLevelRuntime, "unname: no object given");
     if (Value v = obj->getAttr("name")) {
-        m_objnames.remove(v.to_string());
+        m_objnames.remove(v.toString());
         obj->setAttr("name", Value());
     }
 }
@@ -1698,7 +1698,7 @@ bool WorldInitLevel() {
         SendMessage(a, "_init", Value());
 
         if (Value v = a->getAttr("owner")) {
-            int iplayer = v;
+            int iplayer = v.toInt();
             player::AddActor(iplayer, a);
             if (iplayer == 0)
                 seen_player0 = true;
@@ -1750,7 +1750,7 @@ void SetMouseForce(V2 f) {
 void NameObject(Object *obj, const std::string &name) {
     string oldname;
     if (Value v = obj->getAttr("name")) {
-        oldname = v.to_string();
+        oldname = v.toString();
         if (oldname.size() > 0 && oldname[0] != '$' && name.size() > 0 && name[0] != '$')
             obj->warning("name '%s' overwritten by '%s'", oldname.c_str(), name.c_str());
         UnnameObject(obj);
@@ -1842,7 +1842,7 @@ void AddSignal(const GridLoc &srcloc, const GridLoc &dstloc, const string &msg) 
             //            dest=%i/%i-%d msg='%s'\n",
             //                srcloc.pos.x, srcloc.pos.y, srcloc.layer, dstloc.pos.x, dstloc.pos.y,
             //                dstloc.layer, msg.c_str());
-            TokenList tl = src->getAttr("destination");  // may be empty or may contain some tokens
+            TokenList tl = src->getAttr("destination").toTokenList();  // may be empty or may contain some tokens
             tl.push_back(GetFloor(dstloc.pos));          // use floor to guarantee existence);
             src->setAttr("destination", tl);
             return;
@@ -1886,8 +1886,8 @@ void AddSignal(const GridLoc &srcloc, const GridLoc &dstloc, const string &msg) 
     }
 
     if (src->isKind("st_actorimpulse")) {
-        ObjectList ol = src->getDefaultedAttr("$!oxyd!destinations", Value(Value::GROUP));
-        ol.push_back(dstValue);
+        ObjectList ol = src->getDefaultedAttr("$!oxyd!destinations", Value(Value::GROUP)).toObjectList();
+        ol.push_back(dstValue.toObject());
         src->setAttr("$!oxyd!destinations", ol);
         return;
     }
@@ -1895,7 +1895,7 @@ void AddSignal(const GridLoc &srcloc, const GridLoc &dstloc, const string &msg) 
     std::string target_key = "target";
     std::string action_key = "action";
 
-    // fourswitch: 4 subsequent AddSignal calls for state specific signals
+    // fourswitch: 4 subsequent AddSignal calls for state-specific signals
     if (src->getObjectType() == Object::STONE &&
         get_id(dynamic_cast<Stone *>(src)) == st_fourswitch) {
         for (int i = NORTH;; i--) {
@@ -1919,10 +1919,10 @@ void AddSignal(const GridLoc &srcloc, const GridLoc &dstloc, const string &msg) 
 
     // this function is supported for old API only - we can assume that target, action
     // are not set by other means than this function:
-    TokenList targets = src->getDefaultedAttr(target_key, Value(Value::TOKENS));
+    TokenList targets = src->getDefaultedAttr(target_key, Value(Value::TOKENS)).toTokenList();
     targets.push_back(dstValue);  // add this target to existing ones
     src->setAttr(target_key, Value(targets));
-    TokenList actions = src->getDefaultedAttr(action_key, Value(Value::TOKENS));
+    TokenList actions = src->getDefaultedAttr(action_key, Value(Value::TOKENS)).toTokenList();
     actions.push_back(Value("signal"));  // add this target to existing ones
     src->setAttr(action_key, actions);
 }
@@ -1993,7 +1993,7 @@ void explosion(GridPos source, GridPos dest, const char *explosion_item) {
     if (Item *item = GetItem(dest)) {
         if (item->getClass() == "it_explosion") {
             Item *newExplosion = MakeItem(explosion_item);
-            if ((int)(newExplosion->getAttr("state")) > (int)(item->getAttr("state")))
+            if (newExplosion->getAttr("state").toInt() > item->getAttr("state").toInt())
                 SetItem(dest, newExplosion);
             else
                 DisposeObject(newExplosion);

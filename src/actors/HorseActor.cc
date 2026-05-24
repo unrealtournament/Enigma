@@ -56,18 +56,18 @@ namespace enigma {
                 objFlags |= OBJBIT_NEWDEST;
             }
         } else if (key == "destidx") {
-            destidx = val;
+            destidx = val.toInt();
             if (destidx >= 0)
                 objFlags |= OBJBIT_NEWDEST;
             else
                 objFlags &= ~OBJBIT_AUTOMOVE;
         } else if (key == "steady") {
-            if (val.to_bool())
+            if (val.toBool())
                  objFlags |= OBJBIT_STEADY;
             else
                  objFlags &= ~OBJBIT_STEADY;
         } else if (key == "strength") {
-            strength = val;
+            strength = val.toDouble();
             if (strength < 0)
                 objFlags &= ~OBJBIT_AUTOMOVE;
         } else
@@ -113,7 +113,7 @@ namespace enigma {
             // target reached or? try next one
             if ((Object::getObject(theid) != nullptr)  && (objFlags & OBJBIT_AUTOMOVE) &&
                     !getDestinationByIndex(++destidx, target)) {
-                if (getAttr("loop").to_bool()) {
+                if (getAttr("loop").toBool()) {
                     destidx = 0;     // failed -> start anew
                     getDestinationByIndex(destidx, target);
                 } else

@@ -33,7 +33,7 @@ namespace enigma {
 
 void Stone::on_creation(GridPos p) {
     // notify rubberbands that may now exceed max/min limits
-    ObjectList olist = getAttr("rubbers");  // a private deletion resistant copy
+    ObjectList olist = getAttr("rubbers").toObjectList();  // a private deletion resistant copy
     for (auto &elem : olist)
         SendMessage(elem, "_recheck");
     GridObject::on_creation(p);
@@ -42,13 +42,13 @@ void Stone::on_creation(GridPos p) {
 void Stone::transform(std::string kind) {
     Stone *newStone = MakeStone(kind.c_str());
     transferIdentity(newStone);  // subclasses may hook this call
-    ObjectList olist = getAttr("rubbers");
+    ObjectList olist = getAttr("rubbers").toObjectList();
     for (auto &elem : olist) {
         elem->setAttr("anchor2", newStone);
     }
-    olist = getAttr("wires");
+    olist = getAttr("wires").toObjectList();
     for (auto &elem : olist) {
-        elem->setAttr((this == elem->getAttr("anchor1")) ? "anchor1" : "anchor2", newStone);
+        elem->setAttr((this == elem->getAttr("anchor1").toObject()) ? "anchor1" : "anchor2", newStone);
     }
     SetStone(get_pos(), newStone);
 }
@@ -111,7 +111,7 @@ void Stone::on_impulse(const Impulse &impulse) {
 
 void Stone::propagateImpulse(const Impulse &impulse) {
     if (!impulse.byWire) {
-        ObjectList olist = getAttr("fellows");
+        ObjectList olist = getAttr("fellows").toObjectList();
         for (auto &elem : olist) {
             if (Stone *fellow = dynamic_cast<Stone *>(elem)) {
                 Impulse wireImpulse(this, fellow->get_pos(), impulse.dir, true);
@@ -168,11 +168,11 @@ bool Stone::on_move(const GridPos &origin) {
    default matrix, resp. defaultfactor as hit_factor. */
 ecl::V2 Stone::distortedVelocity(ecl::V2 vel, double defaultfactor = 1.0) {
     ecl::V2 newvel;
-    double factor = this->getDefaultedAttr("hit_strength", defaultfactor);
-    newvel[0] = (double)(this->getDefaultedAttr("hit_distortion_xx", 1)) * vel[0] +
-                (double)(this->getAttr("hit_distortion_xy")) * vel[1];
-    newvel[1] = (double)(this->getAttr("hit_distortion_yx")) * vel[0] +
-                (double)(this->getDefaultedAttr("hit_distortion_yy", 1)) * vel[1];
+    double factor = this->getDefaultedAttr("hit_strength", defaultfactor).toDouble();
+    newvel[0] = this->getDefaultedAttr("hit_distortion_xx", 1).toDouble() * vel[0] +
+                this->getAttr("hit_distortion_xy").toDouble() * vel[1];
+    newvel[1] = this->getAttr("hit_distortion_yx").toDouble() * vel[0] +
+                this->getDefaultedAttr("hit_distortion_yy", 1).toDouble() * vel[1];
     return newvel * factor;
 }
 
@@ -246,7 +246,7 @@ FreezeStatusBits Stone::get_freeze_bits(GridPos p) {
 bool Stone::freeze_check() {
     GridPos this_pos = this->get_pos();
     // Check if stone and floor ask for freeze_check
-    if (!to_bool(this->getAttr("freeze_check")))
+    if (!this->getAttr("freeze_check").toBool())
         return false;
     if (freeze_check_running)
         return false;

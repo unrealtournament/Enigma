@@ -41,11 +41,11 @@ namespace enigma {
         GridObject(const char * kind) : StateObject(kind), pos (GridPos(-1, -1)) {}
 
         // Object interface
-        virtual void setAttr(const std::string& key, const Value &val) override;
-        virtual Value getAttr(const std::string &key) const override;
+        void setAttr(const std::string& key, const Value &val) override;
+        Value getAttr(const std::string &key) const override;
 
         // StateObject interface
-        virtual void setState(int extState) override;
+        void setState(int extState) override;
 
 
         void creation(GridPos p) {
@@ -102,9 +102,9 @@ namespace enigma {
 
         DirectionBits getConnections() const;
         virtual DirectionBits getFaces(bool actorInvisible = false) const;
-        
-        virtual double squareDistance(const Object *other) const override;
-        virtual bool isSouthOrEastOf(const Object *other) const override;
+
+        double squareDistance(const Object *other) const override;
+        bool isSouthOrEastOf(const Object *other) const override;
 
         virtual std::string getModelName() const;
         virtual display::Model *get_model () = 0;

@@ -87,21 +87,21 @@ namespace
         for (unsigned y=0; y<sgrid.getHeight(); ++y)
             for (unsigned x=0; x<sgrid.getWidth(); ++x)
                 if (Stone *st = GetStone(GridPos(x, y)))
-                    if (int code = st->getAttr("code"))
+                    if (int code = st->getAttr("code").toInt())
                         stones.insert(code);
 
         const Grid &igrid = level.getGrid (GridType_Objects);
         for (unsigned y=0; y<igrid.getHeight(); ++y)
             for (unsigned x=0; x<igrid.getWidth(); ++x)
                 if (Item *it = GetItem(GridPos(x, y)))
-                    if (int code = it->getAttr("code"))
+                    if (int code = it->getAttr("code").toInt())
                         items.insert(code);
 
         const Grid &fgrid = level.getGrid (GridType_Objects);
         for (unsigned y=0; y<fgrid.getHeight(); ++y)
             for (unsigned x=0; x<fgrid.getWidth(); ++x)
                 if (Floor *fl = GetFloor(GridPos(x, y)))
-                    if (int code = fl->getAttr("code"))
+                    if (int code = fl->getAttr("code").toInt())
                         floors.insert(code);
 
         if (!stones.empty()) {

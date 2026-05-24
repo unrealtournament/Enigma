@@ -32,7 +32,7 @@ namespace enigma {
     
     void PullerItem::setAttr(const std::string& key, const Value &val) {
         if (key == "orientation") {
-            objFlags = (objFlags & ~OBJBIT_ORIENTATION) | (((int)(val) << 24) & OBJBIT_ORIENTATION);
+            objFlags = (objFlags & ~OBJBIT_ORIENTATION) | ((val.toInt() << 24) & OBJBIT_ORIENTATION);
         }
         Item::setAttr(key, val);
     }
@@ -49,8 +49,8 @@ namespace enigma {
         
         // usage within a st-window
         Stone *stone = GetStone(get_pos());
-        if (stone && (stone->getClass() == "st_window") &&
-                to_bool(SendMessage(stone, "inner_pull", dir))) {
+        if (stone && (stone->getClass() == "st_window")
+            && SendMessage(stone, "inner_pull", dir).toBool()) {
         }
         
         // usage in front of a stone

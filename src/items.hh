@@ -204,14 +204,13 @@ public:
 
     /* ---------- Public methods ---------- */
     void kill();
-    void replace(std::string kind);
+    void replace(const std::string &kind);
 
     /* ---------- Virtual functions ---------- */
-    virtual std::string getClass() const override;
-    virtual Value getAttr(const std::string &key) const override;
+    std::string getClass() const override;
+    Value getAttr(const std::string &key) const override;
 
-    void init_model() override;
-    virtual void processLight(Direction d) override;
+    void processLight(Direction d) override;
     virtual double getFriction(ecl::V2 position, double defaultFriction, Actor *a);
     virtual ecl::V2 calcMouseforce(Actor *a, ecl::V2 mouseForce, ecl::V2 floorForce);
 
@@ -239,19 +238,19 @@ public:
 
     virtual void drop(Actor *a, GridPos p);
 
-    /*! Called when item is dropped by actor `a' */
+    /*! Called when an item is dropped by actor `a' */
     virtual void on_drop(Actor *a);
 
-    /*! Called when item is picked up by actor `a' */
+    /*! Called when an item is picked up by actor `a' */
     virtual void on_pickup(Actor *a);
 
-    /*! Called when stone above item changes. */
+    /*! Called when the stone above item changes. */
     virtual void stone_change(Stone *st);
 
-    /*! Called when item is ``hit'' by a moving stone. */
+    /*! Called when an item is ``hit'' by a moving stone. */
     virtual void on_stonehit(Stone *st);
 
-    /*! Called when item is ``hit'' by an actor.  Return true if
+    /*! Called when an item is ``hit'' by an actor.  Returns true if
       the item should be picked up. */
     virtual bool actor_hit(Actor *a);
 
@@ -259,25 +258,27 @@ public:
       inventory. */
     virtual std::string get_inventory_model();
 
-    /* Called when item is activated by the owner of `a'. */
+    /* Called when an item is activated by the owner of `a'. */
     virtual ItemAction activate(Actor *a, GridPos p);
 
     virtual std::list<GridPos> warpSpreadPos(bool isWater);
 
-protected:
-    virtual Object::ObjectType getObjectType() const override { return Object::ITEM; }
+    ObjectType getObjectType() const override { return Object::ITEM; }
 
+protected:
     // GridObject interface
-    virtual void set_model(const std::string &mname) override {
+    void init_model() override;
+
+    void set_model(const std::string &mname) override {
         display::SetModel(GridLoc(GRID_ITEMS, get_pos()), mname);
     }
 
-    virtual display::Model *get_model() override {
+    display::Model *get_model() override {
         return display::GetModel(GridLoc(GRID_ITEMS, get_pos()));
     }
 
-    virtual void kill_model(GridPos p) override { display::KillModel(GridLoc(GRID_ITEMS, p)); }
-    void transform(std::string kind);
+    void kill_model(GridPos p) override { display::KillModel(GridLoc(GRID_ITEMS, p)); }
+    void transform(const std::string &kind);
     // replace template method hook
     virtual void setup_successor(Item *newitem) {}
 };

@@ -385,7 +385,7 @@ static int pushNewPolist(lua_State *L, PositionList positions) {
         // polist[i] = position
         Value v = *it;
         if (v) {  // existing object not NULL
-            ecl::V2 p(v);
+            ecl::V2 p = v.toVec();
             lua_pushnumber(L, p[0]);
             lua_rawseti(L, -2, i++);   
             lua_pushnumber(L, p[1]);
@@ -428,26 +428,26 @@ static void push_value(lua_State *L, const Value &val) {
             break;
         case Value::BOOL:
             if (server::EnigmaCompatibility < 1.10) {
-                if (val.to_bool())
+                if (val.toBool())
                     lua_pushnumber(L, 1);
                 else
                     lua_pushnil(L);
             } else {
-                lua_pushboolean(L, val.to_bool());
+                lua_pushboolean(L, val.toBool());
             }
             break;
         case Value::OBJECT:
-            pushobject(L, (Object *)val);
+            pushobject(L, val.toObject());
             break;
         case Value::GROUP:
-            pushNewGroup(L, val);
+            pushNewGroup(L, val.toObjectList());
             break;
         case Value::POSITION:
         case Value::GRIDPOS:
-            pushNewPosition(L, val);
+            pushNewPosition(L, val.toVec());
             break;
         case Value::TOKENS: {
-            TokenList tokens = val;
+            TokenList tokens = val.toTokenList();
             lua_newtable(L);
             int n = 1;
             for (TokenList::iterator it = tokens.begin(); it != tokens.end(); ++it, n++) {
@@ -1107,7 +1107,7 @@ static int addPositionsBase(lua_State *L, double factorArg2, bool scalarMultipli
         }
         lua_pop(L, 1);
         for (PositionList::iterator itr = pl.begin(); itr != pl.end(); ++itr) {
-             ecl::V2 newpos = offset + factorArg2 * (ecl::V2)(*itr);
+             ecl::V2 newpos = offset + factorArg2 * itr->toVec();
              newpl.push_back(newpos);
         }
         return pushNewPolist(L, newpl);
@@ -1373,7 +1373,7 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
     if (is_world(L, 1))      // world method?
         lua_remove(L, 1);    // no need of context
     if (is_group(L, 1)) {
-        ObjectList srcList = to_value(L, 1);
+        ObjectList srcList = to_value(L, 1).toObjectList();
         ObjectList objects;
         for (ObjectList::iterator itr = srcList.begin(); itr != srcList.end(); ++itr) {
             GridPos  p;
@@ -1401,7 +1401,7 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
         PositionList positions = toPositionList(L, 1);
         ObjectList objects;
         for (PositionList::iterator itr = positions.begin(); itr != positions.end(); ++itr) {
-            GridPos p = *itr;
+            GridPos p = itr->toGridPos();
             Object *obj = nullptr;
             switch (ot) {
                 case Object::FLOOR :
@@ -2316,7 +2316,7 @@ static int setObjectByTable(lua_State *L, double x, double y, bool onlyFloors = 
         switch (obj->getObjectType()) {
             case Object::FLOOR :
                 if (Value odd = obj->getAttr("checkerboard")) {
-                    if ((xi+yi)%2 != (int)odd) {
+                    if ((xi + yi) % 2 != odd.toInt()) {
                         DisposeObject(obj);
                         break;
                     }
@@ -2326,7 +2326,7 @@ static int setObjectByTable(lua_State *L, double x, double y, bool onlyFloors = 
             case Object::STONE :
                 if (!onlyFloors) {
                     if (Value odd = obj->getAttr("checkerboard")) {
-                        if ((xi+yi)%2 != (int)odd) {
+                        if ((xi+yi)%2 != odd.toInt()) {
                             DisposeObject(obj);
                             break;
                         }
@@ -2339,7 +2339,7 @@ static int setObjectByTable(lua_State *L, double x, double y, bool onlyFloors = 
             case Object::ITEM  :
                 if (!onlyFloors) {
                     if (Value odd = obj->getAttr("checkerboard")) {
-                        if ((xi+yi)%2 != (int)odd) {
+                        if ((xi+yi)%2 != odd.toInt()) {
                             DisposeObject(obj);
                             break;
                         }
@@ -2716,7 +2716,7 @@ static int dispatchWorldWriteAccess(lua_State *L) {
         } else if (is_polist(L, 2)) {
             PositionList positions = toPositionList(L, 2);
             for (PositionList::iterator itr = positions.begin(); itr != positions.end(); ++itr) {
-                GridPos p = *itr;
+                GridPos p = itr->toGridPos();
                 x = p.x;
                 y = p.y;
                 lua_pushvalue(L, 3);
@@ -2850,7 +2850,7 @@ static int shuffleOxyd(lua_State *L) {
         if (!is_pair) {
             lua_getfield(L, i, "linear");
             if (lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
-                ObjectList oxyds = group1;
+                ObjectList oxyds = group1.toObjectList();
                 Object *firstOxyd = nullptr;
                 for (ObjectList::iterator i = oxyds.begin(); i != oxyds.end(); ++i) {
                     if (firstOxyd == nullptr)
@@ -2865,7 +2865,7 @@ static int shuffleOxyd(lua_State *L) {
             
             lua_getfield(L, i, "circular");
             if (lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
-                ObjectList oxyds = group1;
+                ObjectList oxyds = group1.toObjectList();
                 Object *firstOxyd = nullptr;
                 Object *leftOxyd = nullptr;
                 for (ObjectList::iterator i = oxyds.begin(); i != oxyds.end(); ++i) {
@@ -3310,7 +3310,7 @@ static int sortGroup(lua_State *L) {
         int num = 0;
         for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr) {
             if (*itr != nullptr) {
-                ecl::V2 pos = Value(*itr);
+                ecl::V2 pos = Value(*itr).toVec();
                 cx += pos[0];
                 cy += pos[1];
                 num++;
@@ -3321,7 +3321,7 @@ static int sortGroup(lua_State *L) {
             cy = cy/num;
             for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr) {
                 if (*itr != nullptr) {
-                    ecl::V2 pos = Value(*itr);
+                    ecl::V2 pos = Value(*itr).toVec();
                     double alpha = std::atan2(pos[1] - cy, pos[0] - cx); 
                     sortMap[alpha] = *itr;
                 }
@@ -3336,7 +3336,7 @@ static int sortGroup(lua_State *L) {
         if (lua_gettop(L) == 2 && oldSort.size() >= 2) {
             Object *front = oldSort.front();
             oldSort.pop_front();
-            dir = (ecl::V2)(Value(oldSort.front())) - (ecl::V2)(Value(front));
+            dir = Value(oldSort.front()).toVec() - Value(front).toVec();
             oldSort.push_front(front);
         } else if (lua_gettop(L) == 3 && is_position(L, 3)) {
             dir = toPosition(L, 3);
@@ -3345,7 +3345,7 @@ static int sortGroup(lua_State *L) {
         }
         dir.normalize();
         for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr) {
-            double d = dir * (ecl::V2)(Value(*itr));
+            double d = dir * Value(*itr).toVec();
             sortMap.insert(std::make_pair(d, *itr));
         }
         for (std::multimap<double, Object *>::iterator itr = sortMap.begin(); itr != sortMap.end(); ++itr)
@@ -3355,7 +3355,7 @@ static int sortGroup(lua_State *L) {
         // default sort lexical by name
         std::map<std::string, Object *> sortMap;
         for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr)
-            sortMap[((*itr)->getAttr("name")).to_string()] = *itr;
+            sortMap[((*itr)->getAttr("name")).toString()] = *itr;
         for (std::map<std::string, Object *>::iterator itr = sortMap.begin(); itr != sortMap.end(); ++itr)
             newSort.push_back(itr->second);
     }
@@ -3446,7 +3446,7 @@ static int polistEquality(lua_State *L) {
     PositionList pl2 = toPositionList(L, 2);
     PositionList::iterator itr2 = pl2.begin();
     for (PositionList::iterator itr1 = pl1.begin(); itr1 != pl1.end(); ++itr1) {
-         if (itr2 == pl2.end() || ((ecl::V2)(*itr1) !=  (ecl::V2)(*itr2))) {
+         if (itr2 == pl2.end() || (itr1->toVec() != itr2->toVec())) {
              lua_pushboolean(L, false);
              return 1;
          }

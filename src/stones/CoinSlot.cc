@@ -50,7 +50,7 @@ namespace enigma {
     
     void CoinSlot::setAttr(const std::string& key, const Value &val) {
         if (key == "instant") {
-            if (val.to_bool())
+            if (val.toBool())
                 objFlags |= OBJBIT_INSTANT;
             else
                 objFlags &= ~OBJBIT_INSTANT;
@@ -88,7 +88,7 @@ namespace enigma {
         iState newIState = ON;                        // standard follow up state
         if (!(objFlags & OBJBIT_INSTANT)) {
             // start or update timer
-            rest += (double)getAttr("$addTime");
+            rest += getAttr("$addTime").toDouble();
             setAttr("$addTime", 0);
         } else { // instant
             if (rest == 0)
@@ -96,7 +96,7 @@ namespace enigma {
                 newIState = OFF;
         }
         if (rest > 0)
-            GameTimer.set_alarm(this, (double)getAttr("$addTime") + rest, false);
+            GameTimer.set_alarm(this, getAttr("$addTime").toDouble() + rest, false);
         setIState(newIState);
     }
 
@@ -110,16 +110,16 @@ namespace enigma {
                 ItemID ID = get_id(it);
                 if (ID == it_coin_s || ID == it_coin_m || ID == it_coin_l) {
                     double interval;
-                    if (server::EnigmaCompatibility < 1.10) 
-                        interval = it->getAttr("coin_value");
-                    else {
+                    if (server::EnigmaCompatibility < 1.10) {
+                        interval = it->getAttr("coin_value").toDouble();
+                    } else {
                         switch (ID) {
                             case it_coin_s:
-                                interval = getAttr("interval_s"); break;
+                                interval = getAttr("interval_s").toDouble(); break;
                             case it_coin_m:
-                                interval = getAttr("interval_m"); break;
+                                interval = getAttr("interval_m").toDouble(); break;
                             case it_coin_l:
-                                interval = getAttr("interval_l"); break;
+                                interval = getAttr("interval_l").toDouble(); break;
                             default:
                                 ; // ignore 
                         }
@@ -133,7 +133,7 @@ namespace enigma {
                             GameTimer.set_alarm(this, interval + rest, false);
                         } else {
                             // remember time value for animcb evaluation
-                            setAttr("$addTime", (double)getAttr("$addTime") + interval);
+                            setAttr("$addTime", getAttr("$addTime").toDouble() + interval);
                         }
                     }
                     inv->yield_first();

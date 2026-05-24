@@ -80,17 +80,15 @@ namespace enigma {
     double StripItem::getFriction(ecl::V2 position, double defaultFriction, Actor *a) {
         Value v = getAttr("friction");
         if (v && covers_floor(position, a))
-            return v;
-        else
-            return defaultFriction;
+            return v.toDouble();
+        return defaultFriction;
     }
 
     ecl::V2 StripItem::calcMouseforce(Actor *a, ecl::V2 mouseForce, ecl::V2 floorForce) {
         Value v = getAttr("adhesion");
         if (v && covers_floor(a->get_pos(), a))
-            return mouseForce * (double)v ;
-        else
-            return floorForce;
+            return mouseForce * v.toDouble();
+        return floorForce;
     }
 
     int StripItem::traitsIdx() const {

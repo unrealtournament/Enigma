@@ -46,14 +46,12 @@ namespace enigma {
             };
             if (Value v = Item::getAttr(key))
                 return v;
-            else {
-                TokenList tl;
-                for (int i = 0; i < 5; i++)
-                    tl.push_back(stonename[i]);
-               return tl;
-            }
-        } else
-            return Item::getAttr(key);
+            TokenList tl;
+            for (int i = 0; i < 5; i++)
+                tl.push_back(stonename[i]);
+            return tl;
+        }
+        return Item::getAttr(key);
     }
 
     void SurpriseItem::on_drop(Actor *a) {
@@ -61,11 +59,11 @@ namespace enigma {
             performAction(true);    // may kill the stone!
 
         if (Object::getObject(theid) != nullptr) {  // not killed?
-            TokenList tl = getAttr("selection");
+            TokenList tl = getAttr("selection").toTokenList();
             int idx = enigma::IntegerRand(1, tl.size()) - 1;
             TokenList::iterator itr = tl.begin();
             for (int i = 0; i < idx; i++, ++itr);
-            std::string name = (*itr).to_string();
+            std::string name = (*itr).toString();
             if (name.find('=') == 0) {
                 if (lua::CallFunc(lua::LevelState(), "enigma.settile", name.substr(1), this)) {
                     throw XLevelRuntime(std::string("surprise set tile failed:\n")+lua::LastError(lua::LevelState()));

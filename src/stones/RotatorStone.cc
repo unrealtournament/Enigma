@@ -40,14 +40,14 @@ namespace enigma {
 
 void RotatorStone::setAttr(const std::string& key, const Value &val) {
         if (key == "counterclock") {
-            int newstate = val.to_bool() ? CCW : CW;
+            int newstate = val.toBool() ? CCW : CW;
             if (newstate != state) {
                 state = newstate;
                 if (isDisplayable())
                     init_model();
             }
         } else if (key == "movable") {
-            if (val.to_bool())
+            if (val.toBool())
                 objFlags |= OBJBIT_MOVABLE;
             else
                 objFlags &= ~OBJBIT_MOVABLE;

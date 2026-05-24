@@ -133,7 +133,7 @@ DirectionBits rotate(DirectionBits d, bool clockwise) {
 GridPos::GridPos(const ecl::V2 &p) : x(round_down<int>(p[0])), y(round_down<int>(p[1])) {
 }
 
-GridPos::operator ecl::V2() const {
+ecl::V2 GridPos::toVec() const {
     return ecl::V2(x, y);
 }
 

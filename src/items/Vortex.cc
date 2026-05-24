@@ -35,7 +35,7 @@ namespace enigma {
 
     Vortex::~Vortex() {
         GameTimer.remove_alarm(this);
-        if (Actor *actor = dynamic_cast<Actor *>((Object *)getAttr("$grabbed_actor"))) {
+        if (Actor *actor = dynamic_cast<Actor *>(getAttr("$grabbed_actor").toObject())) {
             // release an actor that is grabbed on behalf of this vortex - actor state FALLING_VORTEX
             SendMessage(actor, "_rise");
         }
@@ -46,7 +46,7 @@ namespace enigma {
     }
 
     Value Vortex::message(const Message &m) {
-        if (m.message == "_passed" && getAttr("autoclose").to_bool()) {
+        if (m.message == "_passed" && getAttr("autoclose").toBool()) {
             setState(0);
             performAction(getAttr("$grabbed_actor"));
             return Value();
@@ -136,11 +136,13 @@ namespace enigma {
     }
 
     bool Vortex::actor_hit(Actor *actor) {
-        if (state == OPEN && (length((actor->get_pos()) - get_pos().center()) < 0.25) && actor->can_be_warped())
+        if (state == OPEN && (length((actor->get_pos()) - get_pos().center()) < 0.25)
+                && actor->can_be_warped()) {
             prepare_for_warp(actor);
-        else if (state == CLOSED && (length((actor->get_pos()) - get_pos().center()) > 0.25) &&
-                getAttr("autoopen").to_bool())
+        } else if (state == CLOSED && (length((actor->get_pos()) - get_pos().center()) > 0.25)
+                && getAttr("autoopen").toBool()) {
             toggleState();
+        }
         return false;
     }
 
@@ -167,7 +169,7 @@ namespace enigma {
         if (state == WARPING) {
             perform_warp();
         } else if (state == EMITTING) {
-            emit_actor(dynamic_cast<Vortex *>((Object *)getAttr("$dest_vortex")));
+            emit_actor(dynamic_cast<Vortex *>(getAttr("$dest_vortex").toObject()));
         } else if (state == SWALLOWING) {
             state = WARPING;
             sound_event("hitfloor");
@@ -189,18 +191,20 @@ namespace enigma {
         if (destVortex == nullptr)   // destination vortex got killed in meantime
             destVortex = this;    // reemit from source vortex
         ecl::V2 v(destVortex->get_pos().center());
-        if (Actor *actor = dynamic_cast<Actor *>((Object *)getAttr("$grabbed_actor"))) {
+        if (Actor *actor = dynamic_cast<Actor *>(getAttr("$grabbed_actor").toObject())) {
             WarpActor(actor, v[0], v[1], false);
             SendMessage(actor, "_rise");
             if (destVortex != this) {
-                bool isScissor = to_bool(getDefaultedAttr("scissor",
-                        (server::EnigmaCompatibility >= 1.10) || server::GameCompatibility != GAMET_ENIGMA));
+                bool isScissor = getDefaultedAttr("scissor",
+                        (server::EnigmaCompatibility >= 1.10)
+                                || server::GameCompatibility != GAMET_ENIGMA)
+                                         .toBool();
                 if (isScissor)
                     SendMessage(actor, "disconnect");
             }
         }
         state = OPEN;
-        if (this != destVortex && getAttr("autoclose").to_bool())  // do not close source vortex if destination is currently blocked
+        if (this != destVortex && getAttr("autoclose").toBool())  // do not close source vortex if destination is currently blocked
             setState(0);
         if (this != destVortex)
             performAction(getAttr("$grabbed_actor"));
@@ -210,16 +214,17 @@ namespace enigma {
 
     void Vortex::warp_to(const ecl::V2 &target) {
         client::Msg_Sparkle(target);
-        if (Actor *actor = dynamic_cast<Actor *>((Object *)getAttr("$grabbed_actor"))) {
+        if (Actor *actor = dynamic_cast<Actor *>(getAttr("$grabbed_actor").toObject())) {
             WarpActor(actor, target[0], target[1], false);
             SendMessage(actor, "_appear");
-            bool isScissor = to_bool(getDefaultedAttr("scissor",
-                    (server::EnigmaCompatibility >= 1.10) || server::GameCompatibility != GAMET_ENIGMA));
+            bool isScissor = getDefaultedAttr(
+                    "scissor", (server::EnigmaCompatibility >= 1.10)
+                                       || server::GameCompatibility != GAMET_ENIGMA).toBool();
             if (isScissor)
                 SendMessage(actor, "disconnect");
         }
         state = OPEN;
-        if (getAttr("autoclose").to_bool())
+        if (getAttr("autoclose").toBool())
             setState(0);
 
         performAction(getAttr("$grabbed_actor"));
@@ -227,7 +232,7 @@ namespace enigma {
     }
 
     void Vortex::perform_warp() {
-        Actor *actor = dynamic_cast<Actor *>((Object *)getAttr("$grabbed_actor"));
+        Actor *actor = dynamic_cast<Actor *>(getAttr("$grabbed_actor").toObject());
         if (actor == nullptr)
             return;
 
@@ -236,7 +241,7 @@ namespace enigma {
         ecl::V2 v_target;
 
         // is another target position defined?
-        int dest_idx = getAttr("$dest_idx");
+        int dest_idx = getAttr("$dest_idx").toInt();
         if (Object::getDestinationByIndex(dest_idx, v_target)) {
             GridPos  p_target(v_target);
 

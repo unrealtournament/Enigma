@@ -33,7 +33,7 @@ namespace enigma {
         if (key == "color") {
             Stone::setAttr("state", val);
         } else if (key == "flavor") {
-            std::string fs = val.to_string();
+            std::string fs = val.toString();
             int fo = (objFlags & OBJBIT_FLAVOR) >> 24;
             int fi = -1;
             if (fs == "square") fi = 0;

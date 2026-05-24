@@ -132,10 +132,10 @@ namespace enigma {
         bool didSteal = false;
 
         // the actor that hit the thief may no longer exist!
-        if (Actor *victim = dynamic_cast<Actor *>(Object::getObject(victimId))) {
+        if (Actor *victim = dynamic_cast<Actor *>(getObject(victimId))) {
             if (Value owner = victim->getAttr("owner")) {
-                if (!(victim->has_shield())) {
-                    enigma::Inventory *inv = player::GetInventory(owner);
+                if (!victim->has_shield()) {
+                    Inventory *inv = player::GetInventory(owner.toInt());
                     if (inv && inv->size() > 0) {
                         if (bag == nullptr) {
                             bag = MakeItem("it_bag");
@@ -154,7 +154,7 @@ namespace enigma {
             }
         }
         // steal from grid
-        if(Item *it = GetItem(get_pos())) {
+        if (Item *it = GetItem(get_pos())) {
             if (!(it->get_traits().flags & itf_static)) {
                 if (bag == nullptr) {
                     bag = MakeItem("it_bag");

@@ -37,7 +37,7 @@ namespace enigma {
             return;
         } else if (key == "orientation") {
             if (val >= minState() && val <= maxState())
-                setState(val);
+                setState(val.toInt());
         }
         Stone::setAttr(key, val);
     }
@@ -75,21 +75,23 @@ namespace enigma {
     StoneResponse OneWayStone::collision_response(const StoneContact &sc) {
         Value c = getAttr("color");
         Value accolor = sc.actor->getAttr("color");
-        
-        if (c && server::GameCompatibility != GAMET_ENIGMA && sc.actor->getClass() != "ac_marble")
+
+        if (!c.isDefault() && server::GameCompatibility != GAMET_ENIGMA
+                && sc.actor->getClass() != "ac_marble") {
             return STONE_REBOUND;
-            
+        }
+
         if (!sc.actor->is_flying() && (!c || c == accolor)) {
             StoneResponse result = STONE_PASS;
             if ((state == WEST && (get_pos().x >= sc.actor->get_pos()[0])) ||
                     (state == SOUTH && (get_pos().y + 1 <= sc.actor->get_pos()[1])) ||
                     (state == EAST && (get_pos().x + 1 <= sc.actor->get_pos()[0])) ||
-                    (state == NORTH && (get_pos().y >= sc.actor->get_pos()[1])))
+                    (state == NORTH && (get_pos().y >= sc.actor->get_pos()[1]))) {
                 result = STONE_REBOUND;
+            }
             return result;
         }
-        else
-            return STONE_REBOUND;
+        return STONE_REBOUND;
     }
     
     void OneWayStone::actor_hit(const StoneContact &sc) {
@@ -102,7 +104,7 @@ namespace enigma {
 
     int OneWayStone::iColor() const {
         Value v = getAttr("color");
-        return v ? (int)v + 1 : 0;
+        return v ? v.toInt() + 1 : 0;
     }
     
     const char* OneWayStone::colorName() const {

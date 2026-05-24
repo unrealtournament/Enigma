@@ -185,7 +185,7 @@ namespace enigma {
         static void log_shuffle_stack();
         
         static bool not_open(OxydStone *a) {
-            return !(a->state == OPEN_PAIR || (int)a->getAttr("oxydcolor") < AUTO);
+            return !(a->state == OPEN_PAIR || a->getAttr("oxydcolor").toInt() < AUTO);
         }
 
 

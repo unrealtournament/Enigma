@@ -106,10 +106,8 @@ struct GridPos {
     void move(Direction dir);
     ecl::V2 center() const;
 
-    /**
-     * Conversion of a value to a position vector.
-     */
-    operator ecl::V2() const;
+    /// Conversion of a value to a position vector.
+    ecl::V2 toVec() const;
 };
 
 GridPos move(GridPos p, Direction dir);
@@ -147,7 +145,7 @@ struct GridLoc {
     GridLayer layer;
 
     // Constructor
-    GridLoc(GridLayer l = GRID_FLOOR, GridPos p = GridPos());
+    GridLoc(GridLayer l = GRID_FLOOR, GridPos p = GridPos()) : pos(p), layer(l) {}
 };
 
 /*! Converts strings like "it(10 10)", "st(5 2)" to GridLoc
@@ -286,11 +284,6 @@ inline bool operator!=(GridPos a, GridPos b) {
 
 inline bool operator<(GridPos a, GridPos b) {
     return ((a.y << 16) + a.x) < ((b.y << 16) + b.x);
-}
-
-// ---------- GridLoc ----------
-
-inline GridLoc::GridLoc(GridLayer l, GridPos p) : pos(std::move(p)), layer(l) {
 }
 
 }  // namespace enigma

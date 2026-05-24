@@ -32,7 +32,7 @@ namespace enigma {
     
     void ShogunDot::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
-            std::string flavor = val.to_string();
+            std::string flavor = val.toString();
             int holes = 0;
             if (flavor == "s")
                 holes = ShogunStone::S;
@@ -47,7 +47,7 @@ namespace enigma {
             objFlags |= holes << 24;
             if (isDisplayable()) {
                 init_model();
-                state = SendMessage(GetStone(get_pos()), "_shogun", requiredShogunHoles()).to_bool() ? ON : OFF;
+                state = SendMessage(GetStone(get_pos()), "_shogun", requiredShogunHoles()).toBool() ? ON : OFF;
                 // no action is performed due to snapshot principle 
             }
             return;
@@ -65,7 +65,7 @@ namespace enigma {
     
     Value ShogunDot::message(const Message &m) {
         if (m.message =="_init" ) {
-            state = (SendMessage(GetStone(get_pos()), "_shogun", requiredShogunHoles()).to_bool()) ? ON : OFF;
+            state = (SendMessage(GetStone(get_pos()), "_shogun", requiredShogunHoles()).toBool()) ? ON : OFF;
             if (server::EnigmaCompatibility < 1.10 && state == ON) {
                 performAction(true);
             }
@@ -79,13 +79,13 @@ namespace enigma {
     
     void ShogunDot::on_creation(GridPos p) {
         if (server::WorldInitialized &&
-                SendMessage(GetStone(get_pos()), "_shogun", requiredShogunHoles()).to_bool())
+                SendMessage(GetStone(get_pos()), "_shogun", requiredShogunHoles()).toBool())
             state = ON;
         Item::on_creation(p);
     }
     
     void ShogunDot::stone_change(Stone *st) {
-        int newState = SendMessage(GetStone(get_pos()), "_shogun", requiredShogunHoles()).to_bool() ? ON : OFF;
+        int newState = SendMessage(GetStone(get_pos()), "_shogun", requiredShogunHoles()).toBool() ? ON : OFF;
         if (state != newState ) {  
             state = newState;
             performAction(newState == ON);

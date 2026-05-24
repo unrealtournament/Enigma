@@ -48,7 +48,7 @@ namespace enigma {
 void ShogunStone::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
             ASSERT(!isDisplayable(), XLevelRuntime, "ShogunStone: attempt to reflavor an existing shogun");
-            std::string flavor = val.to_string();
+            std::string flavor = val.toString();
             int holes = 0;
             if (flavor.find('n') != std::string::npos)  holes += ShogunStone::N;
             if (flavor.find('t') != std::string::npos)  holes += ShogunStone::T;
@@ -124,7 +124,7 @@ Value ShogunStone::getAttr(const std::string &key) const {
                 s->addSubHoles(subHoles);
                 subHoles &= ~M;
                 if (Value v = getAttr("name_m"))
-                    NameObject(s, v.to_string());
+                    NameObject(s, v.toString());
             }
             if (subHoles & S) {
                 ShogunStone *s = dynamic_cast<ShogunStone *>(MakeObject("st_shogun_s"));
@@ -136,7 +136,7 @@ Value ShogunStone::getAttr(const std::string &key) const {
                     s->superShogun = subShogun;
                 }
                 if (Value v = getAttr("name_s"))
-                    NameObject(s, v.to_string());
+                    NameObject(s, v.toString());
                 s->setOwnerPos(p);
             }
         }

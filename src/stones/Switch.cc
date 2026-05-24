@@ -101,7 +101,7 @@ void Switch::setAttr(const std::string& key, const Value &val) {
     void Switch::actor_hit(const StoneContact &sc) {
         int ic = iColor();
         Value accolorv = sc.actor->getAttr("color");
-        int accolor = accolorv ? (int)accolorv + 1 : 0;
+        int accolor = accolorv ? accolorv.toInt() + 1 : 0;
         
         if (ic == 0 || (ic == accolor && (server::GameCompatibility == GAMET_ENIGMA || sc.actor->getClass() == "ac_marble")))
             setState(ON - state);  // switch on only if OFF, switch off only if ON, otherwise ignore
@@ -113,7 +113,7 @@ void Switch::setAttr(const std::string& key, const Value &val) {
     
     int Switch::iColor() const {
         Value v = getAttr("color");
-        return v ? (int)v + 1 : 0;
+        return v ? v.toInt() + 1 : 0;
     }
     
     const char* Switch::colorName() const {
@@ -128,7 +128,7 @@ void Switch::setAttr(const std::string& key, const Value &val) {
     }
     
     bool Switch::isInstant() const {
-        return getDefaultedAttr("instant", false).to_bool();
+        return getDefaultedAttr("instant", false).toBool();
     }
     
     int Switch::traitsIdx() const {

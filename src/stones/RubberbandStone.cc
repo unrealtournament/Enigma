@@ -37,12 +37,12 @@ namespace enigma {
     void RubberbandStone::actor_hit(const StoneContact &sc) {
         // The mode attribute "scissor" defines, if when touching an st-rubberband,
         // other rubberbands to the actor will be cut of or not, true means they will. true is default.
-        bool isScissor = to_bool(getAttr("scissor"));
+        bool isScissor = getAttr("scissor").toBool();
 
         bool alreadyConnected = false;
-        ObjectList rubbers = sc.actor->getAttr("rubbers");
+        ObjectList rubbers = sc.actor->getAttr("rubbers").toObjectList();
         for (ObjectList::iterator it =  rubbers.begin(); it != rubbers.end(); ++it) {
-            if (((Object *)(*it)->getAttr("anchor2")) == this) {
+            if ((*it)->getAttr("anchor2").toObject() == this) {
                 alreadyConnected = true;
                 break;
             }

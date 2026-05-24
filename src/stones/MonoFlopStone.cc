@@ -56,10 +56,10 @@ namespace enigma {
                 if (state == ON_TIMER) {
                     // renew timer by first removing it
                     GameTimer.remove_alarm(this);
-                    GameTimer.set_alarm(this, (double)getAttr("interval"), false);
+                    GameTimer.set_alarm(this, getAttr("interval").toDouble(), false);
                 } else if (state == OFF) {
                     state = ON_TIMER;
-                    GameTimer.set_alarm(this, (double)getAttr("interval"), false);
+                    GameTimer.set_alarm(this, getAttr("interval").toDouble(), false);
                     init_model();
                     performAction(true);
                 }
@@ -76,7 +76,7 @@ namespace enigma {
     
     void MonoFlopStone::on_creation (GridPos p) {
         if (state == ON_PENDING) {
-            GameTimer.set_alarm(this, (double)getAttr("interval"), false);
+            GameTimer.set_alarm(this, getAttr("interval").toDouble(), false);
             state = ON_TIMER;
             // no action
         }
@@ -108,7 +108,7 @@ namespace enigma {
         if (state == ON_LASER) {
             // start final timer
             state = ON_TIMER;
-            GameTimer.set_alarm(this, (double)getAttr("interval"), false);
+            GameTimer.set_alarm(this, getAttr("interval").toDouble(), false);
         }
         Stone::on_removal(p);
     }
@@ -125,7 +125,7 @@ namespace enigma {
                 performAction(true);
         } else if (newDirs == 0) {
             // light off
-            GameTimer.set_alarm(this, (double)getAttr("interval"), false);
+            GameTimer.set_alarm(this, getAttr("interval").toDouble(), false);
             state = ON_TIMER;
         }
     }

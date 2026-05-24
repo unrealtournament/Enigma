@@ -34,7 +34,7 @@ namespace enigma {
 
     void Crack::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
-            std::string flavor = val.to_string();
+            std::string flavor = val.toString();
             ASSERT(flavor == "abyss" || flavor == "water", XLevelRuntime, "Crack illegal flavor value");
             if (flavor == "water")
                 objFlags |= OBJBIT_TYP;
@@ -111,7 +111,7 @@ namespace enigma {
                                 if (!(objFlags & OBJBIT_TYP))    // no water crack caused neighbor cracking
                                     SendMessage(it, "crack");
                             } else {
-                                double spreading = getDefaultedAttr("spreading", server::CrackSpreading);
+                                double spreading = getDefaultedAttr("spreading", server::CrackSpreading).toDouble();
                                 if (DoubleRand(0, 0.9999) < spreading) {
                                     Item *theit = MakeItem("it_crack_i");
                                     theit->setAttr("flavor", getAttr("flavor"));
@@ -139,9 +139,12 @@ namespace enigma {
         Floor *fl = GetFloor(get_pos());
         if (fl != nullptr && fl->is_destructible()) {
             Value v = fl->getAttr("fragility");
-            double fragility = getDefaultedAttr("fragility", v ? v : Value(server::Fragility));
-            double spreading = getDefaultedAttr("spreading", server::CrackSpreading);
-            if (((state == INVISIBLE) && (DoubleRand(0, 0.9999) < spreading)) || (DoubleRand(0, 0.9999) < fragility)) {
+            double fragility =
+                    getDefaultedAttr("fragility", !v.isDefault() ? v : Value(server::Fragility))
+                            .toDouble();
+            double spreading = getDefaultedAttr("spreading", server::CrackSpreading).toDouble();
+            if (state == INVISIBLE && DoubleRand(0, 0.9999) < spreading
+                    || DoubleRand(0, 0.9999) < fragility) {
                 toggleState();
                 sound_event("crack");
             }

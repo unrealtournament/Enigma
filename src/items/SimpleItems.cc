@@ -72,7 +72,7 @@ namespace enigma {
     }
 
     ItemAction Cherry::activate(Actor *actor, GridPos p) {
-        if (SendMessage(actor, "_invisibility").to_bool())
+        if (SendMessage(actor, "_invisibility").toBool())
             return ITEM_KILL;
         else
             // item not applied - dropped by an actor that does not become invisible
@@ -251,7 +251,7 @@ namespace enigma {
 
     void FlagItem::setAttr(const std::string& key, const Value &val) {
         if (key == "color") {
-            if ((int)val < 0 || (int)val > 1)
+            if (val.toInt() < 0 || val.toInt() > 1)
                 return;
         }
         Item::setAttr(key, val);
@@ -265,7 +265,7 @@ namespace enigma {
     }
 
     int FlagItem::traitsIdx() const {
-        return getAttr("color");
+        return getAttr("color").toInt();
     }
 
     ItemTraits FlagItem::traits[2] = {
@@ -286,8 +286,8 @@ namespace enigma {
     }
 
     std::string Key::get_inventory_model() {
-        bool showCode = !getAttr("invisible").to_bool();
-        int code = getAttr("code");
+        bool showCode = !getAttr("invisible").toBool();
+        int code = getAttr("code").toInt();
         if (showCode && code >= 1 && code <= 8)
             return ecl::strf("it_key_%d", code);
         else
@@ -360,7 +360,7 @@ namespace enigma {
         sound::EmitSoundEvent("triggerdown", p.center());
         performAction(true);
         if (Value v = getAttr("text")) {
-            std::string txt(v);
+            std::string txt = v.toString();
             // translate text
             txt = server::LoadedProxy->getLocalizedString(txt);
             client::Msg_ShowDocument(txt, true);
@@ -502,14 +502,14 @@ namespace enigma {
 
     void Weight::setAttr(const std::string& key, const Value &val) {
         if (key == "mass") {
-            double oldMass = getAttr("mass");
-            double newMass = val;
+            double oldMass = getAttr("mass").toDouble();
+            double newMass = val.toDouble();
             if (newMass != oldMass && newMass > 0) {
                 Item::setAttr("mass", newMass);
                 Value owner = getOwner();
                 if (owner.getType() != Value::NIL) {
-                    Inventory *i = player::GetInventory(owner);
-                    i->setAttr("mass", (double)i->getAttr("mass") + newMass - oldMass);
+                    Inventory *i = player::GetInventory(owner.toInt());
+                    i->setAttr("mass", i->getAttr("mass").toDouble() + newMass - oldMass);
                     BroadcastMessage("_update_mass", owner, GRID_NONE_BIT, true);
                 }
             }
@@ -523,17 +523,17 @@ namespace enigma {
         if (player == -1) {
             GridPos p = getOwnerPos();
             if (p.x >= 0)
-                SendMessage(GetFloor(p), "_add_mass", -(double)getAttr("mass"), this);
+                SendMessage(GetFloor(p), "_add_mass", -getAttr("mass").toDouble(), this);
         }
         Item::setOwner(player);
         if (oldPlayer.getType() != Value::NIL && oldPlayer != -1 ) {
-            Inventory *i = player::GetInventory(oldPlayer);
-            i->setAttr("mass", (double)i->getAttr("mass") - (double)getAttr("mass"));
+            Inventory *i = player::GetInventory(oldPlayer.toDouble());
+            i->setAttr("mass", i->getAttr("mass").toDouble() - getAttr("mass").toDouble());
             BroadcastMessage("_update_mass", oldPlayer, GRID_NONE_BIT, true);
         }
         if (player != -1) {
             Inventory *i = player::GetInventory(player);
-            i->setAttr("mass", (double)i->getAttr("mass") + (double)getAttr("mass"));
+            i->setAttr("mass", i->getAttr("mass").toDouble() + getAttr("mass").toDouble());
             BroadcastMessage("_update_mass", player, GRID_NONE_BIT, true);
         }
     }
@@ -544,7 +544,7 @@ namespace enigma {
     }
 
     void Weight::on_removal(GridPos p) {
-        SendMessage(GetFloor(get_pos()), "_add_mass", -(double)getAttr("mass"), this);
+        SendMessage(GetFloor(get_pos()), "_add_mass", -getAttr("mass").toDouble(), this);
         Item::on_removal(p);
     }
 
@@ -552,7 +552,7 @@ namespace enigma {
         if (po == GridPos(-1, -1)) {
             GridPos p = getOwnerPos();
             if (p.x >= 0)
-                SendMessage(GetFloor(p), "_add_mass", -(double)getAttr("mass"), this);
+                SendMessage(GetFloor(p), "_add_mass", -getAttr("mass").toDouble(), this);
         }
         Item::setOwnerPos(po);
         SendMessage(GetFloor(po), "_add_mass", getAttr("mass"), this);

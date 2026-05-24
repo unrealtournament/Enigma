@@ -56,7 +56,7 @@ namespace enigma {
             bool safe = true;
             ecl::V2 dest;
             int idx = 0;
-            if (server::EnigmaCompatibility >= 1.10 && getAttr("secure").to_bool()) {
+            if (server::EnigmaCompatibility >= 1.10 && getAttr("secure").toBool()) {
                 while (getDestinationByIndex(idx++, dest)) {
                     if (apos == (GridPos)dest)
                         safe = false;

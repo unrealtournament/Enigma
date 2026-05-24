@@ -79,22 +79,22 @@ namespace enigma {
     void InkwellStone::actor_hit(const StoneContact &sc) {
         Value marblecolor = sc.actor->getAttr("color");
         if (state == BLACK_INK && marblecolor == GLASS) {
-            if (SendMessage(sc.actor, "_setcolor", BLACK).to_bool()) {
+            if (SendMessage(sc.actor, "_setcolor", BLACK).toBool()) {
                 sound_event("drown");
                 setState(BLACK_TO_EMPTY);
             }
         } else if (state == EMPTY_WELL && marblecolor == WHITE) {
-            if (SendMessage(sc.actor, "_setcolor", GLASS).to_bool()) {
+            if (SendMessage(sc.actor, "_setcolor", GLASS).toBool()) {
                 sound_event("drown");
                 setState(EMPTY_TO_WHITE);
             }
         } else if (state == WHITE_INK && marblecolor == GLASS) {
-            if (SendMessage(sc.actor, "_setcolor", WHITE).to_bool()) {
+            if (SendMessage(sc.actor, "_setcolor", WHITE).toBool()) {
                 sound_event("drown");
                 setState(WHITE_TO_EMPTY);
             }
         } else if (state == EMPTY_WELL && marblecolor == BLACK) {
-            if (SendMessage(sc.actor, "_setcolor", GLASS).to_bool()) {
+            if (SendMessage(sc.actor, "_setcolor", GLASS).toBool()) {
                 sound_event("drown");
                 setState(EMPTY_TO_BLACK);
             }

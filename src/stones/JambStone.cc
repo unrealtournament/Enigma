@@ -36,15 +36,17 @@ namespace enigma {
                 GridPos p = get_pos();
                 Object *o;
                 if (m.message == "hit")
-                    o = m.value;
+                    o = m.value.toObject();
                 else
-                    o = SendMessage(m.sender, "_hitactor");
+                    o = SendMessage(m.sender, "_hitactor").toObject();
                 
                 Actor *a = dynamic_cast<Actor *>(o);
-                int c = getAttr("color");
-                if ((a != nullptr && (server::GameCompatibility == GAMET_ENIGMA || a->getClass() == "ac_marble") &&
-                        a->getAttr("color") && a->getAttr("color") == c) || 
-                        (m.sender->getObjectType() != Object::ITEM && m.message == "signal")) {
+                int c = getAttr("color").toInt();
+                if ((a != nullptr
+                            && (server::GameCompatibility == GAMET_ENIGMA
+                                    || a->getClass() == "ac_marble")
+                            && a->getAttr("color") && a->getAttr("color") == c)
+                        || (m.sender->getObjectType() != Object::ITEM && m.message == "signal")) {
                     if (p.y == sender->get_pos().y) {
                         SendMessage (GetStone (move (p, EAST)),  "signal", 1.0);
                         SendMessage (GetStone (move (p, WEST)),  "signal", 1.0);

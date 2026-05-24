@@ -26,7 +26,7 @@ namespace enigma {
     StateObject::StateObject() : Object(), state (0) {
     }
     
-    StateObject::StateObject(const char * kind) : Object(kind), state (0) {
+    StateObject::StateObject(const char *kind) : Object(kind), state(0) {
     }
     
     Value StateObject::message(const Message &m) {
@@ -35,9 +35,9 @@ namespace enigma {
         } else if (m.message == "signal") {
             int v;
             if (m.value.getType() == Value::DOUBLE || m.value.getType() == Value::STRING)
-                v = m.value;
+                v = m.value.toInt();
             else  // convert object and other types to true
-                v = (m.value.to_bool()) ? 1 : 0; 
+                v = m.value.toBool() ? 1 : 0;
             if (v >= 0)
                 setState(v % 2);  // allow fourswitches to send dir as signal value
             return Value();
@@ -54,9 +54,9 @@ namespace enigma {
     Value StateObject::getAttr(const std::string &key) const {
         if (key == "state")
             return externalState();
-        else if (key == "$maxState")
+        if (key == "$maxState")
             return maxState();
-        else if (key == "$minState")
+        if (key == "$minState")
             return minState();
         return Object::getAttr(key);
     }
@@ -64,22 +64,21 @@ namespace enigma {
     void StateObject::setAttr(const std::string& key, const Value &val) {
         if (key == "state") {
             if (val >= minState() && val <= maxState())
-                setState(val);
+                setState(val.toInt());
             return;
         }
         Object::setAttr(key, val);
     }
     
     int StateObject::maxState() const {
-        return 1;  // default 2 state
+        return 1;
     }
     
     int StateObject::minState() const {
-        return 0;  // default 2 state
+        return 0;
     }
     
     void StateObject::toggleState() {
-        // default round robin on external states
         int extState = externalState();
         if (extState + 1 <= maxState())
             setState(extState + 1);

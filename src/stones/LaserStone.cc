@@ -67,8 +67,8 @@ namespace enigma {
             setAttr("orientation", m.value);
             return Value();
         } else if ((m.message == "turn" || m.message == "turnback") && isDisplayable()) {
-            setAttr("orientation", ((m.message == "turn" && !getAttr("counterclock").to_bool()) ||
-				    (m.message == "turnback" && getAttr("counterclock").to_bool()))
+            setAttr("orientation", ((m.message == "turn" && !getAttr("counterclock").toBool()) ||
+				    (m.message == "turnback" && getAttr("counterclock").toBool()))
                     ? rotate_cw(getOrientation()) : rotate_ccw(getOrientation()));
             return Value();
         }

@@ -45,8 +45,8 @@ namespace enigma {
             setDir(to_direction(m.value));
             return Value();
         } else if ((m.message == "turn" || m.message == "turnback") && state != FALLING && isDisplayable()) {
-            setDir(((m.message == "turn" && !getAttr("counterclock").to_bool()) || 
-                    (m.message == "turnback" && getAttr("counterclock").to_bool()))
+            setDir(((m.message == "turn" && !getAttr("counterclock").toBool()) || 
+                    (m.message == "turnback" && getAttr("counterclock").toBool()))
                     ? rotate_cw(getDir()) : rotate_ccw(getDir()));
             return Value();
         } else if (m.message == "flip" && state != FALLING && isDisplayable()) {

@@ -68,13 +68,13 @@ namespace enigma {
     
     ItemAction Bottle::activate(Actor *a, GridPos) {
         if (Value v = getAttr("text")) {
-            std::string txt(v);
+            std::string txt = v.toString();
             // translate text
             txt = server::LoadedProxy->getLocalizedString(txt);
             client::Msg_ShowDocument(txt, true);
             return ITEM_KILL;          // remove from inventory
         } else if (state == IDLE) {
-            if (!SendMessage(a, "_booze", getAttr("interval")).to_bool())
+            if (!SendMessage(a, "_booze", getAttr("interval")).toBool())
                 return ITEM_KEEP;
         }
         return ITEM_DROP;

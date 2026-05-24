@@ -34,7 +34,7 @@ namespace enigma {
     
     void FakeStone::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
-            std::string fl = val.to_string();
+            std::string fl = val.toString();
             FakeStoneTyp typ = QUAKE;
             if (fl == "quake") typ = QUAKE;
             else if (fl == "oxyda") typ = OXYDA;

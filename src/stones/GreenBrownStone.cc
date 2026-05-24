@@ -49,7 +49,7 @@ namespace enigma {
     
     Value GreenBrownStone::message(const Message &m) {
         if ((objFlags & OBJBIT_HOLLOW) && m.message == "_glasses") {
-            if ((bool)((to_int(m.value) & Glasses::HOLLOW)) != (bool)(objFlags & OBJBIT_GLASSES)) {
+            if ((bool)(m.value.toInt() & Glasses::HOLLOW) != (bool)(objFlags & OBJBIT_GLASSES)) {
                 objFlags ^= OBJBIT_GLASSES;
                 if (isDisplayable())
                     init_model();

@@ -32,7 +32,7 @@ namespace enigma {
         if (server::GameCompatibility == enigma::GAMET_PEROXYD) {
             // CrossItemes can be used to invert signals in Per.Oxyd
             if (m.message == "signal") {
-                performAction(!m.value.to_bool()); // convert 1/0 values to true/false
+                performAction(!m.value.toBool()); // convert 1/0 values to true/false
                 return Value();
             }
         } else if (server::GameCompatibility == GAMET_ENIGMA) {
@@ -51,7 +51,7 @@ namespace enigma {
     void CrossItem::actor_enter(Actor *a) {
         if ((state == 0) && a->getAttr("owner")) {
             state = 1;
-            GameTimer.set_alarm (this, getAttr("interval"));
+            GameTimer.set_alarm (this, getAttr("interval").toDouble());
         }
     }
 

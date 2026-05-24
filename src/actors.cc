@@ -69,10 +69,6 @@ Actor *ActorsInRangeIterator::next() {
 
 Actor::Actor(const ActorTraits &tr)
 : StateObject(tr.name),
-  m_actorinfo(),
-  m_sprite(),
-  startingpos(),
-  respawnpos(),
   flagRespawn(false),
   centerRespawn(true),
   inplaceRespawn(false),
@@ -93,11 +89,11 @@ Actor::Actor(const ActorTraits &tr)
 
 void Actor::setAttr(const std::string &key, const Value &val) {
     if (key == "controllers") {
-        controllers = val;
+        controllers = val.toInt();
     } else if (key == "adhesion") {
-        adhesion = val;
+        adhesion = val.toDouble();
     } else if (key == "charge") {
-        m_actorinfo.charge = val;
+        m_actorinfo.charge = val.toDouble();
     } else
         Object::setAttr(key, val);
 }
@@ -124,7 +120,7 @@ Value Actor::message(const Message &m) {
     } else if (m.message == "_update_mass") {
         if (getAttr("owner") == m.value) {
             m_actorinfo.mass =
-                get_traits().default_mass + (double)(player::GetInventory(this)->getAttr("mass"));
+                get_traits().default_mass + player::GetInventory(this)->getAttr("mass").toDouble();
             ASSERT(m_actorinfo.mass > 0, XLevelRuntime, "Actor mass <= 0!");
             SendMessage(GetFloor(get_gridpos()), "_update_mass", true, this);
             //                Log << "Actor new mass " << m_actorinfo.mass << "\n";
@@ -232,10 +228,10 @@ void Actor::on_creation(const ecl::V2 &p) {
         m_actorinfo.created = true;
         startingpos = get_pos();
         if (Value vx = getAttr("velocity_x")) {
-            m_actorinfo.vel = ecl::V2(vx, m_actorinfo.vel[1]);
+            m_actorinfo.vel = ecl::V2(vx.toDouble(), m_actorinfo.vel[1]);
         }
         if (Value vy = getAttr("velocity_y")) {
-            m_actorinfo.vel = ecl::V2(m_actorinfo.vel[0], vy);
+            m_actorinfo.vel = ecl::V2(m_actorinfo.vel[0], vy.toDouble());
         }
     }
     set_model(getKind());
@@ -254,7 +250,7 @@ void Actor::warp(const ecl::V2 &newpos) {
     m_sprite.move(newpos);
     move();
     // notify rubberbands that may now exceed max/min limits
-    ObjectList olist = getAttr("rubbers");  // a private deletion resistant copy
+    ObjectList olist = getAttr("rubbers").toObjectList();  // a private deletion resistant copy
     for (ObjectList::iterator itr = olist.begin(); itr != olist.end(); ++itr)
         SendMessage(*itr, "_recheck");
 }

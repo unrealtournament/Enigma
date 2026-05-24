@@ -21,18 +21,9 @@
 
 #include "errors.hh"
 #include "main.hh"
-#include "display.hh"
-#include "player.hh"
-#include "client.hh"
 #include "SoundEffectManager.hh"
 #include "server.hh"
 #include "world.hh"
-#include "Inventory.hh"
-#include "ItemHolder.hh"
-
-#include "ecl_util.hh"
-
-using namespace std;
 
 namespace enigma {
 
@@ -45,14 +36,14 @@ void Item::kill() {
     KillItem(get_pos());
 }
 
-void Item::replace(std::string kind) {
+void Item::replace(const std::string &kind) {
     Item *newitem = MakeItem(kind.c_str());
     transferName(newitem);     // TODO check where transfer of identity is better
     setup_successor(newitem);  // hook for subclasses
     SetItem(get_pos(), newitem);
 }
 
-void Item::transform(std::string kind) {
+void Item::transform(const std::string &kind) {
     Item *newitem = MakeItem(kind.c_str());
     transferIdentity(newitem);  // subclasses may hook this call
     SetItem(get_pos(), newitem);
@@ -63,13 +54,12 @@ std::string Item::getClass() const {
 }
 
 Value Item::getAttr(const std::string &key) const {
-    if (key == "liftable") {
+    if (key == "liftable")
         return !isStatic();
-    } else if (key == "portable") {
+    if (key == "portable")
         return isPortable();
-    } else if (key == "freezable") {
+    if (key == "freezable")
         return isFreezable();
-    }
     return GridObject::getAttr(key);
 }
 
@@ -96,8 +86,9 @@ void Item::on_stonehit(Stone * /*st*/) {
 void Item::processLight(Direction d) {
     if (get_traits().flags & itf_inflammable) {
         replace("it_explosion_nil");
-    } else
+    } else {
         GridObject::processLight(d);
+    }
 }
 
 double Item::getFriction(ecl::V2 position, double defaultFriction, Actor *a) {
@@ -146,12 +137,10 @@ bool Item::actor_hit(Actor *actor) {
     const ItemTraits &tr = get_traits();
     if (isStatic())
         return false;
-    else {
-        double radius = 0.3;
-        if (tr.radius != 0.0)
-            radius = tr.radius;
-        return length(actor->get_pos() - get_pos().center()) < radius;
-    }
+    double radius = 0.3;
+    if (tr.radius != 0.0)
+        radius = tr.radius;
+    return length(actor->get_pos() - get_pos().center()) < radius;
 }
 
 std::list<GridPos> Item::warpSpreadPos(bool isWater) {

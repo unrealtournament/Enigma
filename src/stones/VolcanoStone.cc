@@ -33,7 +33,7 @@ namespace enigma {
 
 void VolcanoStone::setAttr(const std::string& key, const Value &val) {
         if (key == "secure") {
-            if (val.to_bool())
+            if (val.toBool())
                 objFlags |= OBJBIT_SECURE;
             else
                 objFlags &= ~OBJBIT_SECURE;

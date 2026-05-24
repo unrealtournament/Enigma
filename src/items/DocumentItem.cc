@@ -51,7 +51,7 @@ namespace enigma {
     
     ItemAction DocumentItem::activate(Actor *a, GridPos) {
         if (Value v = getAttr("text")) {
-            std::string txt(v);
+            std::string txt = v.toString();
             // translate text
             txt = server::LoadedProxy->getLocalizedString(txt);
             client::Msg_ShowDocument(txt, true);

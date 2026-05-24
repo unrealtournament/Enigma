@@ -110,7 +110,7 @@ namespace enigma {
     void GridObject::setAttr(const string& key, const Value &val) {
         if (key == "connections" || key == "faces") {
             int d = NODIRBIT;
-            std::string vs(val);
+            std::string vs = val.toString();
             if (vs.find('n') != std::string::npos) d |= NORTHBIT;
             if (vs.find('e') != std::string::npos) d |= EASTBIT;
             if (vs.find('s') != std::string::npos) d |= SOUTHBIT;
@@ -154,8 +154,7 @@ namespace enigma {
         set_model(getModelName());
     }
 
-    void GridObject::set_anim (const std::string &mname) 
-    {
+    void GridObject::set_anim (const std::string &mname) {
         set_model (mname);
         display::Model *m = get_model();
         m->set_callback(this);
@@ -163,7 +162,7 @@ namespace enigma {
     
     DirectionBits GridObject::getConnections() const {
         if (Value v = getAttr("$connections"))
-            return DirectionBits((int)v);
+            return DirectionBits(v.toInt());
         else
             return NODIRBIT;
     }

@@ -42,14 +42,14 @@ namespace enigma {
     
     void ChessStone::setAttr(const std::string& key, const Value &val) {
         if (key == "color") {
-            set_color(to_int(val));
+            set_color(val.toInt());
         } else
             Stone::setAttr(key, val);
     }
 
     Value ChessStone::message(const Message &m) {
         if (m.message == "_capture") {
-            if (isDisplayable() && state == IDLE && m.value.to_string() != getKind())
+            if (isDisplayable() && state == IDLE && m.value.toString() != getKind())
                 if (try_state(CAPTURE)) {
                     set_anim(get_model_name() + "-capture");
                     return true;
@@ -61,7 +61,7 @@ namespace enigma {
             else
                 return Value();
         } else if (m.message == "signal") {
-            set_color(to_int(m.value));
+            set_color(m.value.toInt());
             return Value();
         } else if (m.message == "flip") {
             set_color((objFlags & OBJBIT_NEWCOLOR) ? 0 : 1);
@@ -90,14 +90,14 @@ namespace enigma {
                 // Maybe the floor has changed into swamp or abyss?
                 if (!(objFlags & (OBJBIT_FALL | OBJBIT_SINK))) {
                     if (try_state(APPEARING)) {
-                        st = GetStone(getAttr("$destination"));
+                        st = GetStone(getAttr("$destination").toGridPos());
                         if (st) {
                             // Something went wrong while killing the old
                             // stone, or maybe a third one intervened.
                             // Don't move, just reappear at old position.                
                         } else {
-                            move_stone(getAttr("$destination"), "movesmall");
-                            SendMessage(GetFloor(getAttr("$destination")), "_capture");
+                            move_stone(getAttr("$destination").toGridPos(), "movesmall");
+                            SendMessage(GetFloor(getAttr("$destination").toGridPos()), "_capture");
                         }
                         // maybe a floor-change has happened, but during
                         // state APPEARING this doesn't mean anything:
@@ -121,7 +121,7 @@ namespace enigma {
          Value accolor = sc.actor->getAttr("color");
          if (player::WieldedItemIs (sc.actor, "it_magicwand")) {
              sound_event ("stonepaint");
-             set_color(1 - (int)getAttr("color"));
+             set_color(1 - getAttr("color").toInt());
              // If not IDLE, color will be set next time IDLE is set.
          } else if (accolor && getAttr("color") == accolor) {
              ecl::V2 v = sc.actor->get_vel();
@@ -162,10 +162,10 @@ namespace enigma {
         ASSERT(state == CAPTURING, XLevelRuntime,
             "ChessStone: inconsistent state in alarm()");
         int capture_retry = (objFlags & OBJBIT_CAPTURE_RETRY) >> 27;
-        if(!GetStone(getAttr("$destination"))) {
-            if(try_state(DISAPPEARING))
+        if (!GetStone(getAttr("$destination").toGridPos())) {
+            if (try_state(DISAPPEARING))
                 set_anim(get_model_name() + "-disappearing");
-        } else if(capture_retry < max_capture_retry) {
+        } else if (capture_retry < max_capture_retry) {
             objFlags &= ~OBJBIT_CAPTURE_RETRY;
             objFlags |= ((capture_retry + 1) << 27) & OBJBIT_CAPTURE_RETRY;
             GameTimer.set_alarm(this, capture_interval, false);
@@ -211,7 +211,7 @@ namespace enigma {
             } else {
                 // Test stone. Is it opposite chess stone or totally another one?
                 Stone *st = GetStone(destination);
-                if(to_int(SendMessage(st, "_capture", Value(get_model_name()))) ) {
+                if (SendMessage(st, "_capture", Value(get_model_name())).toInt()) {
                     // Give it some time for animation, then replace it.
                     ASSERT(try_state(CAPTURING), XLevelRuntime,
                         "ChessStone: strange things happening in maybe_move_to");
@@ -227,7 +227,7 @@ namespace enigma {
     }
 
     Value ChessStone::message_move(Value moveDir) {
-        GridPos dir = moveDir;
+        GridPos dir = moveDir.toGridPos();
         if (std::abs(dir.x) == 2 && std::abs(dir.y) == 1)
             return maybe_move_to(dir.x > 0 ? EAST : WEST, dir.y > 0 ? SOUTH : NORTH);
         if (std::abs(dir.x) == 1 && std::abs(dir.y) == 2)

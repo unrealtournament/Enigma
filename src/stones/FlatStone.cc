@@ -61,13 +61,13 @@ namespace enigma {
     
     Value FlatStone::message(const Message &m) {
         if (m.message == "_glasses") {
-            if ((bool)((to_int(m.value) & Glasses::HOLLOW)) != (bool)(objFlags & OBJBIT_GLASSES)) {
+            if ((bool)(m.value.toInt() & Glasses::HOLLOW) != (bool)(objFlags & OBJBIT_GLASSES)) {
                 objFlags ^= OBJBIT_GLASSES;
                 if (isDisplayable())
                     init_model();
             }
             return Value();
-        } else if (((objFlags & (OBJBIT_BREAKABLE | OBJBIT_MOVABLE)) || state == CRACKED) && 
+        } else if ((objFlags & (OBJBIT_BREAKABLE | OBJBIT_MOVABLE) || state == CRACKED) &&
                 (m.message =="ignite" || m.message == "_explosion")) {
             doBreak();
             return Value();

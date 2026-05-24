@@ -25,7 +25,7 @@ namespace enigma {
     }
     
     std::string ClusterStone::getClass() const {
-        return getAttr("$class").to_string();
+        return getAttr("$class").toString();
     }
     
     void ClusterStone::setAttr(const std::string& key, const Value &val) {

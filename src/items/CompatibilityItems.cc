@@ -126,11 +126,11 @@ E.g. it can be used to hide walls in easy game mode.
     }
 
     void DummyItem::on_pickup(Actor *) {
-        int code = getAttr("code");
+        int code = getAttr("code").toInt();
         Log << ecl::strf("Picked up item 0x%x\n", code);
     }
     void DummyItem::on_drop(Actor *) {
-        int code = getAttr("code");
+        int code = getAttr("code").toInt();
         Log << ecl::strf("Dropped up item 0x%x\n", code);
     }
     
@@ -150,7 +150,7 @@ E.g. it can be used to hide walls in easy game mode.
 
     Value OxydBridge::message(const Message &m) {
         if (m.message == "signal") {
-            int ival = m.value;
+            int ival = m.value.toInt();
             Floor *floor = GetFloor (get_pos());
             if (ival > 0)
                 SendMessage (floor, "close");

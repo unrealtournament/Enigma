@@ -122,7 +122,7 @@ namespace enigma {
     }
 
     void BlockerStone::actor_contact(Actor *a) {
-        if (!(getDefaultedAttr("autoclose", false).to_bool()) && (
+        if (!(getDefaultedAttr("autoclose", false).toBool()) && (
                 (state == GROWING && server::GameCompatibility != GAMET_PEROXYD) ||
                 (state == SOLID && server::GameCompatibility == GAMET_PEROXYD))) {
             SendMessage(a, "_shatter");

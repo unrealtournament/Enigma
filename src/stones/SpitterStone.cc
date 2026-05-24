@@ -33,15 +33,15 @@ namespace enigma {
     
     Value SpitterStone::message(const Message &m) {
         if (m.message == "_cannonball") {
-            if (!getAttr("secure").to_bool() || server::GameCompatibility == enigma::GAMET_PEROXYD) {
+            if (!getAttr("secure").toBool() || server::GameCompatibility == enigma::GAMET_PEROXYD) {
                 state = BREAKING;
                 init_model();
             }
             return Value();
         } else if (m.message == "spit" && state == ACTIVE && isDisplayable()) {
-            ecl::V2 dest = m.value;
+            ecl::V2 dest = m.value.toVec();
             if (!IsInsideLevel(dest)) {
-                int idx = getDefaultedAttr("$hitdestindex", 0);
+                int idx = getDefaultedAttr("$hitdestindex", 0).toInt();
                 if (!getDestinationByIndex(idx++, dest)) {
                     if (idx != 1) {
                         idx = 0;
@@ -128,7 +128,7 @@ namespace enigma {
                 delete inv->yield_item(lifepos);
                 player::RedrawInventory (inv);
                 ecl::V2 vel = distortedVelocity(sc.actor->get_vel(), 1.0);
-                double maxvel = (double)getAttr("range")/0.56;
+                double maxvel = getAttr("range").toDouble() / 0.56;
                 if (maxvel * maxvel < square(vel))
                     vel = maxvel * normalize(vel);
                 setAttr("$ball_velocity", vel);

@@ -81,13 +81,13 @@ ecl::V2 Floor::process_mouseforce(Actor *a, ecl::V2 force) {
 
 void Floor::setAttr(const string &key, const Value &val) {
     if (key == "adhesion")
-        adhesion = val;
+        adhesion = val.toDouble();
     else if (key == "friction")
-        friction = val;
+        friction = val.toDouble();
     else if (key == "force_x")
-        var_floorforce[0] = val;
+        var_floorforce[0] = val.toDouble();
     else if (key == "force_y")
-        var_floorforce[1] = val;
+        var_floorforce[1] = val.toDouble();
     GridObject::setAttr(key, val);
     if (key == "faces" && isDisplayable())
         init_model();
@@ -104,9 +104,9 @@ Value Floor::getAttr(const std::string &key) const {
 
 void Floor::on_creation(GridPos p) {
     if (Value v = GridObject::getAttr("adhesion"))
-        adhesion = v;
+        adhesion = v.toDouble();
     if (Value v = GridObject::getAttr("friction"))
-        friction = v;
+        friction = v.toDouble();
     GridObject::on_creation(p);
 
     if (server::WorldInitialized && has_firetype(flft_initfire))
@@ -130,7 +130,7 @@ bool Floor::is_destructible() const {
 }
 
 bool Floor::is_freeze_check() const {
-    return to_bool(this->getAttr("freeze_check"));
+    return getAttr("freeze_check").toBool();
 }
 
 void Floor::set_model(const std::string &mname) {
@@ -151,7 +151,7 @@ void Floor::add_force(Actor *, ecl::V2 &f) {
 }
 
 void Floor::stone_change(Stone *st) {
-    if (getDefaultedAttr("floodable", false).to_bool()) {
+    if (getDefaultedAttr("floodable", false).toBool()) {
         SendMessage(GetFloor(get_pos()), "_checkflood");
         for (Direction d = NORTH; d != NODIR; d = previous(d))
             SendMessage(GetFloor(move(get_pos(), d)), "_checkflood");
@@ -200,7 +200,7 @@ void Floor::stone_change(Stone *st) {
 
 std::string Floor::get_firetransform() {
     if (server::GameCompatibility == GAMET_ENIGMA) {
-        std::string classname = getAttr("$firetransform").to_string();
+        std::string classname = getAttr("$firetransform").toString();
         return (classname.length() > 0) ? classname : traits.firetransform;
     } else {
         // In non-Enigma-compatibility-modes, only fl_wood and fl_wood_framed
@@ -215,7 +215,7 @@ std::string Floor::get_heattransform(bool override_mode) {
     // The bool is needed to correctly exit the heating-animation
     // in case the level switched to non-Enigma-mode in between.
     if (server::GameCompatibility == GAMET_ENIGMA || override_mode) {
-        std::string classname = getAttr("$heattransform").to_string();
+        std::string classname = getAttr("$heattransform").toString();
         return (classname.length() > 0) ? classname : traits.heattransform;
     } else {
         // In non-Enigma-compatibility-modes, there is no heat-transformation.
@@ -329,17 +329,21 @@ bool Floor::try_heating(Direction sourcedir, FloorHeatFlags flhf) {
     bool doIgnite = doItem;
     bool reaction_happened = false;
     // Heat item -> destroy cracks, ignite bombs...
-    if (doItem)
-        if (Item *it = GetItem(get_pos()))
-            if (to_int(SendMessage(it, "heat", Value(sourcedir))) != 0.0)
+    if (doItem) {
+        if (Item *it = GetItem(get_pos())) {
+            if (SendMessage(it, "heat", Value(sourcedir)).toInt() != 0.0)
                 reaction_happened = true;
+        }
+    }
     // Maybe also transform floor?
     reaction_happened = on_heattransform(sourcedir, flhf) || reaction_happened;
     // Maybe transform stone, or stone blocks fire?
-    if (doStone)
-        if (Stone *st = GetStone(get_pos()))
-            if (SendMessage(st, "heat", Value(sourcedir)).to_bool())
+    if (doStone) {
+        if (Stone *st = GetStone(get_pos())) {
+            if (SendMessage(st, "heat", Value(sourcedir)).toBool())
                 reaction_happened = true;
+        }
+    }
     // Not item nor floor nor stone reacted? Then try to ignite the floor!
     // (Note: try_ignite also tests for the heating animation:
     //        No fire during transformation allowed!)
@@ -442,13 +446,13 @@ bool Floor::has_firetype(FloorFireType selector) {
     bool dflt = (server::GameCompatibility == GAMET_ENIGMA) && (traits.firetype & selector);
     // In non-Enigma-modes, without items on them, all floors behave the same:
     switch (selector) {
-    case flft_burnable: return getDefaultedAttr("burnable", dflt).to_bool();
-    case flft_ignitable: return getDefaultedAttr("ignitable", dflt).to_bool();
-    case flft_secure: return getDefaultedAttr("secure", dflt).to_bool();
-    case flft_eternal: return getDefaultedAttr("eternal", dflt).to_bool();
-    case flft_noash: return getDefaultedAttr("noash", dflt).to_bool();
-    case flft_fastfire: return getDefaultedAttr("fastfire", dflt).to_bool();
-    case flft_initfire: return getDefaultedAttr("initfire", dflt).to_bool();
+    case flft_burnable: return getDefaultedAttr("burnable", dflt).toBool();
+    case flft_ignitable: return getDefaultedAttr("ignitable", dflt).toBool();
+    case flft_secure: return getDefaultedAttr("secure", dflt).toBool();
+    case flft_eternal: return getDefaultedAttr("eternal", dflt).toBool();
+    case flft_noash: return getDefaultedAttr("noash", dflt).toBool();
+    case flft_fastfire: return getDefaultedAttr("fastfire", dflt).toBool();
+    case flft_initfire: return getDefaultedAttr("initfire", dflt).toBool();
     default:
         // do nothing
         break;

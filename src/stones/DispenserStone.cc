@@ -84,7 +84,7 @@ namespace enigma {
     }
 
     void DispenserStone::actor_hit(const StoneContact &sc) {
-        int reserve = getAttr("stock");
+        int reserve = getAttr("stock").toInt();
         if (reserve > 0) {
             if (enigma::Inventory *inv = player::GetInventory(sc.actor)) {
                 if (!inv->is_full()) {

@@ -73,7 +73,7 @@ namespace enigma {
             checkActors();
             return Value();
         } else if (m.message == "_dying" ) {
-            if (whiteball == m.sender && m.value.to_bool() == true)
+            if (whiteball == m.sender && m.value.toBool() == true)
                 // meditatist left hollow (warp, ...)
                 deregisterWhiteball();
             return Value();
@@ -190,15 +190,14 @@ namespace enigma {
     double Meditation::getFriction(ecl::V2 position, double defaultFriction, Actor *a) {
         Value v = getAttr("friction");
         if (v && covers_floor(position, a))
-            return v;
-        else
-            return defaultFriction;
+            return v.toDouble();
+        return defaultFriction;
     }
 
     ecl::V2 Meditation::calcMouseforce(Actor *a, ecl::V2 mouseForce, ecl::V2 floorForce) {
         Value v = getAttr("adhesion");
         if (v && covers_floor(a->get_pos(), a))
-            return mouseForce * (double)v ;
+            return mouseForce * v.toDouble();
         else
             return floorForce;
     }

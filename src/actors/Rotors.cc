@@ -38,15 +38,15 @@ namespace enigma {
 
     void RotorBase::setAttr(const std::string& key, const Value &val) {
         if (key == "range")
-            range = val;
+            range = val.toDouble();
         else if (key == "strength") 
-            force = val;
+            force = val.toDouble();
         else if (key == "gohome") 
-            gohome = val.to_bool();
+            gohome = val.toBool();
         else if (key == "attacknearest")
-            attacknearest = val.to_bool();
+            attacknearest = val.toBool();
         else if (key == "prefercurrent") 
-            prefercurrent = val;
+            prefercurrent = val.toDouble();
         Actor::setAttr(key, val);
     }
 
