@@ -88,19 +88,19 @@ enum MaterialType {
  */
 struct StoneContact {
     // Variables.
-    Actor *actor;
+    Actor *actor = nullptr;
     GridPos stonepos;
-    StoneID stoneid;
-    StoneResponse response;
+    StoneID stoneid = st_INVALID;
+    StoneResponse response = STONE_PASS;
 
-    ecl::V2 contact_point;  // Where do the shapes meet? (world coordinates)
-    ecl::V2 normal;         // The surface normal at the contact point
-    DirectionBits faces;    // Faces hit on contact - may be two on edge contact
-    bool outerCorner;       // Did actor hit an outer corner of the stone
-    bool is_collision;      // Actor moves towards the stone, not away
-    bool ignore;            // Ignore this contact
-    bool new_collision;     // True if actor did not touch the stone before
-    bool is_contact;        // if false, contact_point is closest feature
+    ecl::V2 contact_point;          // Where do the shapes meet? (world coordinates)
+    ecl::V2 normal;                 // The surface normal at the contact point
+    DirectionBits faces = NODIRBIT; // Faces hit on contact - may be two on edge contact
+    bool outerCorner;               // Did actor hit an outer corner of the stone
+    bool is_collision;              // Actor moves towards the stone, not away
+    bool ignore;                    // Ignore this contact
+    bool new_collision;             // True if actor did not touch the stone before
+    bool is_contact;                // if false, contact_point is closest feature
     std::string sound;
 
     // Constructor.
@@ -170,7 +170,7 @@ std::list<Object *> GetNamedGroup(const std::string &templ, Object *reference = 
 
 /* -------------------- Named Positions -------------------- */
 
-void NamePosition(Value po, const std::string &name);
+void NamePosition(const Value& po, const std::string &name);
 Value GetNamedPosition(const std::string &name);
 PositionList GetNamedPositionList(const std::string &templ, Object *reference = nullptr);
 
@@ -212,7 +212,7 @@ Value SendMessage(Object *obj, const Message &m);
 
 /* -------------------- Secure Delayed Actions -------------------- */
 
-void PerformSecureAction(int senderId, bool isCallback, int targetId, std::string name, Value val);
+void PerformSecureAction(int senderId, bool isCallback, int targetId, const std::string& name, const Value& val);
 
 /* -------------------- Actors -------------------- */
 
@@ -294,7 +294,7 @@ void KillItem(GridPos p);
 void SetFloor(GridPos p, Floor *st);
 Floor *GetFloor(GridPos p);
 void KillFloor(GridPos p);
-void CoverFloor(const GridPos &p, std::string kind);
+void CoverFloor(const GridPos &p, const std::string& kind);
 
 /* -------------------- Explosions -------------------- */
 

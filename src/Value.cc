@@ -26,11 +26,7 @@
 #include "Object.hh"
 #include "world.hh"
 
-#include <set>
 #include <vector>
-
-using namespace std;
-using namespace ecl;
 
 namespace enigma {
     
@@ -71,8 +67,7 @@ namespace enigma {
     
     Value::Value(const ObjectList &aList) : type (GROUP) {
         std::string descriptor;
-        ObjectList::const_iterator it;
-        for (it = aList.begin(); it != aList.end(); ++it) {
+        for (auto it = aList.begin(); it != aList.end(); ++it) {
             if (*it == nullptr) {
                 descriptor.append("#0,");
             } else {
@@ -92,16 +87,15 @@ namespace enigma {
     
     Value::Value(TokenList aList) : type (TOKENS) {
         std::string descriptor;
-        TokenList::iterator it;
-        for (it = aList.begin(); it != aList.end(); ++it) {
-            switch ((*it).type) {
+        for (auto it = aList.begin(); it != aList.end(); ++it) {
+            switch (it->type) {
                 case STRING :
                 case NAMEDOBJECT :
                     ASSERT((*it).val.str[0] != 0, XLevelRuntime, "TokenList: illegal empty string value");                
                     descriptor.append(it->val.str);
                     break;
                 case OBJECT :
-                    descriptor.append(ecl::strf("#%d", (int)((*it).val.dval[0])));
+                    descriptor.append(ecl::strf("#%d", (int)(it->val.dval[0])));
                     break;
                 case GROUP :
                     descriptor.append("%");
@@ -162,7 +156,7 @@ namespace enigma {
     }
     
     
-    Value::Value(const string& str) : type(STRING) {
+    Value::Value(const std::string& str) : type(STRING) {
         val.str = new char[str.length()+1];
         strcpy(val.str, str.c_str());
     }
@@ -212,8 +206,9 @@ namespace enigma {
             case POSITION:
             case GRIDPOS:
                 return (val.dval[0] == other.val.dval[0]) && (val.dval[1] == other.val.dval[1]);
+            default:
+                return true;
         }
-        return true;
     }
     
     bool Value::operator!=(const Value& other) const {
@@ -256,12 +251,12 @@ namespace enigma {
     int Value::toInt() const {
         switch (type) {
             case DOUBLE:
-                return round_nearest<int>(val.dval[0]);
+                return ecl::round_nearest<int>(val.dval[0]);
             case BOOL: 
-                return (val.dval[0] != 0) ? 1 : 0;
+                return val.dval[0] != 0 ? 1 : 0;
             case STRING: 
                 if (val.str[0] == '%')
-                    return std::strtol(&(val.str[1]), nullptr, 0);
+                    return std::strtol(&val.str[1], nullptr, 0);
                 else
                     return std::strtol(val.str, nullptr, 0);
             default: return 0;
@@ -271,7 +266,7 @@ namespace enigma {
     Object *Value::toObject() const {
         switch (type) {
             case OBJECT:
-                return Object::getObject(round_nearest<int>(val.dval[0]));
+                return Object::getObject(ecl::round_nearest<int>(val.dval[0]));
             case NAMEDOBJECT:
             case STRING:
                 return GetNamedObject(val.str);            
@@ -303,12 +298,12 @@ namespace enigma {
                         if ((*it)[0] == '#') {
                             // an object id
                             Value v(OBJECT);
-                            v.val.dval[0] = atoi((*it).c_str() + 1);
+                            v.val.dval[0] = atoi(it->c_str() + 1);
                             result.push_back(v);
                         } else if ((*it)[0] == '%'){
                             // a group
                             Value v(NIL);
-                            v.assign((*it).c_str() + 1);
+                            v.assign(it->c_str() + 1);
                             v.type = GROUP;
                             result.push_back(v);
                         } else {
@@ -365,8 +360,10 @@ namespace enigma {
         strcpy(val.str, s);
     }
     
-    void Value::assign(double d) { 
-        clear(); type=DOUBLE; val.dval[0]=d; 
+    void Value::assign(double d) {
+        clear();
+        type = DOUBLE;
+        val.dval[0] = d;
     }
     
     void Value::clear() {
@@ -382,13 +379,9 @@ namespace enigma {
     }
     
     Value::Type Value::getType() const {
-        switch (type) {
-            case NAMEDOBJECT :
-                return OBJECT;
-                break;
-            default:
-                return type;
-        }
+        if (type == NAMEDOBJECT)
+            return OBJECT;
+        return type;
     }
     
     double Value::get_double() const throw(){
@@ -407,12 +400,12 @@ namespace enigma {
     
     std::string Value::toString() const {
         switch (type) {
-            case Value::DOUBLE: {
+            case DOUBLE: {
                 return ecl::strf("%g", val.dval[0]);  // need drop of trailing zeros and point for int
             }
-            case Value::STRING: return val.str;
-            case Value::NIL:
-            case Value::DEFAULT:
+            case STRING: return val.str;
+            case NIL:
+            case DEFAULT:
             default: return "";
         }
     }
@@ -481,7 +474,7 @@ namespace enigma {
                 for (std::vector<std::string>::iterator it = vs.begin(); it != vs.end(); ++it) {
                     if (it->size() > 0) {
                         if ((*it)[0] == '#') {
-                            result.push_back(Object::getObject(atoi((*it).c_str() + 1)));
+                            result.push_back(Object::getObject(atoi(it->c_str() + 1)));
                         } else {
                             result.push_back(GetNamedObject(*it));
                         }
@@ -514,7 +507,7 @@ namespace enigma {
                 for (std::vector<std::string>::iterator it = vs.begin(); it != vs.end(); ++it) {
                     if (it->size() > 0) {
                         if ((*it)[0] == '#') {
-                            result.push_back(Object::getObject(atoi((*it).c_str() + 1)));
+                            result.push_back(Object::getObject(atoi(it->c_str() + 1)));
                         } else {
                             result.push_back(GetNamedPosition(*it));
                         }
@@ -557,7 +550,7 @@ namespace enigma {
     }
     
     Direction to_direction (const Value &v) {
-        int val = Clamp(v.toInt(), -1, 3);
+        int val = ecl::Clamp(v.toInt(), -1, 3);
         return static_cast<Direction>(val);
     }
     

@@ -87,7 +87,7 @@ namespace oxyd
     class OxydLoader {
     public:
         OxydLoader (const Level &level_, 
-                    const LoaderConfig config_);
+                    const LoaderConfig& config_);
 
         virtual ~OxydLoader()
         {}
@@ -160,7 +160,7 @@ namespace oxyd
         /* ---------- LevelPack interface ---------- */
         string get_name() const;
         int size() const { return nlevels; }
-        const char* get_default_SoundSet() const;
+        std::string get_default_SoundSet() const;
         bool needs_twoplayers() const;
     protected:
         virtual bool has_easymode(size_t /*index*/) const;
@@ -244,13 +244,13 @@ namespace oxyd
         ~GameInfo();
 
         bool is_present() const { return m_present; }
-        DatFile *getDatfile() { return datfile; }
+        DatFile *getDatfile() { return datfile.get(); }
 
     private:
         // Variables.
         OxydVersion  ver;
         string       game;
-        DatFile     *datfile;
+        std::unique_ptr<DatFile>     datfile;
         string       datfile_path;
         bool         m_present;
 

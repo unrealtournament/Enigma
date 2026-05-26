@@ -56,7 +56,7 @@
 
 
 
-namespace enigma { namespace lev {    
+namespace enigma::lev {
     enum LevelAdvanceMode {
         ADVANCE_NEXT_MODE,       // honor NextLevelMode
         ADVANCE_STRICTLY,        // move to the next level in index
@@ -78,23 +78,23 @@ namespace enigma { namespace lev {
         static void initGroups();
         static void shutdown();
         static void registerIndex(Index *anIndex);
-        static Index * findIndex(std::string anIndexName);
+        static Index * findIndex(const std::string& anIndexName);
         static Index * getCurrentIndex();
-        static bool setCurrentIndex(std::string anIndexName);
+        static bool setCurrentIndex(const std::string& anIndexName);
         static Index * nextGroupIndex();
         static Index * previousGroupIndex();
         static Proxy * getCurrentProxy();
         static std::string getCurrentGroup();
-        static void setCurrentGroup(std::string groupName);
+        static void setCurrentGroup(const std::string& groupName);
         static std::vector<std::string> getGroupNames();
-        static std::vector<Index *> * getGroup(std::string groupName);
-        static std::string getGroupSelectedIndex(std::string groupName);
-        static int getGroupSelectedColumn(std::string groupName);
-        static void setGroupSelectedIndex(std::string groupName, std::string indexName);
-        static void setGroupSelectedColumn(std::string groupName, int column);
-        static void deleteGroup(std::string groupName);
-        static void moveGroup(std::string groupName, int newPos);
-        static void renameGroup(std::string oldName, std::string newName);
+        static std::vector<Index *> * getGroup(const std::string& groupName);
+        static std::string getGroupSelectedIndex(const std::string& groupName);
+        static int getGroupSelectedColumn(const std::string& groupName);
+        static void setGroupSelectedIndex(const std::string& groupName, const std::string& indexName);
+        static void setGroupSelectedColumn(const std::string& groupName, int column);
+        static void deleteGroup(const std::string& groupName);
+        static void moveGroup(const std::string& groupName, int newPos);
+        static void renameGroup(const std::string& oldName, std::string newName);
         static void insertGroup(std::string groupName, int newPos);
         static void deleteEmptyGroups();
         static double getNextUserLocation();
@@ -102,9 +102,8 @@ namespace enigma { namespace lev {
         /**
          * Convention: method names *Level() can take int pos or Proxy as arg.
          */
-        Index(std::string anIndexName = "Unnamed Pack", 
-                std::string aDescription = "",
-                std::string aGroupName = INDEX_DEFAULT_GROUP, 
+        Index(const std::string& anIndexName = "Unnamed Pack", const std::string& aDescription = "",
+                const std::string& aGroupName = INDEX_DEFAULT_GROUP,
                 double defaultLocation = INDEX_DEFAULT_PACK_LOCATION);
         virtual ~Index();
         
@@ -112,24 +111,24 @@ namespace enigma { namespace lev {
         std::string getGroupName();
         std::string getDefaultGroupName();
         std::string getDescription();
-        double getLocation();
-        double getDefaultLocation();
+        double getLocation() const;
+        double getDefaultLocation() const;
         void setDefaultLocation(double defLocation);
         void moveToGroup(std::string groupName);
-        void locateBehind(std::string indexName);
-        void renameIndex(std::string newName);
+        void locateBehind(const std::string& indexName);
+        void renameIndex(const std::string& newName);
         virtual bool isSource(Proxy * aProxy);
 
-        int getCurrentPosition(); // 0 .. size-1
-        int getCurrentLevel(); // 1 .. size
-        Proxy * getCurrent();
+        int getCurrentPosition() const; // 0 .. size-1
+        int getCurrentLevel() const; // 1 .. size
+        Proxy * getCurrent() const;
         void setCurrentPosition(int newPos);
-        int getScreenFirstPosition();
+        int getScreenFirstPosition() const;
         void setScreenFirstPosition(int iFirstPos);
         virtual bool mayPlayLevel(int levelNumber);
-        Proxy * getProxy(int pos);
-        bool containsProxy(Proxy * aProxy);
-        bool hasNormLevelPath(std::string path);
+        Proxy * getProxy(int pos) const;
+        bool containsProxy(const Proxy * aProxy) const;
+        bool hasNormLevelPath(const std::string& path) const;
         virtual bool advanceLevel(LevelAdvanceMode advMode);
                 
         /*! Return number of levels */
@@ -139,12 +138,12 @@ namespace enigma { namespace lev {
                 std::map<std::string, std::string> varExtensions = nullExtensions);
         virtual void clear();
         virtual void sort(SCSortMethod s);
-        void updateFromProxies();
+        void updateFromProxies() const;
         virtual void updateFromFolder() = 0;
 
         // ---------- LevelPack legacy methods ---to be renamed ------- */
         /*! Return the default SoundSet (see options::SoundSet for meaning) */
-        virtual const char* get_default_SoundSet() const;
+        virtual std::string get_default_SoundSet() const;
 
         /*! Returns true if it's a twoplayer levelpack, but has no
           it-yinyang (needed to add it-yinyang to inventory if
@@ -186,9 +185,9 @@ namespace enigma { namespace lev {
         static std::string currentGroup;
         
         static void addIndexToGroup(Index *anIndex, std::vector<Index *> * aGroup);
-        static void removeIndexFromGroup(Index *anIndex, std::string groupName);
-
+        static void removeIndexFromGroup(const Index *anIndex, const std::string& groupName);
     };
 
-}} // namespace enigma::lev
+} // namespace enigma::lev
+
 #endif

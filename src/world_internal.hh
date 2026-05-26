@@ -23,7 +23,6 @@
 #include "SoundEngine.hh"
 #include "world.hh"
 #include <list>
-#include <memory>
 #include <vector>
 
 namespace enigma {
@@ -149,7 +148,7 @@ class Layer {
     T *defaultval;
 
 public:
-    Layer(T *deflt = 0) : defaultval(deflt) {}
+    Layer(T *deflt = nullptr) : defaultval(deflt) {}
     virtual ~Layer() {}
 
     T *get(GridPos p);
@@ -271,7 +270,7 @@ public:
     void unname(Object *);
     Object *get_named(const std::string &);
     std::list<Object *> get_group(const std::string &tmpl, Object *reference = nullptr);
-    void namePosition(Value po, const std::string &name);
+    void namePosition(const Value& po, const std::string &name);
     Value getNamedPosition(const std::string &name);
     PositionList getPositionList(const std::string &tmpl, Object *reference = nullptr);
 
@@ -293,7 +292,6 @@ public:
     Actor *yield_actor(Actor *a);
     void exchange_actors(Actor *a1, Actor *a2);
     void did_move_actor(Actor *a);
-    void tick_actor(Actor *a, double dtime);
 
 private:
     /* ---------- Private methods ---------- */

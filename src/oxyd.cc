@@ -18,7 +18,7 @@
  */
 
 /*
- * This files contains the interface between Enigma and the original
+ * This file contains the interface between Enigma and the original
  * Oxyd games.  It is responsible for converting level descriptions or
  * sound effects.
  */
@@ -34,12 +34,10 @@
 #include "main.hh"
 
 #include <cstdio>
-#include <cstdlib>
 #include <iostream>
 
 #include "oxyd_internal.hh"
 
-using namespace std;
 using namespace enigma;
 using namespace oxyd;
 using OxydLib::Level;
@@ -52,10 +50,10 @@ namespace
     direction_oxyd2enigma (OxydLib::Direction odir)
     {
         switch (odir) {
-        case Direction_Up:    return NORTH; break;
-        case Direction_Down:  return SOUTH; break;
-        case Direction_Left:  return WEST; break;
-        case Direction_Right: return EAST; break;
+        case Direction_Up:    return NORTH;
+        case Direction_Down:  return SOUTH;
+        case Direction_Left:  return WEST;
+        case Direction_Right: return EAST;
         default :
             fprintf(stderr, "Unknown OxydLib-direction %i!\n", int(odir));
             return NODIR;
@@ -81,7 +79,7 @@ namespace
 
     void dumpUnknownObjects (const OxydLib::Level& level) 
     {
-        set<int> stones, items, floors;
+        std::set<int> stones, items, floors;
 
         const Grid &sgrid = level.getGrid (GridType_Pieces);
         for (unsigned y=0; y<sgrid.getHeight(); ++y)
@@ -106,21 +104,21 @@ namespace
 
         if (!stones.empty()) {
             enigma::Log << "Unknown stones:";
-            for (set<int>::iterator i = stones.begin(); i != stones.end(); ++i)
+            for (auto i = stones.begin(); i != stones.end(); ++i)
                 enigma::Log << ' ' << *i;
-            enigma::Log << endl;
+            enigma::Log << std::endl;
         }
         if (!items.empty()) {
             enigma::Log << "Unknown items:";
-            for (set<int>::iterator i = items.begin(); i != items.end(); ++i)
+            for (auto i = items.begin(); i != items.end(); ++i)
                 enigma::Log << ' ' << *i;
-            enigma::Log << endl;
+            enigma::Log << std::endl;
         }
         if (!floors.empty()) {
             enigma::Log << "Unknown floors:";
-            for (set<int>::iterator i = floors.begin(); i != floors.end(); ++i)
+            for (auto i = floors.begin(); i != floors.end(); ++i)
                 enigma::Log << ' ' << *i;
-            enigma::Log << endl;
+            enigma::Log << std::endl;
         }
     }
 
@@ -183,7 +181,6 @@ bool CommandString::get_bool (bool dflt) {
     return dflt;
 }
 
-
 int CommandString::get_int (int min, int max, int dflt)
 {
     int val = 0;
@@ -220,7 +217,7 @@ int CommandString::get_int (int min, int max, int dflt)
 /* -------------------- OxydLoader -------------------- */
 
 OxydLoader::OxydLoader (const OxydLib::Level &level_, 
-                        const LoaderConfig config_)
+                        const LoaderConfig& config_)
 : level (level_),
   config (config_)
 {
@@ -266,7 +263,7 @@ Stone * OxydLoader::make_laser (int type)
     enigma::Direction dir = direction_oxyd2enigma(laser.getDir());
     bool              on  = laser.getOn();
 
-    Stone *st = 0;
+    Stone *st = nullptr;
     if (dir != NODIR) {
         string lasername("st_laser");
         lasername += toSuffix(dir);
@@ -283,9 +280,8 @@ Stone *OxydLoader::make_timer (int x, int y)
     st->setAttr("interval", Value(0.2));
 
     Block block(x, y);
-    OscillatorMap::const_iterator i = oscillators.find(block);
-    if (i != oscillators.end()) {
-        const Oscillator &o = i->second;
+    if (auto it = oscillators.find(block); it != oscillators.end()) {
+        const Oscillator &o = it->second;
         st->setAttr("state", Value(o.getOn()) ? 1 : 0);
         double interval = (1 + o.getPeriod()) * config.timer_factor;
         st->setAttr("interval", Value(interval));
@@ -295,7 +291,7 @@ Stone *OxydLoader::make_timer (int x, int y)
 
 Stone *OxydLoader::make_stone (int type, int x, int y)
 {
-    Stone *st = 0;
+    Stone *st = nullptr;
 
     if (type == 0) {
         // ignore
@@ -318,7 +314,7 @@ Stone *OxydLoader::make_stone (int type, int x, int y)
     else {
         // No special case -> get Stone from map
         const char *name = config.stonetable[type];
-        if (name == 0) {
+        if (name == nullptr) {
             Log << ecl::strf("Unknown stone %X\n", type);
             st = MakeStone ("st_dummy");
             st->setAttr("code", type);
@@ -362,8 +358,7 @@ static std::string convert_encoding (const std::string &t)
 
 Item  *OxydLoader::make_item(int type, int x, int y)
 {
-
-    Item *it = 0;
+    Item *it = nullptr;
 
     OxydLib::Language lang = Language_English;
     std::string localelang = ecl::GetLanguageCode (ecl::SysMessageLocaleName());
@@ -432,7 +427,7 @@ void OxydLoader::load_floor ()
             const char *name = config.floortable[code];
             Floor      *fl;
 
-            if( name == 0) {
+            if( name == nullptr) {
                 Log << ecl::strf ("Unknown floor %X\n",code);
                 fl = MakeFloor("fl_dummy");
                 fl->setAttr("code", code);
@@ -503,7 +498,7 @@ void OxydLoader::load_actors ()
         const Marble &marble = level.getMarble(i);
         double        x      = marble.getX()/32.0;
         double        y      = marble.getY()/32.0;
-        Actor        *ac     = 0;
+        Actor        *ac     = nullptr;
 
         MarbleInfo minfo(marble);
 
@@ -545,12 +540,12 @@ void OxydLoader::load_actors ()
             if (!minfo.is_default(MI_FORCE)) {
                 double force = minfo.get_value(MI_FORCE) / 4; // just a guess
                 ac->setAttr("strength", force);
-                enigma::Log << "Set jack strength to " << force << endl;
+                enigma::Log << "Set jack strength to " << force << std::endl;
             }
             if (!minfo.is_default(MI_RANGE)) {
                 double range = minfo.get_value(MI_RANGE) / 32.0; // value seems to contain distance in pixels
                 ac->setAttr("range", range);
-                enigma::Log << "Set jack range to " << range << endl;
+                enigma::Log << "Set jack range to " << range << std::endl;
             }
             break;
 
@@ -565,8 +560,8 @@ void OxydLoader::load_actors ()
             ac->setAttr("range", range);
             ac->setAttr("gohome", Value(gohome == 1));
 
-            enigma::Log << "rotor strength " << force << endl;
-            enigma::Log << "rotor range " << range << endl;
+            enigma::Log << "rotor strength " << force << std::endl;
+            enigma::Log << "rotor range " << range << std::endl;
             
             break;
         }
@@ -600,7 +595,7 @@ void OxydLoader::load_actors ()
             ac = MakeActor("ac_bug");
             break;
         default:
-            enigma::Log << "Unhandled actor type " << int(marble.getMarbleType()) << endl;
+            enigma::Log << "Unhandled actor type " << int(marble.getMarbleType()) << std::endl;
             break;
 //         case MarbleType_LifeSpitter:
 //         case MarbleType_DynamiteHolder:
@@ -644,19 +639,17 @@ void OxydLoader::connect_rubberbands ()
 
 void OxydLoader::connect_signals () 
 {
-    set<SignalLocation> senders;
+    std::set<SignalLocation> senders;
     level.getSenders(&senders);
-    set<SignalLocation>::const_iterator senderIter = senders.begin();
-    set<SignalLocation>::const_iterator senderEnd = senders.end();
-    for (; senderIter != senderEnd; ++senderIter) {
-        const SignalLocation &sender = *senderIter;
+    for (auto it = senders.begin(); it != senders.end(); ++it) {
+        const SignalLocation &sender = *it;
 
         int nrec = level.getNumRecipients(sender);
-        for (int irec=0; irec<nrec; ++irec) {
+        for (int irec = 0; irec < nrec; ++irec) {
             SignalLocation recipient = level.getRecipient(sender, irec);
-            GridLoc src = ::to_gridloc(sender);
-            GridLoc dst = ::to_gridloc(recipient);
-            AddSignal (src, dst, "signal");
+            GridLoc src = to_gridloc(sender);
+            GridLoc dst = to_gridloc(recipient);
+            AddSignal(src, dst, "signal");
         }
     }
 }
@@ -669,7 +662,7 @@ void OxydLoader::parse_specials ()
 
     GridPos p;
     const std::vector<std::string> &special = level.getSpecialItems();
-    vector<int> numberlist;
+    std::vector<int> numberlist;
     int levelw = level.getWidth();
     int levelh = level.getHeight();
     for (size_t i=0; i<special.size(); ++i) {
@@ -742,8 +735,6 @@ Actor *OxydLoader::get_actor (int idx)
 }
 
 
-
-
 /* -------------------- LevelPack_Oxyd -------------------- */
 
 LevelPack_Oxyd::LevelPack_Oxyd (OxydVersion ver, DatFile *dat, 
@@ -770,13 +761,13 @@ LevelPack_Oxyd::LevelPack_Oxyd (OxydVersion ver, DatFile *dat,
     indexGroup = defaultGroup = "Dongleware";
     indexDefaultLocation = get_default_location();
     indexLocation = indexDefaultLocation;
-    Log << "Levelpack '" << get_name() << "' has " << nlevels << " levels." << endl;
+    Log << "Levelpack '" << get_name() << "' has " << nlevels << " levels." << std::endl;
 }
 
 void LevelPack_Oxyd::updateFromFolder() {
 }
 
-const char* LevelPack_Oxyd::get_default_SoundSet() const 
+std::string LevelPack_Oxyd::get_default_SoundSet() const
 { 
     return sound::GetOxydSoundSet(m_datfile->getVersion()).c_str();
 }
@@ -789,8 +780,7 @@ bool LevelPack_Oxyd::needs_twoplayers() const
 bool LevelPack_Oxyd::has_easymode(size_t index) const {
      if (get_version() != OxydVersion_PerOxyd)
          return false;
-     else 
-        return LP_PerOxyd::hasEasymode(index);
+     return LP_PerOxyd::hasEasymode(index);
 }
 
 GameType LevelPack_Oxyd::get_gametype() const 
@@ -927,7 +917,7 @@ MarbleInfo::MarbleInfo (const Marble& marble)
                 }
             }
             else {
-                Log << "Error in MarbleInfo: missing closing parenthesis" << endl;
+                Log << "Error in MarbleInfo: missing closing parenthesis" << std::endl;
             }
         }
     }
@@ -942,7 +932,7 @@ MarbleInfo::~MarbleInfo() {
     for (int idx = 0; idx<MAX_MARBLE_INFO_FIELDS; ++idx) {
         if (!interpreted[idx] && !is_default(idx)) {
             enigma::Log << "MarbleInfo[" << idx << "]=" 
-                        << get_value(idx) << " is not used yet." << endl;
+                        << get_value(idx) << " is not used yet." << std::endl;
         }
     }
 }
@@ -952,16 +942,15 @@ MarbleInfo::~MarbleInfo() {
 /* -------------------- GameInfo -------------------- */
 
 GameInfo::GameInfo()
-: ver(OxydVersion_Invalid), datfile(0), m_present(false)
+: ver(OxydVersion_Invalid), datfile(nullptr), m_present(false)
 {}
 
 GameInfo::~GameInfo() {
-	delete datfile;
 }
 
 
 GameInfo::GameInfo (OxydVersion ver_, const string &game_, const string &datfile_name_, const bool searchDAT)
-: ver(ver_), game(game_), datfile(0), /*datfile_name(datfile_name_), */m_present(false)
+: ver(ver_), game(game_), m_present(false)
 {
     string alt_datfile_name = "levels/legacy_dat/" + datfile_name_;
     string fname;
@@ -985,44 +974,43 @@ void GameInfo::openDatFile()
     OxydLib::ByteVec data;
     readFile (datfile_path, &data);
 
-    datfile  = new DatFile;
+    datfile  = std::make_unique<DatFile>();
 
     string errmsg;
-    if (!parseDatFile (data, ver, datfile, &errmsg)) {
-        enigma::Log << "Error loading " << datfile_path << ": " << errmsg << endl;
-        delete datfile;
-        datfile    = 0;
+    if (!parseDatFile (data, ver, datfile.get(), &errmsg)) {
+        enigma::Log << "Error loading " << datfile_path << ": " << errmsg << std::endl;
+        datfile.reset();
         m_present = false;
     } else {
-        enigma::Log << "Loaded "<< datfile_path << endl;
+        enigma::Log << "Loaded "<< datfile_path << std::endl;
     }
 }
 
 lev::Index *GameInfo::makeLevelIndex(bool twoplayers)
 {
-    if (datfile == 0)
-        return 0;
+    if (!datfile)
+        return nullptr;
 
     if (twoplayers && (ver == OxydVersion_OxydExtra ||
                        ver == OxydVersion_OxydMagnum ||
                        ver == OxydVersion_OxydMagnumGold))
     {
-        return 0;           // no twoplayer levels available
+        return nullptr;           // no twoplayer levels available
     }
 
     switch (ver) {
     case OxydVersion_Oxyd1:
-        return new LP_Oxyd1 (datfile, twoplayers);
+        return new LP_Oxyd1 (datfile.get(), twoplayers);
     case OxydVersion_OxydExtra:
-        return new LP_OxydExtra(datfile);
+        return new LP_OxydExtra(datfile.get());
     case OxydVersion_PerOxyd:
-        return new LP_PerOxyd (datfile, twoplayers);
+        return new LP_PerOxyd (datfile.get(), twoplayers);
     case OxydVersion_OxydMagnum:
     case OxydVersion_OxydMagnumGold:
-        return new LP_OxydMagnum (ver, datfile);
+        return new LP_OxydMagnum (ver, datfile.get());
 
     default:
-        return 0;
+        return nullptr;
     }
 }
 
@@ -1031,7 +1019,7 @@ lev::Index *GameInfo::makeLevelIndex(bool twoplayers)
 
 namespace
 {
-    vector<GameInfo*> games;
+    std::vector<GameInfo*> games;
 }
 
 
@@ -1082,7 +1070,7 @@ bool oxyd::InitOxydSoundSet(OxydVersion ver)
         "OXMEMOK.SDD", "OXMEMOP.SDD", "OXMONEY.SDD", "OXMOTOR.SDD", 
         "OXMOVE.SDD", "OXPULLER.SDD", "OXSWOFF.SDD", "OXSWON.SDD", 
         "OXTHIEF.SDD", "OXTRANS.SDD", "OXTURN.SDD", "OXUNTITL.SDD", 
-        "OXWOUOU.SDD", 0
+        "OXWOUOU.SDD", nullptr
     };
 
     OxydLib::DatFile *datfile = gi.getDatfile();

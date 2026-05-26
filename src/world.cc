@@ -25,12 +25,10 @@
 #include "player.hh"
 #include "SoundEffectManager.hh"
 #include "SoundEngine.hh"
-#include "options.hh"
 #include "server.hh"
 #include "lua.hh"
 #include "client.hh"
 #include "main.hh"
-#include "stones_internal.hh"
 #include "WorldProxy.hh"
 #include "stones/OxydStone.hh"
 
@@ -118,8 +116,11 @@ Field::~Field() {
 /* -------------------- StoneContact -------------------- */
 
 StoneContact::StoneContact()
-: is_collision(false), ignore(false), new_collision(false), is_contact(false), outerCorner(false) {
-}
+    : outerCorner(false),
+      is_collision(false),
+      ignore(false),
+      new_collision(false),
+      is_contact(false) {}
 
 DirectionBits contact_faces(const StoneContact &sc) {
     int dirs = NODIRBIT;
@@ -332,7 +333,7 @@ void World::unname(Object *obj) {
     }
 }
 
-void World::namePosition(Value po, const std::string &name) {
+void World::namePosition(const Value& po, const std::string &name) {
     namedPositions.remove(name);  // need to remove to avoid duplicate inserts in ecl::dict
     namedPositions.insert(name, po);
 }
@@ -550,11 +551,7 @@ ecl::V2 World::drunkenMouseforce(Actor *a, V2 &mforce) {
     return f;
 }
 
-/*! Calculate the total force on an actor A at time TIME.  The
-  actor's current position X and velocity V are also passed.  [Note
-  that the position and velocity entries in ActorInfo will be updated
-  only after a *successful* time step, so they cannot be used
-  here.] */
+/*! Calculate the total force on an actor 'a'. */
 ecl::V2 World::get_local_force(Actor *a) {
     ecl::V2 f;
     ecl::V2 m;
@@ -590,7 +587,7 @@ ecl::V2 World::get_local_force(Actor *a) {
 
 /* Global forces are calculated less often than local ones, namely
    only once every four time steps, cf. move_actors().  They are used
-   for forces that are more time consuming to calculate, i.e.,
+   for forces that are more time-consuming to calculate, i.e.,
    actor-actor interactions and external force fields. */
 ecl::V2 World::get_global_force(Actor *a) {
     ecl::V2 f;
@@ -630,8 +627,8 @@ ecl::V2 World::get_global_force(Actor *a) {
 //    the contact information and `is_contact' is set to true.
 //
 // 3) The stone and the actor are _not_ in contact. In this case, `c' is
-//    filled is filled with information about the closest feature on the stone
-//    and `is_contact' is set to false.
+//    filled with information about the closest feature on the stone
+//    and 'is_contact' is set to false.
 
 /**
  * Examine a possible contact of an actor with stone at a given grid position. Joins
@@ -1231,11 +1228,7 @@ struct ActorEntry {
     double pos;
     size_t idx;
 
-    ActorEntry() {
-        pos = 0;
-        idx = 0;
-    }
-    ActorEntry(double pos_, size_t idx_) {
+    ActorEntry(double pos_ = 0, size_t idx_ = 0) {
         pos = pos_;
         idx = idx_;
     }
@@ -1770,7 +1763,7 @@ std::list<Object *> GetNamedGroup(const std::string &name, Object *reference) {
     return level->get_group(name, reference);
 }
 
-void NamePosition(Value po, const string &name) {
+void NamePosition(const Value& po, const string &name) {
     level->namePosition(po, name);
 }
 
@@ -1980,7 +1973,8 @@ void BroadcastMessage(const std::string &msg, const Value &value, GridLayerBits 
     //         exectime, to_floors, to_items, to_stones, actors, others);
 }
 
-void PerformSecureAction(int senderId, bool isCallback, int targetId, std::string name, Value val) {
+void PerformSecureAction(
+        int senderId, bool isCallback, int targetId, const std::string& name, const Value& val) {
     level->actionList.push_back(Action(senderId, isCallback, targetId, name, val));
 }
 
@@ -2126,7 +2120,7 @@ void SetFloor(GridPos p, Floor *fl) {
             st->on_floor_change();
 }
 
-void CoverFloor(const GridPos &p, std::string kind) {
+void CoverFloor(const GridPos &p, const std::string& kind) {
     Floor *fl = GetFloor(p);
     Item *it = GetItem(p);
     if (fl == nullptr || !fl->isKind("fl_abyss"))
@@ -2165,8 +2159,7 @@ void SetStone(GridPos p, Stone *st) {
 }
 
 void ReplaceStone(GridPos p, Stone *st) {
-    Stone *old = level->st_layer.get(p);
-    if (old) {
+    if (Stone* old = level->st_layer.get(p)) {
         old->transferName(st);
         level->st_layer.kill(p);
     }
