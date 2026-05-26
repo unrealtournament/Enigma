@@ -28,7 +28,6 @@
 
 #include <iostream>
 
-XERCES_CPP_NAMESPACE_USE
 
 namespace enigma
 {
@@ -55,8 +54,8 @@ namespace enigma
             const std::string &schemaFilename) {
         substitutions.insert(std::make_pair(schemaSystemId, schemaFilename));
     }
-    
-    DOMLSInput * DOMSchemaResolver::resolveResource (
+
+    xercesc::DOMLSInput * DOMSchemaResolver::resolveResource (
             const XMLCh* const resourceType, const XMLCh* const namespaceUri,
             const XMLCh *const publicId, const XMLCh *const systemId,
             const XMLCh *const baseURI) {
@@ -73,8 +72,8 @@ namespace enigma
             bool result = app.systemFS->findFile( std::string("schemas/") + 
                     i->second , schemaPath);
             if (result) {
-                DOMLSInput * inSrc = new Wrapper4InputSource(new LocalFileInputSource(
-                        LocalToXML(&schemaPath).x_str()));
+                xercesc::DOMLSInput* inSrc = new xercesc::Wrapper4InputSource(
+                        new xercesc::LocalFileInputSource(LocalToXML(&schemaPath).x_str()));
 // W3C implementation:
 //                 DOMLSInput * inSrc = app.domImplementationLS->createLSInput();
 //                 inSrc->setSystemId(LocalToXML(&schemaPath).x_str()));

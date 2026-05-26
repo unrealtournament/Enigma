@@ -32,7 +32,11 @@
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/util/XMLDouble.hpp>
 
-XERCES_CPP_NAMESPACE_USE 
+using xercesc::DOMElement;
+using xercesc::DOMNode;
+using xercesc::DOMNodeList;
+using xercesc::XMLDouble;
+using xercesc::XMLString;
 
 namespace enigma {
     ObjectValidator *ObjectValidator::theSingleton = nullptr;

@@ -22,7 +22,8 @@
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/util/TransService.hpp>
 
-XERCES_CPP_NAMESPACE_USE
+using xercesc::XMLString;
+using xercesc::XMLTranscoder;
 
 namespace enigma
 {
@@ -31,11 +32,10 @@ namespace enigma
         // make safe assumptions on utf-8 size
         XMLSize_t maxDestLength = 3 * srcLength;
         XMLSize_t charsEaten;
-        XMLSize_t destLength;
         // make a buffer - size does not matter - the object is temporary
         utf8String = new char[maxDestLength];
         // transcode to utf-8 -- there are no unrepresentable chars
-        destLength = app.xmlUtf8Transcoder->transcodeTo(toTranscode, srcLength,
+        app.xmlUtf8Transcoder->transcodeTo(toTranscode, srcLength,
                 (XMLByte *)utf8String, maxDestLength,
                 charsEaten, XMLTranscoder::UnRep_RepChar);
         if (charsEaten < srcLength)

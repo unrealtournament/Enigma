@@ -17,13 +17,12 @@
  *
  */
 
-#include <cstring>
 #include "Utf8ToXML.hh"
-#include "main.hh"
-#include <xercesc/util/XMLString.hpp>
-#include <xercesc/util/TransService.hpp>
 
-XERCES_CPP_NAMESPACE_USE
+#include "main.hh"
+
+#include <xercesc/util/TransService.hpp>
+#include <xercesc/util/XMLString.hpp>
 
 namespace enigma
 {
@@ -35,7 +34,7 @@ namespace enigma
         init(toTranscode->c_str());
     }
     
-    Utf8ToXML::Utf8ToXML(const std::string toTranscode) {
+    Utf8ToXML::Utf8ToXML(const std::string& toTranscode) {
         init(toTranscode.c_str());
     }
 
@@ -44,20 +43,20 @@ namespace enigma
         // make safe assumptions on utf-16 size
         XMLSize_t maxDestLength = srcLength;
         XMLSize_t charsEaten;
-        XMLSize_t destLength;
         unsigned char *charSizes = new unsigned char[maxDestLength]; // just junk
         // make a buffer - size does not matter - the object is temporary 
         xmlString = new XMLCh[maxDestLength];
         // transcode to utf-8 -- there are no unrepresentable chars
-        destLength = app.xmlUtf8Transcoder->transcodeFrom((XMLByte *)toTranscode, 
+        app.xmlUtf8Transcoder->transcodeFrom((XMLByte *)toTranscode,
                 srcLength,
                 xmlString, maxDestLength,
                 charsEaten, charSizes);
         delete[] charSizes;
-        if (charsEaten < srcLength)
+        if (charsEaten < srcLength) {
             // an assert - should never occur
-            Log << "Utf8toXML: incomplete transcoding - only "<< charsEaten <<
-                    " of " << srcLength << "bytes were processed!" << std::endl;
+            Log << "Utf8toXML: incomplete transcoding - only " << charsEaten << " of " << srcLength
+                << "bytes were processed!" << std::endl;
+        }
     }
     
     

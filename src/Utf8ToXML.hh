@@ -33,7 +33,7 @@ namespace enigma
      * exist only temporarily, f.e. 
      * <code>DOMNode::setNodeValue(Utf8ToXML(char *toTranscode).x_str())</code> or
      * <code>XMLString::replicate(Utf8ToXML(char *toTranscode).x_str())</code>
-     * Xerces should be initialized before using this class and all objects
+     * Xerces should be initialized before using this class, and all objects
      * should be deleted before terminating.
      */
     class Utf8ToXML {
@@ -43,33 +43,33 @@ namespace enigma
          *
          * @param toTranscode utf-8 coded string
          */
-        Utf8ToXML(const char * const toTranscode);
+        explicit Utf8ToXML(const char * toTranscode);
         /**
          * Makes a transcoding to the local code page.
          *
          * @param toTranscode utf-8 coded string
          */
-        Utf8ToXML(const std::string * const toTranscode);
+        explicit Utf8ToXML(const std::string * toTranscode);
         /**
          * Makes a transcoding to the local code page.
          *
          * @param toTranscode utf-8 coded string
          */
-        Utf8ToXML(const std::string toTranscode);
+        explicit Utf8ToXML(const std::string& toTranscode);
         ~Utf8ToXML();
 
         /**
-         * Returns the XML string. It remains owner of
+         * Returns the XML string. It remains the owner of
          * the string.
          */
-        const XMLCh * x_str() const;
+        const XMLCh* x_str() const;
 
-    private :
+    private:
         /**
-         * A XML copy. We are the owner.
+         * An XML copy. We are the owner.
          */
-        XMLCh * xmlString;
-        void init(const char * const toTranscode);
+        XMLCh* xmlString = nullptr;
+        void init(const char* toTranscode);
     };
 } //namespace enigma
 #endif

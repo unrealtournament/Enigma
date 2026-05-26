@@ -20,26 +20,19 @@
 #include "PropertyManager.hh"
 #include "errors.hh"
 #include "main.hh"
-#include "DOMErrorReporter.hh"
-#include "DOMSchemaResolver.hh"
-#include "LocalToXML.hh"
 #include "Utf8ToXML.hh"
-#include "options.hh"
-#include "XMLtoLocal.hh"
 #include "XMLtoUtf8.hh"
 #include "ecl_system.hh"
 #include <cstdio>
-#include <iostream>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/util/XMLDouble.hpp>
 #include <xercesc/util/XMLString.hpp>
-#include <xercesc/util/XMLUniDefs.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XercesVersion.hpp>
 
-using namespace std;
-using namespace enigma;
-XERCES_CPP_NAMESPACE_USE 
+using xercesc::DOMElement;
+using xercesc::DOMNodeList;
+using xercesc::XMLDouble;
+using xercesc::XMLString;
 
 namespace enigma {
     PropertyManager::PropertyManager() : doc (nullptr), propertiesElem (nullptr) {
@@ -61,8 +54,7 @@ namespace enigma {
     
    void PropertyManager::getProperty(const char *prefName, std::string &value) {
         DOMElement * property;
-        bool propFound = hasProperty(prefName, &property);
-        if (propFound) {
+       if (hasProperty(prefName, &property)) {
             value = XMLtoUtf8(property->getAttribute(Utf8ToXML("value").x_str())).c_str();
         }
     }
@@ -83,8 +75,7 @@ namespace enigma {
     
     void PropertyManager::getProperty(const char *prefName, double &value) {
         DOMElement * property;
-        bool propFound = hasProperty(prefName, &property);
-        if (propFound) {
+        if (hasProperty(prefName, &property)) {
             XMLDouble * result = new XMLDouble(property->getAttribute(Utf8ToXML("value").x_str()));
             value = result->getValue();
             delete result;
@@ -108,8 +99,7 @@ namespace enigma {
     
     void PropertyManager::getProperty(const char *prefName, int &value) {
         DOMElement * property;
-        bool propFound = hasProperty(prefName, &property);
-        if (propFound) {
+        if (hasProperty(prefName, &property)) {
             value = XMLString::parseInt(property->getAttribute(Utf8ToXML("value").x_str()));
         }
     }
@@ -128,7 +118,7 @@ namespace enigma {
     void PropertyManager::getProperty(const char *prefName, bool &value) {
         int result = 0;
         getProperty(prefName, result);
-        value = ((result == 0) ? false: true);
+        value = result != 0;
     }
 
     bool PropertyManager::getBool(const char *prefName) {
@@ -159,7 +149,7 @@ namespace enigma {
         return hasProperty(Utf8ToXML(prefName).x_str(), element);
     }
         
-    bool PropertyManager::hasProperty(const XMLCh * key, DOMElement ** element) {
+    bool PropertyManager::hasProperty(const XMLCh * key, DOMElement ** element) const {
         ASSERT(propertiesElem != nullptr, XFrontend, "");
         bool propFound = false;
         DOMElement * property = nullptr;
@@ -170,13 +160,13 @@ namespace enigma {
 
         DOMNodeList * propList = propertiesElem->getElementsByTagName(Utf8ToXML("property").x_str());
         for (int i = 0, l = propList-> getLength(); i < l && !propFound; i++) {
-            property  = dynamic_cast<DOMElement *>(propList->item(i));
+            property = dynamic_cast<DOMElement *>(propList->item(i));
             if (XMLString::equals(key, 
                     property->getAttribute(Utf8ToXML("key").x_str()))) {
                 propFound = true;
             }
         }
-        * element = property;
+        *element = property;
         return propFound;
     }
 } // namespace enigma

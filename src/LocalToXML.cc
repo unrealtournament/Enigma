@@ -19,7 +19,7 @@
 
 #include "LocalToXML.hh"
 
-XERCES_CPP_NAMESPACE_USE
+using xercesc::XMLString;
 
 namespace enigma
 {

@@ -19,18 +19,16 @@
 
 #include "XMLtoLocal.hh"
 
-XERCES_CPP_NAMESPACE_USE
-
 namespace enigma
 {
     XMLtoLocal::XMLtoLocal(const XMLCh* const toTranscode) {
         // Use XML for transcoding -- the returned string is owned by us
         // but managed by XMLString!
-        localString = XMLString::transcode(toTranscode);
+        localString = xercesc::XMLString::transcode(toTranscode);
     }
 
     XMLtoLocal::~XMLtoLocal() {
-        XMLString::release(&localString);
+        xercesc::XMLString::release(&localString);
     }
 
     const char* XMLtoLocal::c_str() const {

@@ -22,7 +22,9 @@
 
 #include <xercesc/dom/DOM.hpp>
 
-XERCES_CPP_NAMESPACE_USE
+using xercesc::DOMElement;
+using xercesc::DOMNode;
+using xercesc::DOMText;
 
 namespace enigma
 {
@@ -36,10 +38,8 @@ namespace enigma
     }
     
     void stripIgnorableWhitespace(DOMElement * elem) {
-        DOMNode * child = elem->getFirstChild();
         DOMNode * next;
-
-        for (child = elem->getFirstChild(); child != nullptr; child = next) {
+        for (DOMNode* child = elem->getFirstChild(); child != nullptr; child = next) {
             next = child->getNextSibling();
             if (child->getNodeType() == DOMNode::TEXT_NODE) {
                 if (dynamic_cast<DOMText *>(child)->isIgnorableWhitespace()) {

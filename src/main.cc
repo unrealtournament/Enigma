@@ -53,19 +53,15 @@
 #include "tinygettext/include/tinygettext/log.hpp"
 
 #include <cstdio>
-#include <cstdlib>
 #include <ctime>
 #include <fstream>
 #include <iostream>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/framework/XMLRecognizer.hpp>
-#include <xercesc/util/XMLString.hpp>
 #include <xercesc/util/XMLUniDefs.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
-#include <xercesc/util/XercesVersion.hpp>
 #include "SDL_main.h"
 #include <SDL_image.h>
-#include <SDL_mixer.h>
 #include <SDL_ttf.h>
 
 #ifdef MACOSX
@@ -76,17 +72,14 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
-using namespace std;
-using namespace ecl;
-using namespace enigma;
-XERCES_CPP_NAMESPACE_USE
-
 #ifdef WIN32
 // LoadImage is a Syscall on Windows, which gets defined to LoadImageA
 // or LoadImageW in winuser.h so we simply undefine it to use this
 // name for one of the methods
 #undef LoadImage
 #endif
+
+using std::string;
 
 namespace
 {
@@ -107,7 +100,6 @@ namespace enigma
     //! If true, do not ``grab'' the mouse and keyboard
     bool   Nograb            = false;
     bool Robinson = false;   // do not connect to internet if true
-}
 
 /*! The stream object that is used for logging messages.  As defined
   here, it is not connected to any file or buffer.
@@ -115,7 +107,7 @@ namespace enigma
   (Note: I think writing to a stream without a streambuffer *should*
   be a no-op, but it leads to crashes with g++ 2.95.  to circumvent
   this, Log is initialized with a dummy streambuf in init(). ) */
-std::ostream enigma::Log(0);
+std::ostream Log(nullptr);
 
 /*! This is the stream object that is used when logging to a file.  In
   this case, enigma::Log uses this object's streambuffer. */
@@ -157,26 +149,26 @@ namespace
         // Variables.
         bool nosound, nomusic, show_help, show_version, do_log, do_assert, force_window;
         bool dumpinfo, makepreview, measureperformance, show_fps, redirect;
-        string gamename;
-        string datapath;
-        string preffilename;
-        std::vector<string> levelnames;
+        std::string gamename;
+        std::string datapath;
+        std::string preffilename;
+        std::vector<std::string> levelnames;
+
+        // ArgParser interface.
+        void on_error (ErrorType t, const std::string &option) override {
+            std::cout << errormsg(t, option) << std::endl;
+            show_help = true;
+        }
+
+        void on_option (int id, const string &param) override;
+        void on_argument (const string &arg) override;
 
     private:
         enum {
             OPT_WINDOW, OPT_GAME, OPT_DATA, OPT_LANG, OPT_PREF, OPT_LOCALE
         };
-
-        // ArgParser interface.
-        void on_error (ErrorType t, const string &option) {
-            cout << errormsg(t, option) << endl;
-            show_help = true;
-        }
-
-        void on_option (int id, const string &param);
-        void on_argument (const string &arg);
     };
-}
+} // namespace
 
 AP::AP() : ArgParser (app.args.begin(), app.args.end())
 {
@@ -242,10 +234,9 @@ void AP::on_argument (const string &arg)
 
 /* -------------------- Application -------------------- */
 
-Application::Application() : wizard_mode (false), nograb (false), language (""),
-        defaultLanguage (""), argumentLanguage (""), errorInit (false),
-        isMakePreviews (false), isMeasurePerformance (false),
-        bossKeyPressed (false), l10nPath("") {
+Application::Application() : wizard_mode(false), nograb(false),
+        errorInit(false), isMakePreviews(false),
+        isMeasurePerformance(false), bossKeyPressed(false) {
 }
 
 void Application::init(int argc, char **argv)
@@ -260,7 +251,7 @@ void Application::init(int argc, char **argv)
     CFIndex cfmax = CFStringGetMaximumSizeOfFileSystemRepresentation(cffileStr);
     char localbuffer[cfmax];
     if (CFStringGetFileSystemRepresentation(cffileStr, localbuffer, cfmax)) {
-      progCallPath = localbuffer; // error skips this and defaults to argv[0] which works for most purposes
+      progCallPath = localbuffer; // error skips this and defaults to argv[0], which works for most purposes
     }
     CFRelease(cfurlmain);
     CFRelease(cffileStr);
@@ -310,8 +301,7 @@ void Application::init(int argc, char **argv)
     ap.redirect = true;
 #endif
     if (ap.redirect) {
-        FILE *newfp;
-        newfp = std::freopen((userStdPath + "/Output.log").c_str(), "w", stdout);
+        FILE* newfp = std::freopen((userStdPath + "/Output.log").c_str(), "w", stdout);
         if ( newfp == nullptr ) {  // This happens on NT
             newfp = fopen((userStdPath + "/Output.log").c_str(), "w");
             if (newfp) {  // in case stdout is a macro
@@ -332,9 +322,9 @@ void Application::init(int argc, char **argv)
 
     // initialize logfile -- needs ap
     if (ap.do_log)
-        enigma::Log.rdbuf(cout.rdbuf());
+        Log.rdbuf(std::cout.rdbuf());
     else
-        enigma::Log.rdbuf(::nullbuffer);
+        Log.rdbuf(::nullbuffer);
 
     // postponed system datapath logs
     Log << "Enigma " << getVersionInfo() << "\n";
@@ -408,8 +398,7 @@ void Application::init(int argc, char **argv)
     Log << ecl::strf("SDL Version: %u.%u.%u\n", sdl_version.major, sdl_version.minor,
                      sdl_version.patch);
 
-    const SDL_version *vi;
-    vi = TTF_Linked_Version();
+    const SDL_version* vi = TTF_Linked_Version();
     Log <<  ecl::strf("SDL_ttf Version: %u.%u.%u\n", vi->major, vi->minor, vi->patch);
     if(TTF_Init() == -1) {
         fprintf(stderr, "Couldn't initialize SDL_ttf: %s\n", TTF_GetError());
@@ -522,23 +511,23 @@ void Application::initSysDatapaths(const std::string &prefFilename)
 {
     std::string progDir;          // directory path part of args[0]
     std::string progName;         // filename part of args[0]
-    bool progDirExists = split_path(progCallPath, &progDir, &progName);
     std::string systemPath = SYSTEM_DATA_DIR; // substituted by configure.ac
-    bool haveHome = (getenv("HOME") != 0);
+    bool haveHome = (getenv("HOME") != nullptr);
 
 
 #ifdef __MINGW32__
-    // windows standard user specific application data directory path
+    // Locate standard user-specific application data directory
     std::string winAppDataPath = ecl::ApplicationDataPath() + "/Enigma";
 #endif
 
 #ifdef __MINGW32__
+    bool progDirExists = ecl::split_path(progCallPath, &progDir, &progName);
     if (!progDirExists) {
         // filename only -- working dir should be on enigma as enigma
-        // should never be located on exec path on windows
+        // should never be located on exec path on Windows
         systemAppDataPath = "./data";
     } else {
-        // a call from elsewhere -- absolute or relative path does not matter.
+        // a call from elsewhere -- the absolute or relative path does not matter.
         // this enables calls from a commandline.
         systemAppDataPath = progDir + "/data";
     }
@@ -548,8 +537,8 @@ void Application::initSysDatapaths(const std::string &prefFilename)
     // placed in those bundles under "Enigma.app/Contents/Resources",
     // the main executable would be "Enigma.app/Contents/MacOS/enigma".
     // Here, we get the executable name, clip off the last bit, chdir into it,
-    // then chdir to ../Resources. The original SDL implementation chdirs to
-    // "../../..", i.e. the directory the bundle is placed in. This breaks
+    // then chdir to "../Resources". The original SDL implementation chdirs to
+    // "../../..", i.e., the directory the bundle is placed in. This breaks
     // the self-containedness.
 
     systemAppDataPath = progDir + "/../Resources/data";
@@ -623,10 +612,11 @@ void Application::initSysDatapaths(const std::string &prefFilename)
 }
 
 void Application::initXerces() {
+    using namespace xercesc;
     // init XML
     try {
-        // Initialize to en_US - we don't know the user prefs yet
-        // If more than the error messages should be influenced we would
+        // Initialize to en_US - we don't know the user prefs yet.
+        // If more than the error messages should be influenced, we would
         // have to terminate and reinit after reading the user prefs.
         XMLPlatformUtils::Initialize();
 
@@ -650,7 +640,7 @@ void Application::initXerces() {
         domParserSchemaResolver = new DOMSchemaResolver();
         domSerErrorHandler = new DOMErrorReporter(&Log);
 
-        domParser = domImplementationLS->createLSParser(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+        domParser = domImplementationLS->createLSParser(DOMImplementationLS::MODE_SYNCHRONOUS, nullptr);
         DOMConfiguration *config = domParser->getDomConfig();
 
         config->setParameter(XMLUni::fgDOMNamespaces, true);
@@ -661,7 +651,7 @@ void Application::initXerces() {
         config->setParameter(XMLUni::fgDOMErrorHandler, domParserErrorHandler);
         config->setParameter(XMLUni::fgDOMResourceResolver, domParserSchemaResolver);
         //The following line fixes a crash where Xerces and Enigma both release
-        //the same document and it is deleted twice. Adopting documents
+        //the same document, which causes it to be deleted twice. Adopting documents
         //prevents Xerces from releasing them, as they will be released by
         //Enigma in the destructors anyway.
         config->setParameter(XMLUni::fgXercesUserAdoptsDOMDocument, true);
@@ -683,9 +673,9 @@ void Application::initUserDatapaths() {
     userPath = prefs->getString("UserPath");
     if (userPath.empty()) {
 #ifdef MACOSX
-        if (prefs->getInt("_MacUpdate1.00") != 1)
-	    userPath = userStdPathMac1_00;  // empty prefs user path is 1.00 std user path
-	else {
+        if (prefs->getInt("_MacUpdate1.00") != 1) {
+            userPath = userStdPathMac1_00; // empty prefs user path is 1.00 std user path
+        } else {
 	    // first installation of Enigma on a Mac
 	    userPath = userStdPath;  // use the new path
 	    prefs->setProperty("UserPath", std::string(XMLtoUtf8(LocalToXML(&userPath).x_str()).c_str()));
@@ -758,7 +748,7 @@ void Application::updateMac1_00() {
             prefs->setProperty("_MacUpdate1.00", 2);
         } else if (m.isLaterQuit()) {
             prefs->setProperty("_MacUpdate1.00", 0);
-        } else {  // OK move now
+        } else {  // OK, move now
             Log << "Mac update\n";
             // move
             std::system(ecl::strf("mkdir '%s' && cd ~/.enigma && tar -cf - * | (cd '%s' && tar -xf -) && cd ~ && rm -rf ~/.enigma", userStdPath.c_str(), userStdPath.c_str()).c_str());
@@ -781,9 +771,9 @@ void Application::createPreviews() {
                   systemAppDataPath.c_str());
     Log << message;
 
-    Screen *scr = video_engine->GetScreen();
-    GC gc(scr->get_surface());
-    Font *f = enigma::GetFont("menufont");
+    ecl::Screen *scr = video_engine->GetScreen();
+    ecl::GC gc(scr->get_surface());
+    ecl::Font *f = enigma::GetFont("menufont");
     f->render(gc, 80, 240, message);
     set_color(gc, 200, 200, 200);
 
@@ -814,12 +804,11 @@ void Application::createPreviews() {
 
 void Application::measurePerformance() {
     if (lev::Index::setCurrentIndex(INDEX_STARTUP_PACK_NAME)) {
-        std::clock_t c_start, c_end;
         while (!app.bossKeyPressed) {
             lev::Index::getCurrentIndex()->setCurrentPosition(0);
-            c_start = std::clock();
+            std::clock_t c_start = std::clock();
             game::StartGame();
-            c_end = std::clock();
+            std::clock_t c_end = std::clock();
             fprintf(stdout, "%.1f ms\n", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC);
         }
     } else {
@@ -831,10 +820,10 @@ void Application::init_i18n()
 {
     // Initialize the internationalization subsystem
 
-    // l10nPath, might already be defined by command line option
-    if (l10nPath == "") {
+    // l10nPath might already have been defined by a command line option
+    if (l10nPath.empty()) {
         app.prefs->getProperty("LocalizationPath", l10nPath);
-        if (l10nPath == "") {
+        if (l10nPath.empty()) {
             l10nPath = systemAppDataPath + ecl::PathSeparator + "locale";
 #ifdef __MINGW32__
             std::string progDir;          // directory path part of args[0]
@@ -853,12 +842,12 @@ void Application::init_i18n()
     // defaultLanguage: command-line --- system (environment)
     app.language = app.argumentLanguage;
     app.defaultLanguage = app.argumentLanguage;
-    if (app.language == "") {
+    if (app.language.empty()) {
         options::GetOption("Language", app.language);
     }
-    if (app.defaultLanguage == "") {
+    if (app.defaultLanguage.empty()) {
         app.defaultLanguage = ecl::SysMessageLocaleName();
-        if (app.language == "") {
+        if (app.language.empty()) {
             app.language = app.defaultLanguage;
         }
     }
@@ -875,13 +864,13 @@ void Application::init_i18n()
     nls::SetMessageLocale (app.language);
 }
 
-void Application::setLanguage(std::string newLanguage)
+void Application::setLanguage(const std::string& newLanguage)
 {
     language = newLanguage.empty() ? defaultLanguage : newLanguage;
     nls::SetMessageLocale(language);
 }
 
-void Application::setUserPath(std::string newPath) {
+void Application::setUserPath(const std::string& newPath) {
     std::string prefUserPath = (newPath == userStdPath) ? "" : newPath;
     if ((prefUserPath.empty() && userPath != userStdPath) || (!prefUserPath.empty() && prefUserPath != userPath)) {
         // set the new userPath - used for saves
@@ -894,7 +883,7 @@ void Application::setUserPath(std::string newPath) {
         // because the user could not yet copy his user data to the new location
         resourceFS->prepend_dir(userPath);
 
-        // set the new path as the users preference - the standard path is saved as ""
+        // set the new path as the user's preference - the standard path is saved as ""
 #ifdef MACOSX
         // 1.00 uses "" as "~/.enigma" - we have to store the complete path
         if (prefUserPath.empty()) prefUserPath = userStdPath;
@@ -903,8 +892,8 @@ void Application::setUserPath(std::string newPath) {
     }
 }
 
-void Application::setUserImagePath(std::string newPath) {
-    std::string prefUserImagePath = (newPath == userStdPath) ? "" : newPath;
+void Application::setUserImagePath(const std::string& newPath) {
+    std::string prefUserImagePath = newPath == userStdPath ? "" : newPath;
     if ((prefUserImagePath.empty() && userImagePath != userStdPath) || (!prefUserImagePath.empty() && prefUserImagePath != userImagePath)) {
         // set the new userImagePath - used for saves
         if (prefUserImagePath.empty())
@@ -917,7 +906,7 @@ void Application::setUserImagePath(std::string newPath) {
         if (userImagePath != userPath)
             resourceFS->prepend_dir(userImagePath);
 
-        // set the new path as the users preference - the standard path is saved as ""
+        // set the new path as the user's preference - the standard path is saved as ""
 #ifdef MACOSX
         // 1.00 uses "" as "~/.enigma" - we have to store the complete path
         if (prefUserImagePath.empty()) prefUserImagePath = userStdPath;
@@ -946,18 +935,18 @@ void Application::shutdown()
         app.prefs->shutdown();
         lev::Index::shutdown();
     }
-    // now we shutdown SDL - no error reports will be possible!
+    // now we shut down SDL - no error reports will be possible!
     app.errorInit = false;
     video_engine->Shutdown();
     sound::Shutdown();
     enet_deinitialize();
-    enigma::ShutdownCurl();
+    ShutdownCurl();
     lua::ShutdownGlobal();
     lev::PersistentIndex::shutdown();
     lev::Proxy::shutdown();
     ObjectValidator::instance()->shutdown();
     domParser->release();
-    XMLPlatformUtils::Terminate();
+    xercesc::XMLPlatformUtils::Terminate();
 #ifdef SDL_IMG_INIT
     IMG_Quit();
 #endif
@@ -967,39 +956,43 @@ void Application::shutdown()
     delete ::nullbuffer;
 }
 
+} // namespace enigma
+
+
 int main(int argc, char **argv)
 {
+    using enigma::app;
     try {
         app.init(argc,argv);
         if (!app.isMakePreviews && !app.isMeasurePerformance)
-            gui::ShowMainMenu();
+            enigma::gui::ShowMainMenu();
         app.shutdown();
         return 0;
     }
-    catch (XFrontend &e) {
-        cerr << "Error: " << e.what() << endl;
+    catch (enigma::XFrontend &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
         std::string message = _("Fatal error that caused the application to quit:\n\n");
         if (app.errorInit) {
-            gui::ErrorMenu m(message + e.what(), N_("Quit"));
+            enigma::gui::ErrorMenu m(message + e.what(), N_("Quit"));
             m.manage();
         }
     }
-    catch (XSDLError &e) {
-        cerr << "Error: " << e.what() << endl;
+    catch (ecl::XSDLError &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
         std::string message = _("Fatal error that caused the application to quit:\n\n");
         if (app.errorInit) {
-            gui::ErrorMenu m(message + e.what(), N_("Quit"));
+            enigma::gui::ErrorMenu m(message + e.what(), N_("Quit"));
             m.manage();
         }
     }
     catch (ecl::XGeneric &e) {
-        cerr << "Error: " << e.what() << endl;
+        std::cerr << "Error: " << e.what() << std::endl;
     }
     catch (std::exception &e) {
-        cerr << "Error: " << e.what() << endl;
+        std::cerr << "Error: " << e.what() << std::endl;
     }
     catch (...) {
-        cerr << "Uncaught exception...\n";
+        std::cerr << "Uncaught exception...\n";
     }
     return 1;
 }

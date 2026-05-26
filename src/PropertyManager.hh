@@ -30,7 +30,7 @@ namespace enigma
      */
     class PropertyManager {
     public:
-        ~PropertyManager();
+        virtual ~PropertyManager();
         virtual bool save() = 0;    // mark the class as abstract
         
         void setProperty(const char *prefName, const std::string &value);
@@ -74,7 +74,7 @@ namespace enigma
          *                element found in the preference list (for append usage).
          * @return validity of element.
          */
-        bool hasProperty(const XMLCh * key, xercesc::DOMElement ** element);
+        bool hasProperty(const XMLCh * key, xercesc::DOMElement ** element) const;
     };
 } // namespace enigma
 #endif

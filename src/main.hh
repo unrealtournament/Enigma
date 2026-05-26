@@ -34,14 +34,11 @@
 #include "video.hh"
 #include <string>
 #include <vector>
-#include <memory>
-#include <xercesc/dom/DOMImplementation.hpp>
 #include <xercesc/dom/DOMImplementationLS.hpp>
 #include <xercesc/dom/DOMLSParser.hpp>
 #include <xercesc/util/TransService.hpp>
 
-namespace enigma
-{
+namespace enigma {
 /* -------------------- Application services -------------------- */
 
     class ImageManager;         // in resources.hh
@@ -49,13 +46,13 @@ namespace enigma
 
     /**
      * Main object for initialization and resource access.  Even though this
-     * class is a Highlander, it is not implemented as a singleton. Instead a 
+     * class is a Highlander, it is not implemented as a singleton. Instead, a
      * global variable "Application app" is provided for fast access to the 
      * unique instance. All major resources are directly accessible via public
-     * ivars. They should be read only. We do without set/get-methods to gain
+     * ivars. They should be read-only. We do without set/get-methods to gain
      * simple and fast access.
      * <p>The Application provides a set of path and pathlist (<code>GameFs</code>)
-     * ivars. They are initialized OS and installation dependent. For consistency
+     * ivars. They are initialized OS and installation-dependent. For consistency
      * every file access to a relative path should be resolved via the appropriate
      * path ivars. All paths are provided in local code pages.</p>
      */
@@ -67,26 +64,26 @@ namespace enigma
         void shutdown();
         std::string getVersionInfo();
         double getEnigmaVersion();
-        void setLanguage(std::string newLanguage);
+        void setLanguage(const std::string& newLanguage);
         /**
-         * Define a new user path. Files stored to user path use the new path
-         * at once and the path is added to the resource path for file lookups.
-         * But existing files on the previous user path are not copied or moved
+         * Define a new user path. The path is added to the resource path for file lookups,
+         * and it is used for newly created files.
+         * However, existing files on the previous user path are not copied or moved
          * to the new location! This remains a manual task for the user. The new
          * user path is added to the preferences.
          * @param newPath local encoded new user path or empty string for default
          */
-        void setUserPath(std::string newPath);
+        void setUserPath(const std::string& newPath);
         
         /**
-         * Define a new user image path. Images are stored to new path
-         * at once and the path is added to the resource path for images lookups.
-         * But existing images on the previous user images path are not copied or moved
+         * Define a new user image path. The path is added to the resource path for file lookups,
+         * and it is used for newly created images.
+         * However, existing images on the previous user images path are not copied or moved
          * to the new location! This remains a manual task for the user. The new
          * user images path is added to the preferences.
          * @param newPath local encoded new path or empty string for default
          */
-        void setUserImagePath(std::string newPath);
+        void setUserImagePath(const std::string& newPath);
 
         //---------- Variables ----------//
 
@@ -124,10 +121,10 @@ namespace enigma
         GameFS *l10nFS;
         
         /**
-         * the path to the user preferences file. The directory is OS dependent
-         * with priority of the "HOME" environment. The filename itself is
-         * standard, but can be overriden by command line option (main usage for
-         * developers to start enigma in test configuration).
+         * The path to the user preferences file. The directory is OS-dependent
+         * but usually somewhere in the user's "HOME" environment. The filename itself is
+         * fixed but can be overridden with a command line option (this is mainly useful for
+         * developers who wish to start Enigma in a test configuration).
          */
         std::string prefPath;
         
@@ -142,42 +139,41 @@ namespace enigma
         std::string l10nPath;
         
         /**
-         * the path to user data. The base directory for files like score, user
-         * levelindices, levels, etc.. The directory is OS dependent
-         * with priority of the "HOME" environment, but can be overriden by a
-         * user preference. This allows a user to store his data on USB sticks
+         * The path to user data. The base directory for files like score, user
+         * level indices, levels, etc. The directory is OS-dependent
+         * but usually somewhere in the user's "HOME" environment; it can be overridden with a
+         * user preference. This allows a user to store their data on USB sticks
          * and shared partitions.
          */
         std::string userPath;
         
         /**
-         * the path for large image data. Files like thumbs and screenshots
-         * that the user may not want to be stored on the userPath. The main
-         * reason for this separation of user data should be limited space on
-         * userPath. The userImagePath defaults to userPath, but can be overriden
-         * by a user preference.
+         * The path for large image data. Files like thumbnails and screenshots
+         * that the user may not want to be stored on the userPath, for example
+         * because there is limited space on userPath. The userImagePath defaults
+         * to userPath, but can be overriden with a user preference.
          */
         std::string userImagePath;
-        
+
         /**
-         * the singleton instance of our preference manager.
+         * The singleton instance of our preference manager.
          */
-        PreferenceManager * prefs;
-        
+        PreferenceManager* prefs;
+
         /**
-         * the singleton instance of our state manager.
+         * The singleton instance of our state manager.
          */
-        StateManager * state;
-        
+        StateManager* state;
+
         /**
          * A xerces transcoder for utf-8.
          */
-        xercesc::XMLTranscoder   *xmlUtf8Transcoder;
+        xercesc::XMLTranscoder* xmlUtf8Transcoder;
         
         /**
          * The implementation of DOM Core.
          */
-        xercesc::DOMImplementation   *domImplementationCore;
+        xercesc::DOMImplementation* domImplementationCore;
 
         /**
          * The implementation of DOM Load and Save.
@@ -225,7 +221,7 @@ namespace enigma
         void measurePerformance();
 
         double enigmaVersion;
-        std::string systemAppDataPath;    // dir path to the apps data
+        std::string systemAppDataPath;    // dir path to the app's data
         std::string systemCmdDataPath;    // commandline override of systemAppDataPath
         std::string userStdPath;          // standard user data path
         std::string userStdPathMac1_00;   // standard user data path as of Mac 1.00
@@ -239,9 +235,8 @@ namespace enigma
     extern std::ostream Log;
     
     /**
-     * Flag to use in expensive asserts as first operand in a logical or
-     * statement to allow the assertion to be blocked in favour of speed.
-     * F.e. <code>ASSERT(noAssert || long_lasting_check(), XLevelRuntime, "");</code>
+     * A flag that can be used to prevent the evaluation of expensive asserts.
+     * E.g., <code>ASSERT(noAssert || long_lasting_check(), XLevelRuntime, "");</code>
      */
     extern bool noAssert;
 
@@ -249,6 +244,6 @@ namespace enigma
     extern bool   WizardMode;
     extern bool   Nograb;
     extern bool   Robinson;
-}
+} // namespace enigma
 
 #endif

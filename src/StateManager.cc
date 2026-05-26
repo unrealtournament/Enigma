@@ -41,9 +41,7 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XercesVersion.hpp>
 
-using namespace std;
-using namespace enigma;
-XERCES_CPP_NAMESPACE_USE 
+using namespace xercesc;
 
 namespace enigma {
     StateManager *StateManager::theSingleton = 0;
@@ -164,7 +162,7 @@ namespace enigma {
                     std::rename((pathBackup + "~2").c_str(), (pathBackup + "~1").c_str());
                 }
             }
-            cerr << XMLtoLocal(Utf8ToXML(errMessage.c_str()).x_str()).c_str();
+            std::cerr << XMLtoLocal(Utf8ToXML(errMessage.c_str()).x_str()).c_str();
             gui::ErrorMenu m(errMessage, N_("Continue"));
             m.manage();          
         } else

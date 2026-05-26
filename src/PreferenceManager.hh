@@ -24,13 +24,13 @@
 namespace enigma
 {
     /**
-     * A singelton manager for preferences stored in XML format. 
-     * <p>The singleton can be accessed via standard static instance() method or
+     * A singleton manager for preferences stored in XML format.
+     * <p>The singleton can be accessed via the standard instance() method or
      * the application public ivar <code>app.prefs</code>.</p>
-     * <p> During initialization old LUA stored options are convereted. New 
+     * <p> During initialization old LUA stored options are converted. New
      * preferences with given default values are introduced to the user via the 
-     * template in the systen data directory (data/enigmarc.xml).</p>
-     * <p>The storage location of the users preferences is determined by the
+     * template in the system data directory (data/enigmarc.xml).</p>
+     * <p>The storage location of the user's preferences is determined by the
      * Application object.</p>
      * <p>The set and get methods for preferences take utf8 encoded preference
      * names and operate with utf8 encoded string values. Set methods create new
@@ -41,8 +41,8 @@ namespace enigma
     class PreferenceManager : public PropertyManager {
     public:
         static PreferenceManager *instance();
-        ~PreferenceManager();
-        virtual bool save() override;
+        ~PreferenceManager() override;
+        bool save() override;
         void shutdown();
         
     protected:

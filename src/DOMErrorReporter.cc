@@ -18,15 +18,14 @@
  */
 
 #include "DOMErrorReporter.hh"
-#include "main.hh"
 #include "XMLtoLocal.hh"
 #include <iostream>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/util/XercesDefs.hpp>
 
-
-XERCES_CPP_NAMESPACE_USE
+using xercesc::DOMError;
+using xercesc::XMLString;
 
 namespace enigma
 {
