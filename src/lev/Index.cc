@@ -31,7 +31,7 @@
 // interfere with the random algorithms used in the game.
 #include <random>
 
-namespace enigma { namespace lev {
+namespace enigma::lev {
 
     std::map<std::string, Index *> Index::indices;
     std::map<std::string, std::vector<Index *> *> Index::indexGroups;
@@ -43,16 +43,16 @@ namespace enigma { namespace lev {
     void Index::initGroups() {
         ASSERT(indexGroups.empty(), XFrontend, "Reinitialization of groups");
         std::vector<std::string> groupNames = getGroupNames();
-        for (int i = 0; i < groupNames.size(); i++) {
+        for (std::string& groupName : groupNames) {
             std::vector<Index *> *group = new std::vector<Index *>;
-            indexGroups.insert(std::make_pair(groupNames[i], group));
+            indexGroups.insert(std::make_pair(groupName, group));
         }
         currentGroup = app.state->getString("CurrentGroup");
     }
-    void Index::shutdown()
-    {
-        for (auto it = indexGroups.begin();it != indexGroups.end(); ++it) {
-            delete it->second;
+
+    void Index::shutdown() {
+        for (auto& [groupName, group] : indexGroups) {
+            delete group;
         }
     }
 
@@ -68,7 +68,7 @@ namespace enigma { namespace lev {
 
 
         // register index in state.xml and update current position, first with last values
-        std::string groupName = "";
+        std::string groupName;
         double stateLocation = 0;
         app.state->addIndex(anIndex->getName(), groupName, stateLocation,
                 anIndex->currentPosition, anIndex->screenFirstPosition);
@@ -94,9 +94,8 @@ namespace enigma { namespace lev {
 
         // make new group if not existing
         if (groupName != INDEX_EVERY_GROUP) {
-            std::map<std::string, std::vector<Index *> *>::iterator i = indexGroups.find(groupName);
-            if (i != indexGroups.end()) {
-                group = i->second;
+            if (auto it = indexGroups.find(groupName); it != indexGroups.end()) {
+                group = it->second;
             } else {
                 // make the group
                 group = new std::vector<Index *>;
@@ -110,9 +109,10 @@ namespace enigma { namespace lev {
                 }
 
                 // fill group with indices that appear in every group
-                for (auto iti = indices.begin(); iti != indices.end(); ++iti)
-                    if (iti->second->getGroupName() == INDEX_EVERY_GROUP)
-                        addIndexToGroup(iti->second, group);
+                for (auto & indice : indices) {
+                    if (indice.second->getGroupName() == INDEX_EVERY_GROUP)
+                        addIndexToGroup(indice.second, group);
+                }
             }
         }
 
@@ -122,10 +122,9 @@ namespace enigma { namespace lev {
             addIndexToGroup(anIndex, getGroup(INDEX_ALL_PACKS));
         } else {
             // add index to all groups inclusive INDEX_ALL_PACKS
-            for (auto itg = indexGroups.begin(); itg != indexGroups.end(); ++itg)
-                addIndexToGroup(anIndex, itg->second);
+            for (auto& indexGroup : indexGroups)
+                addIndexToGroup(anIndex, indexGroup.second);
         }
-        return;
     }
 
     void Index::addIndexToGroup(Index *anIndex, std::vector<Index *> * aGroup) {
@@ -147,17 +146,16 @@ namespace enigma { namespace lev {
     }
 
     Index * Index::findIndex(const std::string& anIndexName) {
-        std::string::size_type lastChar = anIndexName.find_last_not_of(" ");
+        std::string::size_type lastChar = anIndexName.find_last_not_of(' ');
         if (lastChar == std::string::npos)
             // the name is effectively an empty string
             return nullptr;
 
         // stip of trailing and leading spaces
         std::string name = anIndexName.substr(0 , lastChar + 1);
-        name = name.substr(anIndexName.find_first_not_of(" "));
+        name = name.substr(anIndexName.find_first_not_of(' '));
 
-        std::map<std::string, Index *>::iterator i = indices.find(name);
-        if (i != indices.end())
+        if (auto i = indices.find(name); i != indices.end())
             return i->second;
         else
             return nullptr;
@@ -192,7 +190,7 @@ namespace enigma { namespace lev {
             // the group's current index is no longer available or did change the
             // group -- reset the group's current index
             std::vector<Index *> * group  = getGroup(groupName);
-            if (group->size() > 0) {
+            if (!group->empty()) {
                 setCurrentIndex((*group)[0]->getName());
             } else {
                 // the group is empty -- delete group current index entry and
@@ -240,7 +238,7 @@ namespace enigma { namespace lev {
         app.state->insertGroup(newPos, groupName, indexName, column);
     }
 
-    void Index::renameGroup(const std::string& oldName, std::string newName) {
+    void Index::renameGroup(const std::string& oldName, const std::string& newName) {
         // rename state group element
         app.state->renameGroup(oldName, newName);
 
@@ -250,11 +248,11 @@ namespace enigma { namespace lev {
         indexGroups.insert(std::make_pair(newName, group));
 
         // rename group name in indices
-        for (int i = 0; i < group->size(); i++) {
-            if ((*group)[i]->getGroupName() == oldName) {
-                (*group)[i]->indexGroup = newName;
+        for (auto & index : *group) {
+            if (index->getGroupName() == oldName) {
+                index->indexGroup = newName;
                 // set group as user's choice for index in state
-                app.state->setIndexGroup((*group)[i]->getName(), newName);
+                app.state->setIndexGroup(index->getName(), newName);
             }
         }
 
@@ -265,7 +263,7 @@ namespace enigma { namespace lev {
         }
     }
 
-    void Index::insertGroup(std::string groupName, int newPos) {
+    void Index::insertGroup(const std::string& groupName, int newPos) {
         // make the group
         std::vector<Index *> *group = new std::vector<Index *>;
         indexGroups.insert(std::make_pair(groupName, group));
@@ -281,10 +279,10 @@ namespace enigma { namespace lev {
 
     void Index::deleteEmptyGroups() {
         std::vector<std::string> emptyGroupNames;
-        for(auto const& pair : indexGroups)
-            if((pair.second)->size() == 0)
-                emptyGroupNames.push_back(pair.first);
-        for(auto &group : emptyGroupNames)
+        for (const auto& [name, group] : indexGroups)
+            if (group->empty())
+                emptyGroupNames.push_back(name);
+        for (auto &group : emptyGroupNames)
             deleteGroup(group);
     }
 
@@ -416,7 +414,7 @@ namespace enigma { namespace lev {
           indexDefaultLocation(defaultLocation), currentPosition(0), screenFirstPosition(0) {
     }
 
-    Index::~Index() {}
+    Index::~Index() = default;
 
     std::string Index::getName() {
         return indexName;
@@ -754,4 +752,4 @@ namespace enigma { namespace lev {
         return false;
     }
 
-}} // namespace enigma::lev
+} // namespace enigma::lev

@@ -25,8 +25,6 @@
 
 #include "ecl_util.hh"
 
-#include <algorithm>
-
 namespace enigma {
 
 // remove comment from define below to switch on verbose messaging
@@ -68,8 +66,7 @@ void Object::freeId(int id) {
 }
 
 Object *Object::getObject(int id) {
-    std::map<int, Object *>::iterator it = objects.find(id);
-    if (it == objects.end())
+    if (auto it = objects.find(id); it == objects.end())
         return nullptr;
     else
         return it->second;
@@ -106,7 +103,7 @@ bool Object::isKind(const std::string &kind) const {
     return ObjectValidator::instance()->isKind(this, kind);
 }
 
-bool Object::validateMessage(std::string msg, Value arg) {
+bool Object::validateMessage(const std::string& msg, const Value& arg) {
     return ObjectValidator::instance()->validateMessage(this, msg, arg);
 }
 
@@ -127,16 +124,16 @@ Value Object::message(const Message &m) {
         }
     } else if (m.message == "disconnect") {
         bool wasConnected = false;
-        ObjectList olist = getAttr("rubbers").toObjectList();  // a private deletion resistant copy
-        for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it)
-            KillOther(dynamic_cast<Other *>(*it));
+        ObjectList olist = getAttr("rubbers").toObjectList();  // a private deletion-resistant copy
+        for (auto& obj : olist)
+            KillOther(dynamic_cast<Other *>(obj));
         if (!olist.empty()) {
             wasConnected = true;
             setAttr("rubber", Value());  // delete attribute
         }
-        olist = getAttr("wires").toObjectList();  // a private deletion resistant copy
-        for (ObjectList::iterator it = olist.begin(); it != olist.end(); ++it)
-            KillOther(dynamic_cast<Other *>(*it));
+        olist = getAttr("wires").toObjectList();  // a private deletion-resistant copy
+        for (auto& obj : olist)
+            KillOther(dynamic_cast<Other *>(obj));
         if (!olist.empty()) {
             wasConnected = true;
             setAttr("wires", Value());  // delete attribute
@@ -324,12 +321,12 @@ void Object::performAction(const Value &val) {
             if ((action == "callback" || action.empty()) && (tit->getType() == Value::STRING)) {
                 // it is an existing callback function
                 if (secure) {
-                    PerformSecureAction(this->getId(), true, !action.empty(), tit->get_string(),
+                    PerformSecureAction(this->getId(), true, !action.empty(), tit->getString(),
                                         messageValue);
                 } else {
-                    if (lua::CallFunc(lua::LevelState(), tit->get_string(), messageValue, this,
+                    if (lua::CallFunc(lua::LevelState(), tit->getString(), messageValue, this,
                                       !action.empty()) != lua::NO_LUAERROR) {
-                        throw XLevelRuntime(std::string("callback '") + tit->get_string() +
+                        throw XLevelRuntime(std::string("callback '") + tit->getString() +
                                             "' failed:\n" + lua::LastError(lua::LevelState()));
                     }
                 }

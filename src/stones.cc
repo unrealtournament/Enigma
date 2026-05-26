@@ -17,13 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "errors.hh"
 #include "stones_internal.hh"
-#include "server.hh"
-#include "client.hh"
-#include "player.hh"
+
+#include "errors.hh"
 #include "Inventory.hh"
 #include "main.hh"
+#include "player.hh"
+#include "server.hh"
 
 using namespace std;
 
@@ -33,13 +33,13 @@ namespace enigma {
 
 void Stone::on_creation(GridPos p) {
     // notify rubberbands that may now exceed max/min limits
-    ObjectList olist = getAttr("rubbers").toObjectList();  // a private deletion resistant copy
+    ObjectList olist = getAttr("rubbers").toObjectList();  // a private deletion-resistant copy
     for (auto &elem : olist)
         SendMessage(elem, "_recheck");
     GridObject::on_creation(p);
 }
 
-void Stone::transform(std::string kind) {
+void Stone::transform(const std::string& kind) {
     Stone *newStone = MakeStone(kind.c_str());
     transferIdentity(newStone);  // subclasses may hook this call
     ObjectList olist = getAttr("rubbers").toObjectList();
@@ -72,8 +72,7 @@ Stone::Stone() : freeze_check_running(false) {
 Stone::Stone(const char *kind) : GridObject(kind), freeze_check_running(false) {
 }
 
-Stone::~Stone() {
-}
+Stone::~Stone() = default;
 
 const StoneTraits &Stone::get_traits() const {
     static StoneTraits default_traits = {"INVALID", st_INVALID, stf_none, material_stone, 1.0,
@@ -125,7 +124,7 @@ const char *Stone::collision_sound() {
     return "stone";
 }
 
-/* Move a stone (regardless whether it is_movable() or not) if
+/* Move a stone (regardless of whether it is_movable() or not) if
    the destination field is free.
    Returns: true if stone has been moved.
 
@@ -196,7 +195,7 @@ void Stone::autoJoinCluster() {
                     setAttr("$connections",
                             getConnections() & (ALL_DIRECTIONS ^ to_bits(d)));  // clear connection
                 }
-            } else if (neighbourCluster) {  // I have fixed connections -> adapt neighbour
+            } else if (neighbourCluster) {  // I have fixed connections -> adapt neighbor
                 if (getConnections() & to_bits(d))
                     neighbour->setAttr("$connections",
                                        neighbour->getConnections() | to_bits(reverse(d)));
@@ -204,7 +203,7 @@ void Stone::autoJoinCluster() {
                     neighbour->setAttr("$connections", neighbour->getConnections() &
                                                            (ALL_DIRECTIONS ^ to_bits(reverse(d))));
             }
-        } else if (myCluster) {  // no neighbour -> no connection
+        } else if (myCluster) {  // no neighbor -> no connection
             setAttr("$connections",
                     getConnections() & (ALL_DIRECTIONS ^ to_bits(d)));  // clear connection
         }
@@ -276,7 +275,7 @@ bool Stone::freeze_check() {
     //
     // Second block: $$  Each of the "$" can be movable or persistent.
     //               $$  Centered at one of them, there are again four
-    //                   different orientation.
+    //                   different orientations.
     //
     // Third block: #$   This pattern has eight orientations: Fix one of
     //               $#  the boxes. The adjacent persistent stone has four

@@ -26,7 +26,7 @@ namespace enigma {
 /* Interface for time event handlers. */
 class TimeHandler {
 public:
-    virtual ~TimeHandler() {}
+    virtual ~TimeHandler() = default;
     virtual void tick(double /*dtime*/) {}
     virtual void distinguished_alarm(int alarmnr) {}
     virtual void alarm() {}
@@ -36,10 +36,10 @@ public:
  * This class maintains a list of time handlers that are either
  * invoked at every tick or after a specified amount of time.  If
  * the TimeHandler is registered using #activate, it is invoked at
- * every tick, the #set_alarm method can be used to register a
+ * every tick. The #set_alarm method can be used to register a
  * time handler that is invoked (either once or repeatedly) after
  * a specified time interval. Each TimeHandler may request several
- * timers by choosing different alarmnr. This will be returned
+ * timers by choosing a different alarmnr. This will be returned
  * via the TimeHandlers #alarm method.
  */
 class Timer : public ecl::Nocopy {

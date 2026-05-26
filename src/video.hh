@@ -21,10 +21,11 @@
 
 // This file contains code for managing the current window.
 
-#include <memory>
-#include "SDL.h"
 #include "ecl_geom.hh"
 #include "ecl_video.hh"
+#include "SDL.h"
+
+#include <memory>
 
 namespace enigma {
 
@@ -53,11 +54,10 @@ struct WindowSize {
     int width;
     int height;
 
-    bool operator==(const WindowSize &other) {
-        return width == other.width &&
-            height == other.height;
+    bool operator==(const WindowSize &other) const {
+        return width == other.width && height == other.height;
     }
-    bool operator!=(const WindowSize &other) {
+    bool operator!=(const WindowSize &other) const {
         return !(*this == other);
     }
 };
@@ -131,11 +131,9 @@ struct VMInfo {
 
 class VideoEngine {
 public:
-    ~VideoEngine() = default;
-
+    virtual ~VideoEngine() = default;
 
     virtual void Init() = 0;
-    virtual void Shutdown() = 0;
 
     // ---------- Main window ----------
     virtual ecl::Screen *GetScreen() = 0;
@@ -164,7 +162,7 @@ public:
     virtual const VMInfo *GetInfo() = 0;
     virtual const VMInfo *GetInfo(FullscreenMode mode) = 0;
     virtual VideoTileset *GetTileset() = 0;
-    virtual const VideoTilesetId GetTilesetId() = 0;
+    virtual VideoTilesetId GetTilesetId() = 0;
 
     /*! Identify fullscreen modes by window size or other properties. */
     virtual FullscreenMode FindFullscreenMode(const WindowSize &display_mode) = 0;
@@ -196,11 +194,15 @@ public:
     virtual bool SetInputGrab(bool enabled) = 0;
 };
 
-extern VideoEngine *video_engine;
+// ---------- Global variables ----------
+
+extern std::unique_ptr<VideoEngine> video_engine;
+
+// ---------- ScopedInputGrab ----------
 
 class ScopedInputGrab {
 public:
-    ScopedInputGrab(bool grab_input) {
+    explicit ScopedInputGrab(bool grab_input) {
         old_status = video_engine->SetInputGrab(grab_input);
     }
 
@@ -212,12 +214,14 @@ private:
     bool old_status;
 };
 
+// ---------- Video API ----------
 
 void VideoInit();
+void VideoShutdown();
 void ShowLoadingScreen(const char *text, int progress);
 
 VideoTileset* VideoTilesetById(VideoTilesetId id);
-VideoTileset* VideoTilesetByName(std::string name);
+VideoTileset* VideoTilesetByName(const std::string& name);
 VideoTileset* StandardTileset(VideoTileType tt);
 std::string VideoTilesetPrefName(VideoTilesetId id);
 

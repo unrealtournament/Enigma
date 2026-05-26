@@ -36,25 +36,25 @@ class ModelLayer;
 // callback from inside the callback; use a timer or a flag to do this.
 class ModelCallback {
 public:
-    virtual ~ModelCallback() {}
+    virtual ~ModelCallback() = default;
     virtual void animcb() = 0;
 };
 
 class Model {
 public:
-    virtual ~Model() {}
+    virtual ~Model() = default;
     virtual void set_callback(ModelCallback *) {}
     virtual void reverse() {}
     virtual void restart() {}
 
-    virtual bool hasFinished() const { return false; }
+    [[nodiscard]] virtual bool hasFinished() const { return false; }
     virtual void tick(double /*dtime*/) {}
     virtual bool has_changed(ecl::Rect & /*changed_region*/) { return false; }
 
     virtual void draw(ecl::GC & /*gc*/, int /*x*/, int /*y*/) {}
     virtual void draw_shadow(ecl::GC & /*gc*/, int /*x*/, int /*y*/) {}
 
-    virtual Model *get_shadow() const { return nullptr; }
+    [[nodiscard]] virtual Model *get_shadow() const { return nullptr; }
 
     virtual void expose(ModelLayer * /*ml*/, int /*videox*/, int /*videoy*/) {}
     virtual void remove(ModelLayer * /*ml*/) {}
@@ -138,7 +138,7 @@ public:
     void kill();
     void move(const ecl::V2 &newpos) const;
     void replace_model(std::unique_ptr<Model> m) const;
-    Model *get_model() const;
+    [[nodiscard]] Model *get_model() const;
     void set_callback(ModelCallback *cb) const;
     void hide() const;
     void show() const;
@@ -158,8 +158,8 @@ class DL_Lines;
 
 class RubberHandle {
 public:
-    RubberHandle(DL_Lines *layer = nullptr, unsigned id = 0);
-    operator unsigned() { return id; }
+    explicit RubberHandle(DL_Lines *layer = nullptr, unsigned id = 0);
+    explicit operator unsigned() const { return id; }
 
     void update_first(const ecl::V2 &p1);
     void update_second(const ecl::V2 &p2);
@@ -170,18 +170,18 @@ public:
 };
 
 // Adds a rubber band between points p1 and p2.
-RubberHandle AddRubber(const ecl::V2 &p1, const ecl::V2 &p2, unsigned short rc, unsigned short gc,
-                       unsigned short bc, bool isThick);
+RubberHandle AddRubber(const ecl::V2 &p1, const ecl::V2 &p2, unsigned short red, unsigned short green,
+                       unsigned short blue, bool isThick);
 
 /* -------------------- Status bar -------------------- */
 
 class StatusBar {
 public:
-    virtual ~StatusBar() {}
+    virtual ~StatusBar() = default;
     virtual void set_inventory(enigma::Player activePlayer,
                                const std::vector<std::string> &modelnames) = 0;
 
-    virtual void show_text(const std::string &str, bool scrolling, double duration = -1) = 0;
+    virtual void show_text(const std::string &str, bool scrolling, double duration) = 0;
     virtual void hide_text() = 0;
 
     virtual void show_move_counter(bool active) = 0;

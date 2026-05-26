@@ -18,23 +18,20 @@
  */
 #include "server.hh"
 
-#include "errors.hh"
-#include "game.hh"
 #include "actors.hh"
 #include "client.hh"
-#include "lua.hh"
+#include "enet/enet.h"
+#include "errors.hh"
+#include "game.hh"
 #include "lev/Index.hh"
 #include "lev/Proxy.hh"
+#include "lua.hh"
 #include "main.hh"
+#include "MusicManager.hh"
 #include "nls.hh"
-#include "options.hh"
-#include "player.hh"
 #include "player.hh"
 #include "StateManager.hh"
 #include "world.hh"
-#include "MusicManager.hh"
-
-#include "enet/enet.h"
 
 #ifdef WIN32
 // SendMessage is a Syscall on Windows, so we simply undefine it to use this
@@ -42,12 +39,7 @@
 #undef SendMessage
 #endif
 
-#include <cctype>
-
-using namespace std;
-
-namespace enigma {
-namespace server {
+namespace enigma::server {
 
 enum ServerState {
     sv_idle,
@@ -144,13 +136,13 @@ int currentLevel;
 lev::Index *previousIndex = nullptr;
 int previousLevel;
 ENetAddress network_address;
-ENetHost *network_host = 0;
+ENetHost *network_host = nullptr;
 
 }  // namespace
 
 void load_level(lev::Proxy *levelProxy, bool isRestart) {
     try {
-        Uint32 start_tick_time = SDL_GetTicks();  // meassure time for level loading
+        Uint32 start_tick_time = SDL_GetTicks();  // measure time for level loading
         if (!CreatingPreview)
             sound::StartLevelLoadMusic();
 
@@ -229,7 +221,7 @@ void Init() {
 
 void Shutdown() {
     lua::ShutdownLevel();
-    if (network_host != 0)
+    if (network_host != nullptr)
         enet_host_destroy(network_host);
 }
 
@@ -264,7 +256,7 @@ void PrepareLevel() {
     AutoRespawn = false;
     FollowAction = GridPos(19, 12);  // inner space of a room
     FollowGrid = true;
-    FollowMethod = display::FOLLOW_FLIP;  // FLIP
+    FollowMethod = display::FOLLOW_FLIP;
     FollowThreshold = 0.5;
     ShowMoves = false;
 
@@ -295,7 +287,7 @@ void PrepareLevel() {
 
     move_counter = 0;
 
-    enigma::WorldPrepareLevel();
+    WorldPrepareLevel();
     WorldSized = false;
 
     player::PrepareLevel();
@@ -425,15 +417,15 @@ void Msg_StartGame() {
     }
 }
 
-void Msg_Command_jumpto(const string &dest) {
+void Msg_Command_jumpto(const std::string &dest) {
     // global level jump
-    // e.g.:  dest = "Enigma IV,33" -> jump to level #33 of index "Enigma IV"
+    // e.g.: dest = "Enigma IV,33" -> jump to level #33 of index "Enigma IV"
     // note: level counter start at 1 (not at 0)
 
     size_t comma = dest.find_first_of(',');
-    string error;
+    std::string error;
 
-    if (comma != string::npos) {
+    if (comma != std::string::npos) {
         std::string name = dest.substr(0, comma);
         Log << "Jumpto '" << name << "'\n";
         int ilevel = atoi(dest.c_str() + comma + 1) - 1;
@@ -448,7 +440,7 @@ void Msg_Command_jumpto(const string &dest) {
             } else {
                 error = ecl::strf("Illegal level %i (1-%i)", ilevel + 1,
                                   lev::Index::getCurrentIndex()->size());
-                // May be we want to reset the current index ?
+                // TODO: Maybe we want to reset the current index?
             }
         } else
             error = ecl::strf("Illegal level pack %s", name.c_str());
@@ -464,7 +456,7 @@ void Msg_Command_jumpto(const string &dest) {
         client::Msg_ShowText(error, false, 2);
 }
 
-void Msg_Command_find(const string &text) {
+void Msg_Command_find(const std::string &text) {
     std::string indName = lev::Proxy::search_shallow(text);
     if (!indName.empty()) {
         lev::Index::setCurrentIndex(indName);
@@ -479,11 +471,11 @@ void Msg_Command_find(const string &text) {
             Msg_Command("abort");
         }
     } else {
-        client::Msg_ShowText(string("Couldn't find '") + text + '\'', false, 2);
+        client::Msg_ShowText(std::string("Couldn't find '") + text + '\'', false, 2);
     }
 }
 
-void Msg_Command(const string &cmd) {
+void Msg_Command(const std::string &cmd) {
     lev::Index *ind = lev::Index::getCurrentIndex();
     lev::Proxy *curProxy = ind->getCurrent();
 
@@ -553,18 +545,17 @@ void Msg_Command(const string &cmd) {
         } else
             client::Msg_ShowText("Already in standard mode.", false, 2);
     } else if (cmd == "info") {
-        string infotext = ecl::strf("Level #%i of '", ind->getCurrentLevel()) + ind->getName() +
-                          "' (" + curProxy->getAbsLevelPath() + ")  -  \"" + curProxy->getTitle() +
-                          "\" by " + curProxy->getAuthor() +
-                          ecl::strf(" (rev=%i,", curProxy->getReleaseVersion()) + "id=\"" +
-                          curProxy->getId() + "\")";
+        std::string infotext = ecl::strf("Level #%i of '", ind->getCurrentLevel()) + ind->getName()
+                + "' (" + curProxy->getAbsLevelPath() + ")  -  \"" + curProxy->getTitle() + "\" by "
+                + curProxy->getAuthor() + ecl::strf(" (rev=%i,", curProxy->getReleaseVersion())
+                + "id=\"" + curProxy->getId() + "\")";
 
         client::Msg_ShowText(infotext, true);
     } else if (cmd.substr(0, 5) == "find ") {  // global level-jump
-        string args = cmd.substr(5);
+        std::string args = cmd.substr(5);
         Msg_Command_find(args);
     } else if (cmd.substr(0, 7) == "jumpto ") {  // global level-jump
-        string args = cmd.substr(7);
+        std::string args = cmd.substr(7);
         Msg_Command_jumpto(args);
     } else if (cmd == "help") {
         client::Msg_ShowText(
@@ -576,7 +567,7 @@ void Msg_Command(const string &cmd) {
     }
 
     else {
-        enigma::Log << "Warning: Server received unknown command '" << cmd << "'\n";
+        Log << "Warning: Server received unknown command '" << cmd << "'\n";
     }
 }
 
@@ -630,7 +621,7 @@ void SetCompatibility(lev::Proxy *levelProxy) {
         throw XLevelLoading("unknown engine compatibility");
 }
 
-enigma::Difficulty GetDifficulty() {
+Difficulty GetDifficulty() {
     if (CreatingPreview)
         return DIFFICULTY_HARD;  // we may not access the current index!
 
@@ -660,5 +651,5 @@ void Msg_ActivateItem() {
     player::ActivateFirstItem();
 }
 
-}  // namespace server
-}  // namespace enigma
+} // namespace enigma::server
+

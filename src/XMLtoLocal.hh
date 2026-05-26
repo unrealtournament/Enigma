@@ -42,7 +42,7 @@ namespace enigma
          *
          * @param toTranscode XML managed string
          */
-        XMLtoLocal(const XMLCh* const toTranscode);
+        explicit XMLtoLocal(const XMLCh* toTranscode);
         ~XMLtoLocal();
     
         /**

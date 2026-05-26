@@ -28,7 +28,6 @@
 namespace enigma {
 
 class ImageCache : public ecl::Cache<ecl::Surface> {
-public:
     std::unique_ptr<ecl::Surface> acquire(const std::string &name) override {
         return ecl::LoadImage(name.c_str());
     }

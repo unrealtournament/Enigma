@@ -45,28 +45,22 @@ extern "C" {
 #       include <windows.h>
 #endif
 
-namespace enigma {
-namespace options {
+namespace enigma::options {
 
 /* -------------------- LevelStatus implementation -------------------- */
 
-    LevelStatus::LevelStatus(int easy, int hard, int finished_, int solved_rev)
-        : time_easy (easy),
-          time_hard (hard),
-          finished (finished_),
-          solved_revision (solved_rev) {
-    }
+LevelStatus::LevelStatus(int easy, int hard, int finished_, int solved_rev)
+    : time_easy(easy), time_hard(hard), finished(finished_), solved_revision(solved_rev) {
+}
 
-    bool LevelStatus::operator == (const LevelStatus& other) const  {
-        return (time_easy == other.time_easy &&
-                time_hard == other.time_hard &&
-                finished == other.finished &&
-                solved_revision == other.solved_revision);
-    }
+bool LevelStatus::operator==(const LevelStatus& other) const {
+    return (time_easy == other.time_easy && time_hard == other.time_hard
+            && finished == other.finished && solved_revision == other.solved_revision);
+}
 
 /* -------------------- Variables -------------------- */
 
-    bool LevelStatusChanged = false;
+bool LevelStatusChanged = false;
 
 /* -------------------- Functions -------------------- */
 
@@ -203,7 +197,7 @@ Personal_ConfigurationFileName()
 {
     std::string fname = "enigmarc.lua";
 
-    if (getenv ("HOME") != 0)
+    if (getenv ("HOME") != nullptr)
         fname = ecl::ExpandPath ("~/.enigmarc");
 
     return fname;
@@ -274,5 +268,5 @@ bool Load ()
     return success;
 }
 
-} // namespace options
-} // namespace enigma
+} // namespace enigma::options
+

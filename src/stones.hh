@@ -172,11 +172,11 @@ class Stone : public GridObject {
 
 public:
     Stone();
-    Stone(const char *kind);
-    ~Stone();
+    explicit Stone(const char *kind);
+    ~Stone() override;
 
     /* ---------- Virtual functions ---------- */
-    virtual std::string getClass() const override;
+    std::string getClass() const override;
 
     /* ---------- Stone interface (properties) ---------- */
 
@@ -201,7 +201,7 @@ public:
     /*! Do actors get stuck in this stone? */
     virtual bool is_sticky(const Actor *) const { return !is_floating(); }
 
-    // Fire and water spreading that is face and state dependent for stones
+    // Fire and water spreading that is face and state-dependent for stones
     // like doors, window
     virtual bool allowsSpreading(Direction dir, bool isFlood = false) const {
         return is_floating();
@@ -226,12 +226,12 @@ public:
     void propagateImpulse(const Impulse &impulse);
 
 protected:
-    virtual Object::ObjectType getObjectType() const override { return Object::STONE; }
+    ObjectType getObjectType() const override { return Object::STONE; }
 
     bool move_stone(GridPos newPos, const char *soundevent);
     bool move_stone(Direction dir);
     ecl::V2 distortedVelocity(ecl::V2 vel, double defaultfactor);
-    void transform(std::string kind);
+    void transform(const std::string& kind);
 
     // Cluster support
     void autoJoinCluster();
@@ -239,16 +239,16 @@ protected:
 
 protected:
     // GridObject interface
-    virtual void on_creation(GridPos p) override;
-    virtual void set_model(const std::string &mname) override {
+    void on_creation(GridPos p) override;
+    void set_model(const std::string &mname) override {
         display::SetModel(GridLoc(GRID_STONES, get_pos()), mname);
     }
 
-    virtual display::Model *get_model() override {
+    display::Model *get_model() override {
         return display::GetModel(GridLoc(GRID_STONES, get_pos()));
     }
 
-    virtual void kill_model(GridPos p) override { display::KillModel(GridLoc(GRID_STONES, p)); }
+    void kill_model(GridPos p) override { display::KillModel(GridLoc(GRID_STONES, p)); }
 
 private:
     // Help structure and routine for freeze_check()

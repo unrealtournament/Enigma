@@ -24,7 +24,6 @@
 #include "enigma.hh"
 #include "Value.hh"
 #include <map>
-#include <stdint.h>
 
 namespace enigma {
 
@@ -37,7 +36,7 @@ enum ObjectFlagsBits {
     OBJBIT_PHOTOACTIV = 1 << 8,  ///< GridObject registered as photo activ
     OBJBIT_INVERSE = 1 << 9,     ///< Object invert action value
     OBJBIT_NOP = 1 << 10,        ///< Object use nop instead toggle as default action
-    OBJBIT_INIT = 1 << 11        ///< Object needs init message for @ finalization
+    OBJBIT_INIT = 1 << 11        ///< Object needs an init message for @ finalization
 };
 
 enum ValidationResult {
@@ -58,7 +57,7 @@ enum ValidationResult {
  *
  * - A way to pass messages between unrelated objects via message().
  *     This allows us to send messages to objects from Lua and to
- *     decouple objects types as much as possible.
+ *     decouple object types as much as possible.
  *
  * - A way to get and set attributes.  These attributes are quite
  *     similar to instance variables, but they can be easily modified
@@ -68,11 +67,11 @@ enum ValidationResult {
  *
  * The various Object subclasses instances need to register a template
  * instance for each object name. To avoid the inclusion of every
- * subclass declaration file into the registry for registry driven forward
- * initialization we make use of the static file based initialization
+ * subclass declaration file into the registry for registry-driven forward
+ * initialization, we make use of the static file-based initialization
  * that occurs prior to the main application startup. To be independent of
- * the undefined sequence in which the files are initialized we store the
- * template instances, object names and id's in function local static caches.
+ * the undefined sequence in which the files are initialized, we store the
+ * template instances, object names, and id's in function local static caches.
  * These caches are copied to the final runtime data structures on the main
  * application startup. We call this feature "boot"-initialization. The macros
  * BOOT_REGISTER_START and BOOT_REGISTER_END will be used once at the end of
@@ -87,14 +86,14 @@ public:
     typedef ecl::AssocList<std::string, Value> AttribMap;
 
     Object();
-    Object(const char *kind);
+    explicit Object(const char *kind);
     Object(const Object &src_obj);
     virtual ~Object();
 
     static Object *getObject(int id);
     int getId() const;
 
-    /* ---------- depreceated methods ---------- */
+    /* ---------- deprecated methods ---------- */
 
     const AttribMap &get_attribs() const {
         return attribs;
@@ -110,7 +109,7 @@ public:
      * The main object category name of the object that describes its gaming class.
      * All objects of a gaming class support the same attributes and messages. But
      * they may still be members of different kind subcategories. E.g. "st_panel"
-     * is a class with "st_panel_n", "st_panel_s",... as kinds. A gaming object
+     * is a class with "st_panel_n", "st_panel_s", ... as kinds. A gaming object
      * class is often implemented as a separate C++ class. But sometimes several
      * gaming classes share a single C++ class. E.g. "st_panel", "st_bluesand" are
      * both implemented by the class "ClusterStone". In this case we talk about a
@@ -121,7 +120,7 @@ public:
     /**
      * The most specific object category name. Many objects change their kind during
      * their lifecycle. All attributes are evaluated to determine the current kind
-     * of a gaming object.
+     * of gaming object.
      */
     std::string getKind() const;
 
@@ -130,7 +129,7 @@ public:
      */
     bool isKind(const std::string &kind) const;
 
-    bool validateMessage(std::string msg, Value arg);
+    bool validateMessage(const std::string& msg, const Value& arg);
 
     /**
      *
@@ -139,17 +138,17 @@ public:
 
     /**
      * Store the value information for the given key with prior checking of
-     * write allowance. All level code attribute settings should pass this
-     * central call. If a set is granted the virtual unchecked setAttr is
+     * write permissions. All level code attribute settings should pass this
+     * central call. If a set is granted, the virtual unchecked setAttr is
      * executed.
      */
     void setAttrChecked(const std::string &key, const Value &val);
 
     /**
-     * Store the value information for the given key. If it is a XML declared
-     * system attribute or a user attribute it will be stored in the attribute
-     * map. Otherwise an ivar may be set. Nothing happens if the attribute is
-     * declared as read only. If the value is "nil" the attribute will be reset
+     * Store the value information for the given key. If it is an XML-declared
+     * system attribute or a user attribute, it will be stored in the attribute
+     * map. Otherwise, an ivar may be set. Nothing happens if the attribute is
+     * declared as read-only. If the value is "nil", the attribute will be reset
      * to its declared default. If the default is "nil", too, or if it is a user
      * attribute, it will be deleted in the attribute map. In these cases a read
      * will return "nil" either way.
@@ -159,7 +158,7 @@ public:
     /**
      * Get an attribute or value for the given key with prior checking of
      * read allowance. All level code attribute reads should pass this central
-     * call. If a read is granted the virtual unchecked getAttr is executed.
+     * call. If a read is granted, the virtual unchecked getAttr is executed.
      */
     Value getAttrChecked(const std::string &key) const;
 
@@ -167,18 +166,18 @@ public:
      * Get an attribute that has been set or that stands as a proxy for a
      * trait or ivar. Object itself will just return attribute values
      * that are stored in its attribute map. For not existing attributes
-     * a XML declared standard default value will be returned. If the default
-     * is "nil" type DEFAULT will be returned.
+     * an XML-declared standard default value will be returned. If the default
+     * is "nil", type DEFAULT will be returned.
      *
      * Subclasses may override this method to supply values of traits or
-     * ivars. This way levels can gain read access to attributes that can
-     * not to be stored in the attribute map due to performance reasons.
+     * ivars. This way levels can gain read access to attributes that cannot
+     * be stored in the attribute map due to performance reasons.
      */
     virtual Value getAttr(const std::string &key) const;
 
     /**
      * Get an attribute or a special given default value. This method
-     * gets attributes like the simple argumented getAttr method but
+     * gets attributes like the regular getAttr method but
      * returns the given default value instead of a DEFAULT value if
      * no explicit attribute exists.
      */
@@ -209,7 +208,7 @@ protected:
      * attribute where every token may be a group by itself. All valid
      * destinations are indexed in the sequence of tokens and group positions.
      * The position at the given index is returned as the destination position.
-     * If the caller did index beyond the last valid position this convenience
+     * If the caller did index beyond the last valid position, this convenience
      * method returns false, otherwise true to mark a valid position.
      * Objects with destinations like Vortex and Horse make use of this method.
      * @arg idx      requested index of destination starting with 0
@@ -220,7 +219,7 @@ protected:
 
     /**
      * A central managed container for 32 single bit flags to be used by
-     * subclasses. Object is reponsible for efficiently cloning, saving and
+     * subclasses. Object is responsible for efficiently cloning, saving, and
      * restoring these flags on demand. Subclasses use the bits as follows:
      *
      * - Bit 0-15 are reserved for classes Object to GridObject

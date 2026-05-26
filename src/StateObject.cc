@@ -87,11 +87,11 @@ namespace enigma {
     }
     
     int StateObject::externalState() const {
-        return state;       // default behaviour internal = external state
+        return state;       // default behavior internal = external state
     }
     
     void StateObject::setState(int extState) {
-        state = extState;   // default behaviour internal = external state
+        state = extState;   // default behavior internal = external state
     }
     
 } // namespace enigma

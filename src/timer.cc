@@ -17,12 +17,11 @@
  */
 #include "timer.hh"
 
-#include <list>
+#include "errors.hh"
+
 #include <algorithm>
 #include <functional>
-
-#include "ecl_util.hh"
-#include "errors.hh"
+#include <list>
 
 namespace enigma {
 
@@ -34,14 +33,14 @@ namespace {
 // TimeHandlers.
 class Alarm {
 public:
-    Alarm(enigma::TimeHandler *h, double interval, bool repeatp, int alarmnr);
+    Alarm(TimeHandler *h, double interval, bool repeatp, int alarmnr);
     void tick(double dtime);
     bool expired() const;
     void mark_removed();
-    bool has_handler(enigma::TimeHandler *th, int n) const;
+    bool has_handler(TimeHandler *th, int n) const;
 
     // Variables
-    enigma::TimeHandler *handler;
+    TimeHandler *handler;
     double interval;
     double timeleft;
     bool repeatp;
@@ -90,7 +89,7 @@ struct Timer::Rep {
     std::list<Alarm> alarms;
 };
 
-Timer::Timer() : self(new Rep) {
+Timer::Timer() : self(std::make_unique<Rep>()) {
 }
 
 Timer::~Timer() = default;

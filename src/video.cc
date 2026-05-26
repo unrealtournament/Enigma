@@ -20,22 +20,21 @@
 
 #include "video.hh"
 
+#include "display.hh"
+#include "ecl_system.hh"
+#include "ecl_video.hh"
+#include "gui/LevelPreviewCache.hh"
+#include "main.hh"
+#include "MouseCursor.hh"
+#include "options.hh"
+#include "resource_cache.hh"
+
 #include <cassert>
 #include <cstdio>
 #include <memory>
 #include <sstream>
 
-#include "ecl_system.hh"
-#include "ecl_video.hh"
-#include "enigma.hh"
-#include "main.hh"
-#include "options.hh"
-#include "resource_cache.hh"
-#include "display.hh"
-#include "MouseCursor.hh"
-#include "gui/LevelPreviewCache.hh"
-
-using namespace ecl;
+using ecl::Rect;
 using namespace enigma;
 
 /* -------------------- Local Variables -------------------- */
@@ -318,11 +317,9 @@ namespace enigma {
 class VideoEngineImpl : public VideoEngine {
 public:
     VideoEngineImpl();
-    ~VideoEngineImpl();
+    ~VideoEngineImpl() override;
 
     void Init() override;
-
-    void Shutdown() override;
 
     ecl::Screen *GetScreen() override;
 
@@ -348,7 +345,7 @@ public:
     const VMInfo *GetInfo() override;
     const VMInfo *GetInfo(FullscreenMode mode) override { return &video_modes[mode]; }
     VideoTileset *GetTileset() override;
-    const VideoTilesetId GetTilesetId() override;
+    VideoTilesetId GetTilesetId() override;
 
     FullscreenMode FindFullscreenMode(const WindowSize &display_mode) override;
     FullscreenMode FindClosestFullscreenMode(const WindowSize &display_mode) override;
@@ -361,7 +358,7 @@ public:
 
     ecl::Surface *BackBuffer() override;
 
-    void Screenshot(const std::string &file_name, ecl::Surface *s = 0) override;
+    void Screenshot(const std::string &file_name, ecl::Surface *s = nullptr) override;
 
     void SetMouseCursor(std::unique_ptr<ecl::Surface> s, int hotx, int hoty) override;
     void HideMouse() override;
@@ -379,7 +376,7 @@ private:
     ecl::Screen *screen;
     SDL_Window *window;
     SDL_Renderer *renderer;
-    std::unique_ptr<Surface> back_buffer;
+    std::unique_ptr<ecl::Surface> back_buffer;
     std::unique_ptr<MouseCursor> cursor;
     std::string window_caption;
     VideoTileset *video_tileset;
@@ -458,9 +455,10 @@ void VideoEngineImpl::Init() {
         // Try fullscreen mode.
         SetVideoTileset(fvts);
         success = OpenWindow(video_modes[fmode].width, video_modes[fmode].height, true);
-        if (!success)
+        if (!success) {
             Log << "Preferred video mode (" << w << "x" << h << " "
-                << (isFullScreen?"fullscreen":"window") << " mode) failed.";
+                << (isFullScreen ? "fullscreen" : "window") << " mode) failed.";
+        }
     }
     if (!success) {
         // Probably just window mode; or maybe fullscreen mode failed.
@@ -496,10 +494,6 @@ void VideoEngineImpl::Init() {
         SDL_SetWindowIcon(window, icon->get_surface());
     }
 #endif
-}
-
-void VideoEngineImpl::Shutdown() {
-    CloseWindow();
 }
 
 ecl::Screen *VideoEngineImpl::GetScreen() {
@@ -700,7 +694,7 @@ VideoTileset *VideoEngineImpl::GetTileset() {
     return video_tileset;
 }
 
-const VideoTilesetId VideoEngineImpl::GetTilesetId() {
+VideoTilesetId VideoEngineImpl::GetTilesetId() {
     return video_tileset_id;
 }
 
@@ -728,17 +722,17 @@ ecl::Surface *VideoEngineImpl::BackBuffer() {
 void VideoEngineImpl::Screenshot(const std::string &file_name, ecl::Surface *s) {
     // auto-create the directory if necessary
     std::string directory;
-    if (ecl::split_path(file_name, &directory, 0) && !ecl::FolderExists(directory)) {
+    if (ecl::split_path(file_name, &directory, nullptr) && !ecl::FolderExists(directory)) {
         ecl::FolderCreate(directory);
     }
     if (!s) {
         ecl::Rect rect = GetInfo()->area;
-        std::unique_ptr<Surface> surface = ecl::Grab(screen->get_surface(), rect);
+        std::unique_ptr<ecl::Surface> surface = ecl::Grab(screen->get_surface(), rect);
         ecl::SavePNG(surface.get(), file_name);
     } else {
         ecl::SavePNG(s, file_name);
     }
-    enigma::Log << "Wrote screenshot to '" << file_name << "'\n";
+    Log << "Wrote screenshot to '" << file_name << "'\n";
 }
 
 void VideoEngineImpl::SetMouseCursor(std::unique_ptr<ecl::Surface> s, int hotx, int hoty) {
@@ -771,7 +765,7 @@ bool VideoEngineImpl::OpenWindow(int width, int height, bool fullscreen) {
 
     assert(GetTileset());
     int tilesize = GetTileset()->tilesize;
-    screen = new Screen(window, tilesize * 20, tilesize * 15);
+    screen = new ecl::Screen(window, tilesize * 20, tilesize * 15);
 
     renderer = SDL_CreateSoftwareRenderer(SDL_GetWindowSurface(window));
     if (!renderer)
@@ -781,7 +775,7 @@ bool VideoEngineImpl::OpenWindow(int width, int height, bool fullscreen) {
     const VMInfo *vminfo = GetInfo(video_mode);
     SDL_RenderSetLogicalSize(renderer, vminfo->width, vminfo->height);
 
-    cursor.reset(new MouseCursor(screen));
+    cursor = std::make_unique<MouseCursor>(screen);
     int x, y;
     SDL_GetMouseState(&x, &y);
     cursor->move(x, y);
@@ -848,12 +842,12 @@ FullscreenMode VideoEngineImpl::FullscreenModeByPrefNr(int prefnr) {
  * @arg  seq             sequence number of best available mode, default to 1
  * @return               the preferable video mode
  */
-FullscreenMode VideoEngineImpl::ParseVideomodesFallbackString
-            (std::string modes, bool available_only, int seq) {
+FullscreenMode VideoEngineImpl::ParseVideomodesFallbackString(
+        std::string modes, bool available_only, int seq) {
     // seq defaults to 1.
     // In Enigma 1.3, we actually use our own fallback system, so we only
-    // ever use the very first known and activated mode we find, and work
-    // through our own fallbacks from there on. Therefore, this function
+    // ever use the very first known and activated mode we find and work
+    // through our own fallbacks from there. Therefore, this function
     // is used with seq = 1 only.
     if (modes.length() > 1) {
         std::istringstream ms(modes);
@@ -864,7 +858,7 @@ FullscreenMode VideoEngineImpl::ParseVideomodesFallbackString
             ms >> std::dec >> prefnr;
             ms.ignore();
             mode = FullscreenModeByPrefNr(prefnr);
-            if ((!available_only) || video_modes[mode].f_available) {
+            if (!available_only || video_modes[mode].f_available) {
                 if (seq == 1)
                     return mode;
                 --seq;
@@ -894,12 +888,16 @@ bool VideoEngineImpl::SetInputGrab(bool enabled) {
 
 // -------------------- Global variables & functions --------------------
 
-VideoEngine *video_engine = nullptr;
+std::unique_ptr<VideoEngine> video_engine;
 
 void VideoInit() {
-    video_engine = new VideoEngineImpl;
+    video_engine = std::make_unique<VideoEngineImpl>();
     video_engine->Init();
     Log << "VideoInit done.\n";
+}
+
+void VideoShutdown() {
+    video_engine.reset();
 }
 
 void ShowLoadingScreen(const char *text, int /* progress */) {
@@ -927,15 +925,16 @@ VideoTileset* VideoTilesetById(VideoTilesetId id) {
     return nullptr;
 };
 
-VideoTileset* VideoTilesetByName(std::string name) {
+VideoTileset* VideoTilesetByName(const std::string& name) {
     if (name == "16x16 Standard")  return StandardTileset(VTS_16);
     if (name == "32x32 Standard")  return StandardTileset(VTS_32);
     if (name == "40x40 Standard")  return StandardTileset(VTS_40);
     if (name == "48x48 Standard")  return StandardTileset(VTS_48);
     if (name == "64x64 Standard")  return StandardTileset(VTS_64);
-    for(auto it = std::begin(video_tilesets); it != std::end(video_tilesets); ++it)
+    for (auto it = std::begin(video_tilesets); it != std::end(video_tilesets); ++it) {
         if (it->name == name)
             return &(*it);
+    }
     return nullptr;
 }
 

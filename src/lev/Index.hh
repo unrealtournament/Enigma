@@ -94,8 +94,8 @@ namespace enigma::lev {
         static void setGroupSelectedColumn(const std::string& groupName, int column);
         static void deleteGroup(const std::string& groupName);
         static void moveGroup(const std::string& groupName, int newPos);
-        static void renameGroup(const std::string& oldName, std::string newName);
-        static void insertGroup(std::string groupName, int newPos);
+        static void renameGroup(const std::string& oldName, const std::string& newName);
+        static void insertGroup(const std::string& groupName, int newPos);
         static void deleteEmptyGroups();
         static double getNextUserLocation();
         

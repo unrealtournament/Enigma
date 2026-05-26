@@ -18,7 +18,6 @@
 #include "game.hh"
 #include "errors.hh"
 #include "main.hh"
-#include "options.hh"
 #include "video.hh"
 #include "client.hh"
 #include "server.hh"
@@ -27,16 +26,14 @@
 #include "lev/PersistentIndex.hh"
 
 #include "ecl_sdl.hh"
-#include <cassert>
 
-using namespace enigma;
-using namespace std;
+namespace enigma {
 
 /* -------------------- Global variables -------------------- */
 
 namespace {
 
-Uint32 last_tick_time;
+    Uint32 last_tick_time;
 
 }  // namespace
 
@@ -82,7 +79,7 @@ void game::StartGame() {
             client::Tick(dtime);
             server::Tick(dtime);
         } catch (XLevelRuntime &err) {
-            client::Msg_Error(string("Server Error: level runtime error:\n") + err.what());
+            client::Msg_Error(std::string("Server Error: level runtime error:\n") + err.what());
             server::Msg_Panic(true);
         }
 
@@ -115,3 +112,5 @@ void game::StartGame() {
 void game::ResetGameTimer() {
     last_tick_time = SDL_GetTicks();
 }
+
+} // namespace enigma

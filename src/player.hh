@@ -23,7 +23,7 @@
  *
  * Player management.  Deals mostly with inventory management,
  * switching between players, respawning, etc.  Players are numbered
- * from 0..N-1, where N is the number of players in the current game
+ * from 0 to N-1, where N is the number of players in the current game
  * (currently always 1 or 2).
  */
 
@@ -63,8 +63,8 @@ void RedrawInventory(Inventory *inv);
 
 // set/remove respawn positions for all black or all white actors
 // (used when it-flagwhite/black is dropped)
-void SetRespawnPositions(enigma::GridPos pos, Value color);
-void RemoveRespawnPositions(Value color);
+void SetRespawnPositions(enigma::GridPos pos, const Value& color);
+void RemoveRespawnPositions(const Value& color);
 
 int CurrentPlayer();
 void SetCurrentPlayer(unsigned iplayer);
@@ -87,7 +87,7 @@ bool AllActorsDead();
 
 void InhibitPickup(bool yesno);
 void PickupItem(Actor *a, enigma::GridPos p);
-bool PickupAsItem(Actor *a, GridObject *obj, std::string kind);
+bool PickupAsItem(Actor *a, GridObject *obj, const std::string& kind);
 void RotateInventory(int dir = 1);
 
 void ActivateFirstItem();

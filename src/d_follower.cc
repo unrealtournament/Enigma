@@ -73,7 +73,7 @@ bool Follower::set_offset(ecl::V2 offs) {
 
 /* -------------------- Follower_Screen -------------------- */
 
-// Determine whether the screen must be scrolled or not, and change the
+// Determine whether the screen must be scrolled or not and change the
 // coordinate origin of the screen accordingly.
 void Follower_Screen::tick(double, const ecl::V2 &point) {
     DisplayEngine *engine = get_engine();
@@ -113,11 +113,11 @@ void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
         int sx, sy;
         engine->world_to_screen(point, &sx, &sy);
 
-        bool scrollx_p = (sx < gamearea.x + m_boundary_x * tilew) ||
-                         (sx >= gamearea.x + gamearea.w - m_boundary_x * tilew);
+        bool scrollx_p = (sx < gamearea.x + m_boundary_x * tilew)
+                || (sx >= gamearea.x + gamearea.w - m_boundary_x * tilew);
 
-        bool scrolly_p = (sy < gamearea.y + m_boundary_y * tileh) ||
-                         (sy >= gamearea.y + gamearea.h - m_boundary_y * tileh);
+        bool scrolly_p = (sy < gamearea.y + m_boundary_y * tileh)
+                || (sy >= gamearea.y + gamearea.h - m_boundary_y * tileh);
 
         if (scrollx_p || scrolly_p) {
             ecl::V2 olddest = destpos;
@@ -125,7 +125,7 @@ void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
 
             currently_scrolling = true;
 
-            // Move `point' to center of the screen
+            // Move 'point' to center of the screen
             curpos = scrollpos;
 
             if (screenwise) {
@@ -147,10 +147,10 @@ void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
             }
 
             // Don't scroll off the game area
-            destpos[0] = ecl::Clamp<double>(destpos[0], 0.0,
-                                            (double)engine->get_width() - gamearea.w / tilew);
-            destpos[1] = ecl::Clamp<double>(destpos[1], 0.0,
-                                            (double)engine->get_height() - gamearea.h / tileh);
+            destpos[0] = ecl::Clamp<double>(
+                    destpos[0], 0.0, (double)engine->get_width() - gamearea.w / tilew);
+            destpos[1] = ecl::Clamp<double>(
+                    destpos[1], 0.0, (double)engine->get_height() - gamearea.h / tileh);
             if (!scrollx_p)
                 destpos[0] = olddest[0];
             if (!scrolly_p)

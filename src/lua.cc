@@ -421,10 +421,10 @@ static void push_value(lua_State *L, const Value &val) {
             lua_pushnil(L);
             break;
         case Value::DOUBLE:
-            lua_pushnumber(L, val.get_double());
+            lua_pushnumber(L, val.getDouble());
             break;
         case Value::STRING:
-            lua_pushstring(L, val.get_string());
+            lua_pushstring(L, val.getString());
             break;
         case Value::BOOL:
             if (server::EnigmaCompatibility < 1.10) {

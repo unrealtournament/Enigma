@@ -30,9 +30,6 @@
 #include <cstring>
 #include <iostream>
 
-using namespace enigma;
-using namespace display;
-
 #ifndef CXXLUA
 extern "C" {
 #include "lualib.h"
@@ -47,6 +44,10 @@ extern "C" {
 #include "lua-display.hh"
 #include "lua-enigma.hh"
 #include "lua-ecl.hh"
+
+using namespace enigma;
+using namespace display;
+
 
 /* -------------------- Types -------------------- */
 
@@ -124,8 +125,7 @@ std::unique_ptr<ecl::Surface> SurfaceCache::acquire(const std::string &name) {
 ModelManager::ModelManager() : m_templates(1069) {
 }
 
-ModelManager::~ModelManager() {
-}
+ModelManager::~ModelManager() = default;
 
 void ModelManager::define(const std::string &name, Model *m) {
     m_templates[name] = std::unique_ptr<Model>(m);

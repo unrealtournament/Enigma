@@ -20,7 +20,6 @@
 #define STONES_INTERNAL_HH_INCLUDED
 
 #include "world.hh"
-#include "main.hh"
 
 #define DECL_TRAITS                                              \
         static StoneTraits traits;                               \
@@ -43,9 +42,9 @@ namespace enigma {
 
 /* -------------------- Auxiliary Functions -------------------- */
 
-    /* Move a stone (by sending an impulse) Called when actor hits a
-       stone. */
-    bool maybe_push_stone (const StoneContact &sc);
+/* Move a stone (by sending an impulse) Called when an actor hits a
+   stone. */
+bool maybe_push_stone (const StoneContact &sc);
 
 } // namespace enigma
 

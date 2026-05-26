@@ -36,7 +36,7 @@ class DisplayLayer;
 
 class DisplayEngine {
 public:
-    DisplayEngine(int tilew = 32, int tileh = 32);
+    explicit DisplayEngine(int tilew = 32, int tileh = 32);
     ~DisplayEngine();
 
     /* ---------- Class configuration ---------- */
@@ -104,15 +104,15 @@ private:
     // Width and height of the world in tiles
     int m_width, m_height;
 
-    ecl::Array2<char> m_redrawp;
+    ecl::Array2<uint8_t> m_redrawp;
 };
 
 /* -------------------- DisplayLayer -------------------- */
 
 class DisplayLayer {
 public:
-    DisplayLayer() {}
-    virtual ~DisplayLayer() {}
+    DisplayLayer() : m_engine(nullptr) {}
+    virtual ~DisplayLayer() = default;
 
     /* ---------- Class configuration ---------- */
     void set_engine(DisplayEngine *e) { m_engine = e; }
@@ -371,7 +371,7 @@ private:
 
 class GameDisplay : public CommonDisplay {
 public:
-    GameDisplay(const ScreenArea &gamearea, ScreenArea inventoryarea);
+    GameDisplay(const ScreenArea &gameArea, ScreenArea inventoryarea);
     ~GameDisplay();
 
     StatusBar *get_status_bar() const;
@@ -382,7 +382,7 @@ public:
     void resize_game_area(int w, int h);
 
     /* ---------- Scrolling ---------- */
-    void set_follow_mode(FollowMode m);
+    void set_follow_mode(FollowMode followMode);
     void updateFollowMode();
     void follow_center();
     void set_follow_sprite(SpriteId id);
@@ -398,16 +398,16 @@ public:
     void draw_all(ecl::GC &gc);
 
 private:
-    void set_follower(Follower *f);
+    void set_follower(std::unique_ptr<Follower> f);
     void draw_borders(ecl::GC &gc);
 
     /* ---------- Variables ---------- */
     Uint32 last_frame_time;
-    bool redraw_everything;
-    StatusBarImpl *status_bar;
+    bool redraw_everything = false;
+    std::unique_ptr<StatusBarImpl> status_bar;
 
     ecl::V2 m_reference_point;
-    Follower *m_follower;
+    std::unique_ptr<Follower> m_follower;
 
     ScreenArea inventoryarea;
 };

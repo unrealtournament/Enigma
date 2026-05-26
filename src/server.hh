@@ -24,14 +24,13 @@
 #ifndef SERVER_HH_INCLUDED
 #define SERVER_HH_INCLUDED
 
+#include "ecl_math.hh"
 #include "lev/Proxy.hh"
 #include "Value.hh"
-#include "ecl_math.hh"
 
 #include <stdint.h>
 
-namespace enigma {
-namespace server {
+namespace enigma::server {
 
 /* -------------------- Global variables -------------------- */
 
@@ -68,7 +67,7 @@ extern bool TwoPlayerGame;
 
 extern bool SingleComputerGame;
 
-// True: allow to control 2nd player (e.g. after first died)
+// True: allow controlling the second player (e.g., after first died)
 extern bool AllowTogglePlayer;
 
 // True -> show move counter (Sokoban style)
@@ -175,7 +174,7 @@ void FinishLevel();
 void SetCompatibility(const char *version);     // set compatibility (from lua)
 void SetCompatibility(lev::Proxy *levelProxy);  // set compatibility from xml
 
-enigma::Difficulty GetDifficulty();
+Difficulty GetDifficulty();
 
 // move counter
 void InitMoveCounter();
@@ -211,7 +210,7 @@ void Msg_MouseForce(const ecl::V2 &f);
 
 void Msg_ActivateItem();
 
-}  // namespace server
-}  // namespace enigma
+} // namespace enigma::server
+
 
 #endif

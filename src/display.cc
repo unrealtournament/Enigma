@@ -16,7 +16,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-// This file contains the code renders the graphics during the game. This
+// This file contains the code that renders the game graphics. This
 // includes displaying the current landscape with all its objects and the
 // inventory at the bottom of the screen.
 
@@ -34,10 +34,8 @@
 
 #include <algorithm>
 #include <functional>
-#include <cmath>
 #include <iostream>
 
-using namespace std;
 using namespace ecl;
 using namespace display;
 using namespace enigma;
@@ -90,12 +88,12 @@ StatusBarImpl::StatusBarImpl(const ScreenArea &area)
   m_itemarea(),
   m_models(),
   player(enigma::YIN),
-  m_changedp(false),
+  m_hasChanged(false),
   m_textview(*enigma::GetFont("statusbarfont")),
   m_leveltime(0),
-  m_showtime_p(true),
+  m_showTime(true),
   m_counter(0),
-  m_showcounter_p(false),
+  m_showCounter(false),
   m_interruptible(true),
   m_text_active(false),
   playerImage(0),
@@ -105,20 +103,19 @@ StatusBarImpl::StatusBarImpl(const ScreenArea &area)
     m_itemarea = vminfo->sb_itemarea;
 }
 
-StatusBarImpl::~StatusBarImpl() {
-}
+StatusBarImpl::~StatusBarImpl() = default;
 
 void StatusBarImpl::set_time(double time) {
     double oldtime = m_leveltime;
     m_leveltime = time;
-    if (m_showtime_p && floor(m_leveltime) - floor(oldtime) >= 1)
-        m_changedp = true;  // update clock
+    if (m_showTime && floor(m_leveltime) - floor(oldtime) >= 1)
+        m_hasChanged = true;  // update clock
 }
 
 void StatusBarImpl::hide_text() {
     if (m_text_active) {
         m_text_active = false;
-        m_changedp = true;
+        m_hasChanged = true;
     }
 }
 
@@ -129,26 +126,26 @@ void StatusBarImpl::set_travelled_distance(double /*distance*/) {
 }
 
 void StatusBarImpl::set_counter(int new_counter) {
-    if (m_showcounter_p && new_counter != m_counter) {
-        m_changedp = true;
+    if (m_showCounter && new_counter != m_counter) {
+        m_hasChanged = true;
         m_counter = new_counter;
     }
 }
 
 void StatusBarImpl::show_move_counter(bool active) {
-    if (active != m_showcounter_p) {
-        m_showcounter_p = active;
-        m_changedp = true;
+    if (active != m_showCounter) {
+        m_showCounter = active;
+        m_hasChanged = true;
     }
 }
 void StatusBarImpl::setCMode(bool flag) {
     cMode = flag;
-    m_changedp = true;
+    m_hasChanged = true;
 }
 
 void StatusBarImpl::setBasicModes(std::string flags) {
     basicModes = flags;
-    m_changedp = true;
+    m_hasChanged = true;
 }
 
 void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
@@ -193,7 +190,7 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
     y = modesarea.y;
     blit(gc, x, y, s_modes.get());
 
-    if (m_showtime_p || m_showcounter_p) {
+    if (m_showTime || m_showCounter) {
         int abstime = ecl::round_nearest<int>(fabs(m_leveltime));
         //            abstime += 63*60;  //for testing purposes
         int hours = abstime / 3600;
@@ -208,7 +205,7 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
             minutes = 59;
             seconds = 59;
         }
-        if (m_showtime_p) {
+        if (m_showTime) {
 
             if (!widthInit) {
                 maxWidthDigit = 0;
@@ -240,14 +237,14 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
         }
 
         std::unique_ptr<Surface> s_moves;
-        if (m_showcounter_p) {
+        if (m_showCounter) {
             text = ecl::strf("%d", m_counter);
             s_moves = movesfont->render(text);
             xsize_moves = s_moves->width();
         }
 
-        if (m_showtime_p) {
-            if (m_showcounter_p) {  // time + moves
+        if (m_showTime) {
+            if (m_showCounter) {  // time + moves
                 x = movesarea.x + (movesarea.w - xsize_moves) / 2;
                 y = movesarea.y + (movesarea.h + timefont->get_lineskip()) / 2 -
                     movesfont->get_lineskip() - 4;
@@ -308,7 +305,7 @@ void StatusBarImpl::redraw(ecl::GC &gc, const ScreenArea &r) {
             x += itemsize;
         }
     }
-    m_changedp = false;
+    m_hasChanged = false;
 }
 
 void StatusBarImpl::set_inventory(enigma::Player activePlayer,
@@ -323,14 +320,14 @@ void StatusBarImpl::set_inventory(enigma::Player activePlayer,
     for (auto &modelname : modelnames) {
         m_models.push_back(MakeModel(modelname));
     }
-    m_changedp = true;
+    m_hasChanged = true;
 }
 
 void StatusBarImpl::show_text(const std::string &str, bool scrolling, double duration) {
     m_textview.set_text(str, scrolling, duration);
     m_interruptible = false;
     m_text_active = true;
-    m_changedp = true;
+    m_hasChanged = true;
 }
 
 void StatusBarImpl::tick(double dtime) {
@@ -339,16 +336,16 @@ void StatusBarImpl::tick(double dtime) {
     if ((player * 12 != playerImage) && (playerImageDuration > 0.1)) {
         playerImage = (playerImage + 1) % 24;
         playerImageDuration = 0;
-        m_changedp = true;
+        m_hasChanged = true;
     }
 
     // Update text display
     if (m_text_active) {
         m_textview.tick(dtime);
-        m_changedp = m_changedp || m_textview.has_changed();
+        m_hasChanged = m_hasChanged || m_textview.has_changed();
         if (m_textview.has_finished()) {
             m_text_active = false;
-            m_changedp = true;
+            m_hasChanged = true;
         }
     }
 }
@@ -357,7 +354,7 @@ void StatusBarImpl::new_world() {
     m_models.clear();
     m_leveltime = 0;
     m_text_active = false;
-    m_changedp = true;
+    m_hasChanged = true;
     player = enigma::YIN;
     playerImage = 0;
     playerImageDuration = 0;
@@ -379,14 +376,14 @@ TextDisplay::TextDisplay(Font &f)
     const VMInfo *vminfo = video_engine->GetInfo();
     area = vminfo->sb_textarea;
     time = maxtime = 0;
-    // Note: "scrollspeed" is not yet initialised with
+    // Note: "scrollspeed" is not yet initialized with
     //   display::GetTextSpeed() * FACTOR_TextSpeed but a
     //   default value instead, because Application State
     //   Manager has not been initialised at this point
     //   yet: This would crash.
 }
 
-void TextDisplay::set_text(const string &t, bool scrolling, double duration) {
+void TextDisplay::set_text(const std::string &t, bool scrolling, double duration) {
     text = t;
     textsurface = font.render(text);
     pingpong = false;
@@ -398,7 +395,7 @@ void TextDisplay::set_text(const string &t, bool scrolling, double duration) {
             xoff = -area.w;
             scrollspeed = display::GetTextSpeed() * FACTOR_TextSpeed;
         } else {
-            // Showscroll mode: first show string then scoll it out
+            // Showscroll mode: first show the string, then scroll it out
             showscroll = true;
             scrollspeed = 0;
             if (area.w < textsurface->width()) {
@@ -509,7 +506,7 @@ void DisplayEngine::move_offset(const ecl::V2 &off) {
 }
 
 /*! Scroll the screen contents and mark the newly exposed regions for
-  redraw.  This method assumes that the screen contents were not
+  redrawing.  This method assumes that the screen contents were not
   modified externally since the last call to update_offset(). */
 void DisplayEngine::update_offset() {
     ecl::Screen *screen = video_engine->GetScreen();
@@ -550,9 +547,9 @@ void DisplayEngine::update_offset() {
         // redraw the whole surface:
         set_offset(V2(newx / double(m_tilew), newy / double(m_tileh)));
         mark_redraw_screen();
-        // This is very ressource hungry, but only marginally slower than 
+        // This is very resource-hungry, but only marginally slower than
         // blitting first to a temporary surface, and then back to the
-        // video screen. Best solution would be to have two surfaces to
+        // video screen. The best solution would be to have two surfaces to
         // blit to in class Screen, and smooth scrolling would alternate
         // between these; or to keep the whole level in one surface and
         // blit from there to the screen.
@@ -595,10 +592,10 @@ void DisplayEngine::video_to_screen(int x, int y, int *xx, int *yy) {
     *yy = y - m_screenoffset[1] + get_area().y;
 }
 
-/* Calculate the smallest rectangle `s' in world space aligned to
-   tiles that contains a certain rectangle `r' in video space.  This
+/* Calculate the smallest rectangle 's' in world space aligned to
+   tiles that contains a certain rectangle 'r' in video space.  This
    function is used for calculating the region that needs to be
-   updated when a sprite with extension `r' is moved on the screen. */
+   updated when a sprite with extension 'r' is moved on the screen. */
 void DisplayEngine::video_to_world(const ecl::Rect &r, Rect &s) {
     dRect dr(r.x, r.y, r.w, r.h);
     s = round_grid(dr, get_tilew(), get_tileh());
@@ -644,7 +641,7 @@ void DisplayEngine::mark_redraw_screen() {
 void DisplayEngine::draw_all(ecl::GC &gc) {
     WorldArea wa = screen_to_world(get_area());
 
-    // Fill screen area not covered by world
+    // Fill screen the area not covered by world
     {
         RectList rl;
         rl.push_back(get_area());
@@ -733,17 +730,16 @@ void ModelLayer::maybe_redraw_model(Model *m, bool immediately) {
 }
 
 void ModelLayer::activate(Model *m) {
-    list<Model *> &am = m_active_models_new;
-    am.push_back(m);
+    m_active_models_new.push_back(m);
 }
 
 void ModelLayer::deactivate(Model *m) {
-    list<Model *> &am = m_active_models;
-    auto i = find(am.begin(), am.end(), m);
-    if (i == am.end()) {
+    std::list<Model *> &am = m_active_models;
+    auto it = find(am.begin(), am.end(), m);
+    if (it == am.end()) {
         m_active_models_new.remove(m);
     } else {
-        *i = nullptr;
+        *it = nullptr;
     }
 }
 
@@ -762,9 +758,9 @@ void ModelLayer::tick(double dtime) {
     am.splice(am.end(), m_active_models_new);
 
     // for_each does not work; animation may remove itself during a tick. This
-    // may happen for example when a model callback decides to replace the old
-    // model by another one.
-    for (ModelList::iterator i = am.begin(); i != am.end(); ++i) {
+    // may happen, for example, when a model callback decides to replace the old
+    // model with another one.
+    for (auto i = am.begin(); i != am.end(); ++i) {
         if (Model *m = *i) {
             m->tick(dtime);
 
@@ -781,8 +777,7 @@ void ModelLayer::tick(double dtime) {
 DL_Grid::DL_Grid(int redrawsize) : m_models(0, 0), m_redrawsize(redrawsize) {
 }
 
-DL_Grid::~DL_Grid() {
-}
+DL_Grid::~DL_Grid() = default;
 
 void DL_Grid::new_world(int w, int h) {
     ModelLayer::new_world(w, h);
@@ -1105,10 +1100,10 @@ void DL_Lines::draw_onepass(ecl::GC &gc) {
     }
 }
 
-/* Mark the screen region occupied by a rubber band for redraw.
-   Problem is: what region is that exactly?  What pixels on the screen
+/* Mark the screen region occupied by a rubber band for redrawing.
+   The problem is: what region is that exactly?  What pixels on the screen
    will the line rasterizer touch?  Hard to tell, especially when
-   anti-aliasing is used.
+   antialiasing is used.
 
    This function constructs a list of rectangles that completely
    enclose the line by subdividing the line into n segments and
@@ -1117,16 +1112,16 @@ void DL_Lines::draw_onepass(ecl::GC &gc) {
    need to be enlarged by a small amount to make them overlap a bit.
 
    The number n of subdivision depends on the length of the line.  n=1
-   would of course do, but we want to redraw as little of the screen
+   would, of course, do, but we want to redraw as little of the screen
    as possible.  `n' is therefore chosen in such a way that the line
-   is covered with boxes of size not larger than `maxboxsize'.
+   is covered with boxes of size not larger than 'maxboxsize'.
 */
 void DL_Lines::mark_redraw_line(const Line &r) {
     const double maxboxsize = 0.5;
 
     double w0 = r.start[0] - r.end[0];
     double h0 = r.start[1] - r.end[1];
-    int n = int(max(abs(w0), abs(h0)) / maxboxsize) + 1;
+    int n = int(std::max(abs(w0), abs(h0)) / maxboxsize) + 1;
 
     double w = w0 / n;
     double h = h0 / n;
@@ -1212,8 +1207,8 @@ void RubberHandle::kill() {
 //----------------------------------------------------------------------
 
 /*
-** Drawing the shadows is a lot more difficult than drawing any of the
-** other layers.  There are a couple of reasons for this:
+** Drawing the shadows is more difficult than drawing any of the
+** other layers. There are a couple of reasons for this:
 **
 ** 1. Both Stones and actors cast a shadow.  Not a real problem, but
 **    it makes the implementation more complex.
@@ -1230,15 +1225,15 @@ void RubberHandle::kill() {
 **    avoid the buffer if possible.
 **
 ** So, how do we approach these problems? We handle stone and actor
-** shadows separately: The stone shadows do not change very often so
+** shadows separately: The stone shadows do not change very often, so
 ** it's easy to cache them, one tile at a time.  If there is no actor
-** on this tile, we can blit the cached image directly to the screen,
-** otherwise we have no choice but to use the buffer.
+** on this tile, we can blit the cached image directly to the screen.
+** Otherwise, we have no choice but to use the buffer.
 **
 ** The remaining problem is the shadow cache.  The easiest solution
 ** would be to use one huge image for the whole level and keep it in
 ** memory all the time.  This would consume roughly 20mb for a 100x100
-** landscape, which is of course excessive, considering that there are
+** landscape, which is, of course, excessive, considering that there are
 ** rarely more than 40 different shadow tiles in each landscape.
 **
 ** Instead, Enigma caches the most recently calculated shadow tiles in
@@ -1250,22 +1245,17 @@ void RubberHandle::kill() {
 namespace {
 
 struct ImageQuad {
-    Image *images[4];
+    Image* images[4];
 
-    ImageQuad() { /* do not initialize fields. */
-    }
+    ImageQuad() : images{} {}
 
-    ImageQuad(Image *i1, Image *i2, Image *i3, Image *i4) {
-        images[0] = i1;
-        images[1] = i2;
-        images[2] = i3;
-        images[3] = i4;
+    ImageQuad(Image* i1, Image* i2, Image* i3, Image* i4) : images{i1, i2, i3, i4} {}
+
+    bool operator==(const ImageQuad& q) const {
+        return images[0] == q.images[0] && images[1] == q.images[1] && images[2] == q.images[2]
+                && images[3] == q.images[3];
     }
-    bool operator==(const ImageQuad &q) {
-        return (images[0] == q.images[0] && images[1] == q.images[1] && images[2] == q.images[2] &&
-                images[3] == q.images[3]);
-    }
-    Image *operator[](int idx) { return images[idx]; }
+    Image* operator[](int idx) const { return images[idx]; }
 };
 
 // Returns true if all four models are static ImageModels; fills ImageQuad
@@ -1286,7 +1276,7 @@ bool only_static_shadows(Model *models[4], ImageQuad &quad) {
                 num_static_shadows--;
             }
         } else
-            quad.images[i] = 0;
+            quad.images[i] = nullptr;
     }
     return num_static_shadows == 4;
 }
@@ -1392,18 +1382,18 @@ void StoneShadowCache::fill_image(StoneShadow *sh, Model *models[4]) {
 }
 
 StoneShadow *StoneShadowCache::find_in_cache(const ImageQuad &images) {
-    for (auto i = m_cache.begin(); i != m_cache.end(); ++i) {
-        if ((*i)->images == images) {
-            StoneShadow *sh = (*i).get();
+    for (auto it = m_cache.begin(); it != m_cache.end(); ++it) {
+        if ((*it)->images == images) {
+            StoneShadow *sh = it->get();
             // Move entry to front of list
-            m_cache.splice(m_cache.begin(), m_cache, i);
+            m_cache.splice(m_cache.begin(), m_cache, it);
             return sh;
         }
     }
     return nullptr;
 }
 
-/* Try to lookup the shadow created by the four models in `models[]'
+/* Try to look up the shadow created by the four models in 'models[]'
    in the shadow cache. */
 StoneShadow *StoneShadowCache::retrieve(Model *models[4]) {
     StoneShadow *shadow = nullptr;
@@ -1453,8 +1443,7 @@ DL_Shadows::DL_Shadows(DL_Grid *grid, DL_Sprites *sprites)
 : m_grid(grid), m_sprites(sprites), m_cache(nullptr), shadow_ckey(0), m_hasactor(0, 0) {
 }
 
-DL_Shadows::~DL_Shadows() {
-}
+DL_Shadows::~DL_Shadows() = default;
 
 void DL_Shadows::new_world(int w, int h) {
     m_hasactor.resize(w, h);
@@ -1489,7 +1478,7 @@ bool DL_Shadows::has_actor(int x, int y) {
     return m_hasactor(x, y);
 }
 
-// Prepare the shadows layer for a redraw. This routine pre-calculates the
+// Prepare the shadow layer for redrawing. This routine pre-calculates the
 // tiles that currently are partially covered by an actor.
 void DL_Shadows::prepare_draw(const WorldArea &wa) {
     for (int i = 0; i < wa.w; ++i)
@@ -1680,20 +1669,13 @@ void CommonDisplay::set_stone(int x, int y, std::unique_ptr<Model> m) {
 // Game Display Engine
 //----------------------------------------------------------------------
 
-GameDisplay::GameDisplay(const ScreenArea &gamearea, ScreenArea inventoryarea_)
-: CommonDisplay(gamearea),
-  last_frame_time(0),
-  redraw_everything(false),
-  m_reference_point(),
-  m_follower(nullptr),
-  inventoryarea(std::move(inventoryarea_)) {
-    status_bar = new StatusBarImpl(inventoryarea);
+GameDisplay::GameDisplay(const ScreenArea& gameArea, ScreenArea inventoryArea)
+    : CommonDisplay(gameArea), last_frame_time(0), redraw_everything(false), m_follower(nullptr),
+      inventoryarea(inventoryArea) {
+    status_bar = std::make_unique<StatusBarImpl>(inventoryarea);
 }
 
-GameDisplay::~GameDisplay() {
-    delete m_follower;
-    delete status_bar;
-}
+GameDisplay::~GameDisplay() = default;
 
 void GameDisplay::tick(double dtime) {
     get_engine()->tick(dtime);
@@ -1712,56 +1694,63 @@ void GameDisplay::new_world(int w, int h) {
 }
 
 StatusBar *GameDisplay::get_status_bar() const {
-    return status_bar;
+    return status_bar.get();
 }
 
 /* -------------------- Scrolling -------------------- */
 
-void GameDisplay::set_follow_mode(FollowMode m) {
-    switch (m) {
-    case FOLLOW_NONEOLD: set_follower(nullptr); break;
-    case FOLLOW_SCROLLING: set_follower(new Follower_Scrolling(get_engine(), false)); break;
-    case FOLLOW_SCREEN: set_follower(new Follower_Screen(get_engine())); break;
-    case FOLLOW_SCREENSCROLLING:
-        set_follower(new Follower_Scrolling(get_engine(), true, 0.5, 0.5));
-        break;
-    case FOLLOW_SMOOTH: set_follower(new Follower_Smooth(get_engine()));
-    };
+void GameDisplay::set_follow_mode(FollowMode followMode) {
+    switch (followMode) {
+        case FOLLOW_NONEOLD:
+            set_follower(nullptr);
+            break;
+        case FOLLOW_SCROLLING:
+            set_follower(std::make_unique<Follower_Scrolling>(get_engine(), false));
+            break;
+        case FOLLOW_SCREEN:
+            set_follower(std::make_unique<Follower_Screen>(get_engine()));
+            break;
+        case FOLLOW_SCREENSCROLLING:
+            set_follower(std::make_unique<Follower_Scrolling>(get_engine(), true, 0.5, 0.5));
+            break;
+        case FOLLOW_SMOOTH:
+            set_follower(std::make_unique<Follower_Smooth>(get_engine()));
+    }
     get_engine()->mark_redraw_screen();
 }
 
 void GameDisplay::updateFollowMode() {
     if (!server::FollowGrid) {
-        set_follower(new Follower_Smooth(get_engine()));
+        set_follower(std::make_unique<Follower_Smooth>(get_engine()));
     } else if (server::FollowMethod == FOLLOW_NONE) {
         set_follower(nullptr);
     } else if (server::FollowMethod == FOLLOW_FLIP) {
         if (server::FollowThreshold.getType() == Value::DOUBLE) {
-            set_follower(new Follower_Screen(get_engine(), server::FollowThreshold.toDouble(),
-                    server::FollowThreshold.toDouble()));
+            set_follower(std::make_unique<Follower_Screen>(get_engine(),
+                    server::FollowThreshold.toDouble(), server::FollowThreshold.toDouble()));
         } else {
-            set_follower(new Follower_Screen(get_engine(), server::FollowThreshold.toVec()[0],
-                    server::FollowThreshold.toVec()[1]));
+            set_follower(std::make_unique<Follower_Screen>(get_engine(),
+                    server::FollowThreshold.toVec()[0], server::FollowThreshold.toVec()[1]));
         }
     } else if (server::FollowThreshold.getType() == Value::DOUBLE
             && server::FollowThreshold.toDouble() == 0.5
             && server::FollowAction == Value(ecl::V2(9.5, 6))) {
-        set_follower(new Follower_Scrolling(get_engine(), false));
+        set_follower(std::make_unique<Follower_Scrolling>(get_engine(), false));
     } else if (server::FollowThreshold.getType() == Value::DOUBLE) {
-        set_follower(new Follower_Scrolling(get_engine(), true, server::FollowThreshold.toDouble(),
-                server::FollowThreshold.toDouble()));
+        set_follower(std::make_unique<Follower_Scrolling>(get_engine(), true,
+                server::FollowThreshold.toDouble(), server::FollowThreshold.toDouble()));
     } else {
-        set_follower(new Follower_Scrolling(get_engine(), true,
+        set_follower(std::make_unique<Follower_Scrolling>(get_engine(), true,
                 ecl::V2(server::FollowThreshold.toVec())[0],
                 ecl::V2(server::FollowThreshold.toVec())[1]));
     }
     get_engine()->mark_redraw_screen();
 }
 
-void GameDisplay::set_follower(Follower *f) {
-    delete m_follower;
-    if ((m_follower = f))
-        follow_center();
+void GameDisplay::set_follower(std::unique_ptr<Follower> f) {
+    m_follower = std::move(f);
+    if (m_follower)
+        m_follower->center(m_reference_point);
 }
 
 void GameDisplay::follow_center() {
@@ -1910,12 +1899,10 @@ void display::GetReferencePointCoordinates(int *x, int *y) {
 }
 
 Model* display::SetModel(const GridLoc &l, std::unique_ptr<Model> m) {
-    Model *ptr = m.get();
-    gamedpy->set_model(l, std::move(m));
-    return ptr;
+    return gamedpy->set_model(l, std::move(m));
 }
 
-Model* display::SetModel(const GridLoc &l, const string &modelname) {
+Model* display::SetModel(const GridLoc &l, const std::string &modelname) {
     return SetModel(l, MakeModel(modelname));
 }
 
@@ -1963,9 +1950,9 @@ const Rect &display::GetGameArea() {
     return gamedpy->get_engine()->get_area();
 }
 
-RubberHandle display::AddRubber(const V2 &p1, const V2 &p2, unsigned short rc, unsigned short gc,
-                                unsigned short bc, bool isThick) {
-    return gamedpy->add_line(p1, p2, rc, gc, bc, isThick);
+RubberHandle display::AddRubber(const V2& p1, const V2& p2, unsigned short red,
+        unsigned short green, unsigned short blue, bool isThick) {
+    return gamedpy->add_line(p1, p2, red, green, blue, isThick);
 }
 
 void display::SetTextSpeed(int newspeed) {
@@ -1979,6 +1966,6 @@ int display::GetTextSpeed() {
         // Text Speed has not been set yet. Use default.
         SetTextSpeed(DEFAULT_TextSpeed);
         return DEFAULT_TextSpeed;
-    } else
-        return speed;
+    }
+    return speed;
 }

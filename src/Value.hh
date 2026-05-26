@@ -39,29 +39,29 @@ namespace enigma {
     /**
      * A flexible container for various types of data. This class is one
      * of the central Enigma concepts. It is used for Object attributes,
-     * for passing arguments and return values in messages and for exchanging
-     * values with LUA code.
+     * for passing arguments and return values in messages, and for exchanging
+     * values with Lua code.
      * 
-     * Object attributes besides the common floor, item, stone, actor traits
-     * are usually very specific and only few objects will be aware of
-     * them. The Value provides a common container, that allows all objects
+     * Object attributes aside from the common floor, item, stone, actor traits
+     * are usually very specific, and only few objects will be aware of
+     * them. The Value provides a common container that allows all objects
      * and the world to pass these attributes without any further knowledge.
      * 
-     * Instances of Value can be passed to and from the type free LUA language.
+     * Instances of Value can be passed to and from Lua code.
      * Objects can be configured in their attributes and questioned about states
      * via attributes.
      * 
-     * Value are converted to required types as far as possible and in a
-     * LUA compatible manner.
+     * Values are converted to required types as far as possible and in a
+     * Lua-compatible manner.
      * 
-     * Bool Values can not be assigned directly to a bool variable. Use the
+     * Bool Values cannot be assigned directly to a bool variable. Use the
      * to_bool() method for retrieving proper bool values.
      * 
      * A special Value type called "DEFAULT" exists within the C++ engine. It
      * describes a not explicitly set Value. The receiver of this Value should use
      * or request the default behaviour. "DEFAULT" Values are the only Values
      * that are converted to bool "false". All other Values convert to bool 
-     * "true". Thus a value can be checked for existance by evaluating it as a
+     * "true". Thus, a value can be checked for existence by evaluating it as a
      * bool. This remains true even for Values that contain bool content! A
      * common pattern for handling Values is:
      * 
@@ -107,26 +107,28 @@ namespace enigma {
                                        ///< given string is duplicated
         Value(int i);                  ///< Constructor for DOUBLE value
         Value(bool b);                 ///< Constructor for BOOL value
-        Value(Object *obj);            ///< Constructor for OBJECT value that properly
+        Value(const Object *obj);            ///< Constructor for OBJECT value that properly
                                        ///< represents a persistent reference to an object
-        Value(const ObjectList &aList);       ///< Constructor for OBJECT value that properly
+        Value(const ObjectList &aList);///< Constructor for OBJECT value that properly
                                        ///< represents a set of objects
-        Value(TokenList aList);        ///< Constructor for TOKENS value that properly
+        Value(const TokenList& tokenList);    ///< Constructor for TOKENS value that properly
                                        ///< represents a list of tokens
         Value(ecl::V2 pos);            ///< Constructor for POSITION value
         Value(GridPos gpos);           ///< Constructor for POSITION value
-        Value(Type t);                 ///< Constructor for a given type. The
+        explicit Value(Type t);        ///< Constructor for a given type. The
                                        ///< value defaults to 0.0 or ""
         ~Value();
 
-        Value(const Value& v);                 ///< Explicit copy constructor that
-                                               ///< performs a deep copy
-        Value& operator=(const Value& v);      ///< Explicit copy assignment that
-                                               ///< performs a deep copy
+        /// Explicit copy constructor that performs a deep copy
+        Value(const Value& v);
+
+        /// Explicit copy assignment that performs a deep copy
+        Value& operator=(const Value& v);
+
         /**
-         * Compare values in type and value. This compare is a LUA like
+         * Compare values in type and value. This comparison is a Lua-like
          * compare of values. Note that a DOUBLE value of 1.0 does not equal
-         * a STRING value of "1.0" even though both values are seamless casted
+         * a STRING value of "1.0" even though both values are seamlessly cast
          * to the same double and result in the same numerical calculation results.
          * 
          * If you want to compare two values that express numerical data independent
@@ -172,8 +174,8 @@ namespace enigma {
         int toInt() const;
 
         /**
-         * Conversion of a value to an object reference. All values besides valid
-         * object values default to a nullptr.
+         * Convert a value to an object reference. Invalid object references
+         * return nullptr.
          */
         Object *toObject() const;
         
@@ -202,22 +204,22 @@ namespace enigma {
                                      ///< the given string
 
         Type    getType() const;               ///< Returns the current value type
-        double  get_double() const throw();     ///< Returns the current double value without
+        double  getDouble() const;            ///< Returns the current double value without
                                                 ///< any conversion if it is a DOUBLE.
-                                                ///< On type mismatch a XLevelRuntime is thrown
-        const char* get_string() const throw(); ///< Returns the current string value without
+                                                ///< On type mismatch, an XLevelRuntime is thrown
+        const char* getString() const;        ///< Returns the current string value without
                                                 ///< any conversion if it is a STRING.
-                                                ///< On type mismatch a XLevelRuntime is thrown
+                                                ///< On type mismatch, an XLevelRuntime is thrown
         bool isDefault() const;                 ///< Returns true if type is DEFAULT
         
         /**
          * Convert a value to a string. Numerical values are converted to a string as
-         * is done by LUA. All other values default to an empty string.
+         * is done by Lua. All other values default to an empty string.
          */
         std::string toString() const;
         
         /**
-         * Returns the LUA compatible boolean representation of the value.
+         * Returns the Lua-compatible boolean representation of the value.
          * <code>false</code> is returned for a NIL value and <code>true</code>
          * for any other value.
          */
@@ -226,7 +228,7 @@ namespace enigma {
         /**
          * Returns the value converted to a vector position with a centering of all
          * grid position type values. GRIDPOS type values as well as all positions of
-         * GridObject's will be return as grid centered vector positions, while true
+         * GridObject's will be returned as grid-centered vector positions, while true
          * vector position values and positions of Actor's will be returned as is.
          * Other values will return a position of (-1, -1) indicating a false position 
          */
@@ -247,7 +249,7 @@ namespace enigma {
         union {
             double dval[2];
             char* str;
-        } val;
+        } val{};
     };
 
     Direction   to_direction (const Value &v);  ///< Casting of value to Direction

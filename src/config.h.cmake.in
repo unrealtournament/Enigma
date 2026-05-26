@@ -1,3 +1,4 @@
 /* */
 #define PACKAGE_VERSION "@Enigma_VERSION_MAJOR@.@Enigma_VERSION_MINOR@"
+#define ENABLE_ASSERT
 #define HAVE_DIRENT_H

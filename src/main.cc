@@ -937,7 +937,7 @@ void Application::shutdown()
     }
     // now we shut down SDL - no error reports will be possible!
     app.errorInit = false;
-    video_engine->Shutdown();
+    VideoShutdown();
     sound::Shutdown();
     enet_deinitialize();
     ShutdownCurl();

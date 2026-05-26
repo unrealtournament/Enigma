@@ -20,7 +20,6 @@
 #include "player.hh"
 #include "Inventory.hh"
 #include "display.hh"
-#include "errors.hh"
 #include "SoundEffectManager.hh"
 #include "client.hh"
 #include "server.hh"
@@ -124,7 +123,7 @@ void LevelLocalData::reset() {
 namespace {
 
 LevelLocalData leveldat;
-std::vector<PlayerInfo> players(2);  // this currently has always size 2
+std::vector<PlayerInfo> players(2);  // this currently always has size 2
 unsigned icurrent_player = 0;
 std::vector<Actor *> unassignedActors;
 
@@ -263,7 +262,7 @@ unsigned player::NumberOfRealPlayers() {
 }
 
 /*! Sets respawn positions for black or white actors. */
-void player::SetRespawnPositions(GridPos pos, Value color) {
+void player::SetRespawnPositions(GridPos pos, const Value& color) {
     ecl::V2 center = pos.center();
 
     for (auto &player : players) {
@@ -277,7 +276,7 @@ void player::SetRespawnPositions(GridPos pos, Value color) {
 }
 
 /*! Remove respawn positions for black or white actors */
-void player::RemoveRespawnPositions(Value color) {
+void player::RemoveRespawnPositions(const Value& color) {
     for (auto &player : players) {
         for (auto &actor : player.actors) {
             if (Value ac = actor->getAttr("color")) {
@@ -394,20 +393,20 @@ void player::CheckDeadActors() {
                 if (pl >= 0 && a->controlled_by(pl) && a->isSteerable()) {
                     has_living_actor = true;
                 }
-                // count number of alive actors per kind
+                // count number of living actors per kind
                 if (essential == 0 || essential == 2)
                     ++essMap[essId];
             } else {
                 // player is dead and could not resurrect
                 if (essential == 1) {
-                    // actor is personnally essential but dead
+                    // actor is essential but dead
                     new_game = true;
                 }
             }
         }
-        // check if for any kind we have less living actors as required
-        for (itEss = essMap.begin(); itEss != essMap.end(); itEss++) {
-            if ((*itEss).second < 0)
+        // check if for any kind we have fewer living actors as required
+        for (itEss = essMap.begin(); itEss != essMap.end(); ++itEss) {
+            if (itEss->second < 0)
                 new_game = true;
         }
 
@@ -524,7 +523,7 @@ void player::PickupItem(Actor *a, GridPos p) {
     }
 }
 
-bool player::PickupAsItem(Actor *a, GridObject *obj, std::string kind) {
+bool player::PickupAsItem(Actor *a, GridObject *obj, const std::string& kind) {
     if (Item *item = MakeItem(kind.c_str())) {
         if (Inventory *inv = MayPickup(a, item, true)) {
             inv->add_item(item);
@@ -547,9 +546,8 @@ void player::ActivateFirstItem() {
         Actor *ac = nullptr;
         GridPos p;
         bool can_drop_item = false;
-        std::vector<Actor *>::iterator itr;
-        for (itr = players[icurrent_player].actors.begin();
-             itr != players[icurrent_player].actors.end() && ac == nullptr; itr++) {
+        for (auto itr = players[icurrent_player].actors.begin();
+             itr != players[icurrent_player].actors.end() && ac == nullptr; ++itr) {
             if (!(*itr)->is_dead()) {
                 ac = *itr;
                 p = GridPos(ac->get_pos());

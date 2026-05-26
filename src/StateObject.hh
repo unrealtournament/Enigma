@@ -25,41 +25,44 @@ namespace enigma {
 
     /** 
      * The base class for all gaming objects that have different states that
-     * can be toggled by means of messages, actions or attribute settings.
+     * can be toggled through messages, actions, or attribute settings.
      * This class is the successor of the former OnOffStone and OnOffItem.
-     * Being a superclass of all gaming objects it provides a common interface
-     * for the handling of states. The state is not limited to 2 states like
-     * the common on/off and open/close. Arbitrary number of external states 
-     * are supported. E.g. FourSwitches have 4 states that describe the current
-     * direction.<p>
-     * But the external state - the logical gaming state used in level lua code -
+     * Being a superclass of all gaming objects, it provides a common interface
+     * for the handling of states. The state is not limited to two states
+     * such as on/off or open/close. An arbitrary number of external states
+     * is supported. For example. FourSwitches have four states that describe the current
+     * direction.
+     *
+     * But the external state - the logical gaming state used in level Lua code -
      * is often just a small subset of states that an object has to distinguish.
-     * Additional display related states, timer related states and internal
-     * gaming logic states require sometimes a much more complex state machine.
-     * <p>
+     * Additional display-related states, timer-related states, and internal
+     * gaming logic states sometimes require a much more complex state machine.
+     *
      * The maximum set of states that we call the internal state of a final
      * gaming object class should be stored in StateObjects state ivar. It is
      * the responsibility of StateObject to guarantee the persistence and
-     * cloning of the internal state.<p>
+     * cloning of the internal state.
+     *
      * StateObject provides the common interface for state management with hooks
      * for all needs like conversion of external to and from internal states,
-     * common messages like toggle, signal, on, off, open, close and checked
-     * setter and getter for the state as a pseudo attribute.<p>
-     * Furtheron its default implementation suits the needs a simple 2 state
+     * common messages like toggle, signal, on, off, open, close, and checked
+     * setters and getters for the state as a pseudo attribute.
+     *
+     * The default implementation suits the needs of a simple two-state
      * on/off or open/close object. More complex stated objects will need to
      * override the hook methods to their needs.
      */
     class StateObject : public Object {
     public:
         StateObject();
-        StateObject(const char * kind);
+        explicit StateObject(const char* kind);
         
         // Object Interface
         
         /**
          * Handle the messages "toggle", "signal", "on", "off", "open", "close".
          * Any subclass should forward these messages to its superclass without
-         * interfering these messages. Per default these messages will be blocked
+         * interfering with these messages. Per default, these messages will be blocked
          * by SendMessage() if they are not explicitly declared for the final
          * subclass in objects.xml.
          */
@@ -84,11 +87,11 @@ namespace enigma {
          * The storage location of the internal state. This ivar is logically
          * owned by the final discrete object class which will define in most
          * cases an enum called iState that lists all states. All intermediate
-         * classes between StateObject and the state owning subclass will just
+         * classes between StateObject and the state-owning subclass will just
          * be aware of the external state that they access via the setter and
          * getter methods. Just these two methods in their StateObject default
          * implementation will directly access this ivar (besides the gaming
-         * logic indepent persistence and cloning methods). 
+         * logic independent persistence and cloning methods).
          */
         int state;
         

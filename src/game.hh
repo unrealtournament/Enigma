@@ -21,8 +21,7 @@
 #include "ecl_video.hh"
 #include "lev/Proxy.hh"
 
-namespace enigma {
-namespace game {
+namespace enigma::game {
 
 void ResetGameTimer();
 
@@ -31,7 +30,7 @@ void StartGame();
 // Draw a level preview into video::BackBuffer(). Return true if successful.
 bool DrawLevelPreview(ecl::GC &, enigma::lev::Proxy *levelProxy);
 
-}  // namespace game
-}  // namespace enigma
+} // namespace enigma::game
+
 
 #endif

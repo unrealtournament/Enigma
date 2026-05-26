@@ -20,8 +20,8 @@ typedef std::list<Model *> ModelList;
 
 class Window {
 public:
-    Window() {}
-    Window(ScreenArea area) : m_area(std::move(area)) {}
+    Window() = default;
+    explicit Window(ScreenArea area) : m_area(area) {}
 
     const ScreenArea &get_area() const { return m_area; }
 
@@ -31,7 +31,7 @@ private:
 
 class TextDisplay {
 public:
-    TextDisplay(ecl::Font &f);
+    explicit TextDisplay(ecl::Font &f);
 
     void set_text(const std::string &t, bool scrolling, double duration = -1);
 
@@ -56,10 +56,10 @@ private:
 
 class StatusBarImpl : public StatusBar, public Window {
 public:
-    StatusBarImpl(const ScreenArea &area);
-    ~StatusBarImpl();
+    explicit StatusBarImpl(const ScreenArea &area);
+    ~StatusBarImpl() override;
 
-    bool has_changed() const { return m_changedp; }
+    bool has_changed() const { return m_hasChanged; }
     void redraw(ecl::GC &gc, const ScreenArea &r);
     void tick(double dtime);
     void new_world();
@@ -82,13 +82,13 @@ private:
     ScreenArea m_itemarea;
     std::vector<std::unique_ptr<Model>> m_models;
     enigma::Player player;
-    bool m_changedp;
+    bool m_hasChanged;
     TextDisplay m_textview;
 
     double m_leveltime;
-    bool m_showtime_p;
+    bool m_showTime;
     int m_counter;
-    bool m_showcounter_p;
+    bool m_showCounter;
     bool m_interruptible;  // Current text message may be interrupted
     bool m_text_active;
     bool cMode;  // collision mode flag

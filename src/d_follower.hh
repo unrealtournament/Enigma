@@ -27,17 +27,17 @@ class DisplayEngine;
 // Base class for different kinds of sprite followers.
 class Follower {
 public:
-    Follower(DisplayEngine *e);
-    virtual ~Follower() {}
+    explicit Follower(DisplayEngine *e);
+    virtual ~Follower() = default;
 
     // This function is called by the display engine during each screen
-    // update. 'dtime' is the time since the last frame in seconds and point
+    // update. 'dtime' is the elapsed time since the last frame in seconds, and 'point'
     // is the position of the sprite that is being followed.
     virtual void tick(double dtime, const ecl::V2 &point) = 0;
 
     virtual void center(const ecl::V2 &point);
 
-    void set_boundary(double b) {
+    virtual void set_boundary(double b) {
         m_boundary_x = b;
         m_boundary_y = b;
     }
@@ -47,7 +47,6 @@ protected:
     bool set_offset(ecl::V2 offs);
     double get_hoff() const;
     double get_voff() const;
-    ecl::V2 get_scrollpos(const ecl::V2 &point);
 
     double m_boundary_x;
     double m_boundary_y;
@@ -60,7 +59,7 @@ private:
 // reaches the border of the current screen.
 class Follower_Screen : public Follower {
 public:
-    Follower_Screen(DisplayEngine *e, double borderx = 0.5, double bordery = 0.5);
+    explicit Follower_Screen(DisplayEngine *e, double borderx = 0.5, double bordery = 0.5);
     void tick(double dtime, const ecl::V2 &point) override;
 };
 
@@ -85,10 +84,10 @@ private:
 // Follows a sprite by keeping it centered on the screen at all times.
 class Follower_Smooth : public Follower {
 public:
-    Follower_Smooth(DisplayEngine *e);
+    explicit Follower_Smooth(DisplayEngine *e);
     void tick(double time, const ecl::V2 &point) override;
     void center(const ecl::V2 &point) override;
-    virtual void set_boundary(double /*b*/) {}
+    void set_boundary(double /*b*/) override {}
 
     ecl::V2 calc_offset(const ecl::V2 &point);
 };

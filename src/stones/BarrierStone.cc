@@ -19,9 +19,12 @@
  */
 
 #include "stones/BarrierStone.hh"
+
 #include "errors.hh"
-#include "player.hh"
 #include "Inventory.hh"
+#include "player.hh"
+
+#include <cassert>
 
 namespace enigma {
     

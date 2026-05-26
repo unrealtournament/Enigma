@@ -19,7 +19,7 @@
 #define OPTIONS_HH
 
 /*
-** Options are ``persistent'' settings that can saved to a Lua file or
+** Options are "persistent" settings that can saved to a Lua file or
 ** loaded from it.  This file defined the C++ interface to options;
 ** loading and saving are handled by Lua functions defined in
 ** `startup.lua'.
@@ -27,8 +27,7 @@
 
 #include <ctime>
 
-namespace enigma {
-namespace options {
+namespace enigma::options {
 
 /* -------------------- LevelStatus -------------------- */
 
@@ -99,7 +98,7 @@ namespace options {
     /*! Try to load the user's configuration file.  Returns true if
       successful. */
     bool Load ();
-}  // namespace options
-}  // namespace enigma
+} // namespace enigma::options
+
 
 #endif
