@@ -36,25 +36,18 @@ using namespace oxyd;
 
 /* -------------------- Oxyd 1 level pack -------------------- */
 
-LP_Oxyd1::LP_Oxyd1 (DatFile *dat, bool twoplayers)
-: LevelPack_Oxyd (OxydVersion_Oxyd1, dat,
-                  twoplayers ? 100 : 0,
-                  twoplayers ? 199 : 99,
-                  twoplayers)
-{
+LP_Oxyd1::LP_Oxyd1(OxydLib::DatFile* dat, bool twoplayers)
+    : LevelPack_Oxyd(OxydLib::OxydVersion_Oxyd1, dat, twoplayers ? 100 : 0, twoplayers ? 199 : 99,
+              twoplayers) {
 }
 
-void LP_Oxyd1::load (const OxydLib::Level &level)
-{
-    LoaderConfig c (needs_twoplayers(),
-                    get_gamemode(),
-                    oxyd1_floor_map,
-                    oxyd1_item_map,
-                    oxyd1_stone_map);
-    c.id_timer  = 0x33;
+void LP_Oxyd1::load(const OxydLib::Level& level) {
+    LoaderConfig c(
+            needs_twoplayers(), get_gamemode(), oxyd1_floor_map, oxyd1_item_map, oxyd1_stone_map);
+    c.id_timer = 0x33;
     c.id_laser1 = 0x44;
 
-    OxydLoader (level, c).load();
+    OxydLoader(level, c).load();
 
     if (server::GetDifficulty() == DIFFICULTY_EASY)
         server::WaterSinkSpeed = 100.0;
@@ -64,7 +57,7 @@ void LP_Oxyd1::load (const OxydLib::Level &level)
 
 #endif // PLAIN_SPEC_ONLY
 // only tables following!
-
+namespace enigma {
 const char *oxyd::oxyd1_floor_map[256] = {
     "fl_abyss",                 // Oxyd1 floor 0x00
     "fl_gray",                  // Oxyd1 floor 0x01
@@ -404,3 +397,5 @@ const char *oxyd::oxyd1_item_map[256] = {
     "it_drop",                    // 0x60    drop (turns actor into rotor)
     // codes >= 0x61 are unused
 };
+
+} // namespace enigma

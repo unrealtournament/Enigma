@@ -26,11 +26,11 @@
 #include "DatFile.h"
 #include "Level.h"
 
-#include "EnigmaNames.cpp"
+#include "EnigmaNames.h"
 
 using namespace std;
 using namespace OxydLib;
-using namespace enigma_names;
+using enigma_names::Mapping;
 
 void usage()
 {

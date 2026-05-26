@@ -21,15 +21,16 @@
 
 #include "oxydlib/OxydVersion.h"
 
-namespace oxyd
-{
-    void Init(bool searchDAT);
-    void Shutdown();
+namespace enigma::oxyd {
 
-    bool FoundOxyd (OxydLib::OxydVersion ver);
+void Init(bool searchDAT);
+void Shutdown();
 
-    // Initialise an oxyd sound set
-    bool InitOxydSoundSet(OxydLib::OxydVersion ver);
-}
+bool FoundOxyd(OxydLib::OxydVersion ver);
+
+// Initialize an oxyd sound set
+bool InitOxydSoundSet(OxydLib::OxydVersion ver);
+
+} // namespace enigma::oxyd
 
 #endif

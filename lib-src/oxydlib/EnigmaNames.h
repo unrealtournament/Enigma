@@ -18,42 +18,42 @@
 //                                                                          //
 // ======================================================================== //
 #ifndef ENIGMANAMES_H
-#define ENIGMANAMES_H
+    #define ENIGMANAMES_H
+    #include "OxydVersion.h"
 
-namespace oxyd { // "faked" namespace - is not part of oxyd namespace in enigma itself
-    extern const char *oxyd1_item_map[];
-    extern const char *oxyd1_floor_map[];
-    extern const char *oxyd1_stone_map[];
+namespace enigma::oxyd {
+extern const char* oxyd1_item_map[];
+extern const char* oxyd1_floor_map[];
+extern const char* oxyd1_stone_map[];
 
-    extern const char *peroxyd_item_map[];
-    extern const char *peroxyd_floor_map[];
-    extern const char *peroxyd_stone_map[];
+extern const char* peroxyd_item_map[];
+extern const char* peroxyd_floor_map[];
+extern const char* peroxyd_stone_map[];
 
-    extern const char *oxydmag_item_map[];
-    extern const char *oxydmag_floor_map[];
-    extern const char *oxydmag_stone_map[];
+extern const char* oxydmag_item_map[];
+extern const char* oxydmag_floor_map[];
+extern const char* oxydmag_stone_map[];
 
-    extern const char *oxydextra_item_map[];
-    extern const char *oxydextra_floor_map[];
-    extern const char *oxydextra_stone_map[];
-};
+extern const char* oxydextra_item_map[];
+extern const char* oxydextra_floor_map[];
+extern const char* oxydextra_stone_map[];
+}; // namespace enigma::oxyd
 
 namespace enigma_names {
-    class Mapping {
-        const char **item_map;
-        const char **floor_map;
-        const char **stone_map;
+class Mapping {
+    const char** item_map;
+    const char** floor_map;
+    const char** stone_map;
 
-    public:
-        Mapping(OxydLib::OxydVersion version);
+public:
+    Mapping(OxydLib::OxydVersion version);
 
-        const char* floorName(int idx) const { return floor_map[idx]; }
-        const char* itemName(int idx) const { return item_map[idx]; }
-        const char* stoneName(int idx) const { return stone_map[idx]; }
-    };
+    const char* floorName(int idx) const { return floor_map[idx]; }
+    const char* itemName(int idx) const { return item_map[idx]; }
+    const char* stoneName(int idx) const { return stone_map[idx]; }
 };
+}; // namespace enigma_names
 
 #else
-#error EnigmaNames.h included twice
+    #error EnigmaNames.h included twice
 #endif // ENIGMANAMES_H
-

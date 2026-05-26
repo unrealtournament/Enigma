@@ -33,6 +33,7 @@ using namespace enigma;
 #endif // PLAIN_SPEC_ONLY
 // only tables following!
 
+namespace enigma {
 const char *oxyd::oxydmag_floor_map[256] = {
     "fl_abyss",                 // OxydMagnum floor 0x00
     "fl_gray",                  // OxydMagnum floor 0x01 (common was 'fl_gray')
@@ -396,3 +397,5 @@ const char* oxyd::oxydmag_item_map[256] = {
     "it_puller_e",      // OxydMagnum item 0x67
     // codes >= 0x68 are unused
 };
+
+} // namespace enigma

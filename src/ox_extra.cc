@@ -32,7 +32,7 @@ using namespace enigma;
 
 #endif // PLAIN_SPEC_ONLY
 // only tables following!
-
+namespace enigma {
 const char *oxyd::oxydextra_floor_map[256] = {
     "fl_abyss",          // OxydExtra floor 0x00
     "fl_gray",           // OxydExtra floor 0x01
@@ -377,3 +377,4 @@ const char* oxyd::oxydextra_item_map[256] = {
     "it_banana",             // OxydExtra item 0x42
     // codes >= 0x43 are unused
 };
+} // namespace enigma

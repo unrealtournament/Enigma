@@ -19,13 +19,10 @@
 #ifndef OXYD_INTERNAL_HH
 #define OXYD_INTERNAL_HH
 
-#include "world.hh"
-
-#include "oxydlib/DatFile.h"
-#include "oxydlib/FileUtils.h"
-#include "oxydlib/Level.h"
-#include "lev/Proxy.hh"
 #include "lev/Index.hh"
+#include "oxydlib/DatFile.h"
+#include "oxydlib/Level.h"
+#include "world.hh"
 
 #include <cassert>
 
@@ -36,294 +33,274 @@
 #define it_key_b it_key
 #define it_key_c it_key
 
-
 #define UNUSED ""
 #define SPECIAL ""
 
-namespace oxyd
-{
-    using namespace OxydLib;
-    using namespace enigma;
-
-    using OxydLib::Level;
+namespace enigma::oxyd {
 
 /* -------------------- OxydLoader -------------------- */
 
-    /** This data structure is used to encode differences between different
-        Oxyd versions and other .*/
-    struct LoaderConfig {
-        // Variables
-        const char    *oxyd_flavor;
-        double         timer_factor;
-        bool           twoplayers;
-        GameMode       gamemode;
-        const char   **floortable;
-        const char   **itemtable;
-        const char   **stonetable;
+/** This data structure is used to encode differences between different
+        Oxyd versions and other. */
+struct LoaderConfig {
+    // Variables
+    const char* oxyd_flavor;
+    double timer_factor;
+    bool twoplayers;
+    OxydLib::GameMode gamemode;
+    const char** floortable;
+    const char** itemtable;
+    const char** stonetable;
 
-        int id_timer;
-        int id_laser1;
+    int id_timer;
+    int id_laser1;
 
-        // Constructor
-        LoaderConfig (bool twoplayers_,
-                      GameMode gamemode_,
-                      const char **floortable_,
-                      const char **itemtable_,
-                      const char **stonetable_,
-                      const char *oxyd_flavor_ = "a"
-                      )
-        : oxyd_flavor(oxyd_flavor_),
-          timer_factor (0.678),
-          twoplayers (twoplayers_),
-          gamemode (gamemode_),
-          floortable (floortable_),
-          itemtable (itemtable_),
-          stonetable (stonetable_),
-          id_timer (-1),
-          id_laser1 (-1)
-        {}
-    };
+    // Constructor
+    LoaderConfig(bool twoplayers_, OxydLib::GameMode gamemode_, const char** floortable_,
+            const char** itemtable_, const char** stonetable_, const char* oxyd_flavor_ = "a")
+        : oxyd_flavor(oxyd_flavor_), timer_factor(0.678), twoplayers(twoplayers_),
+          gamemode(gamemode_), floortable(floortable_), itemtable(itemtable_),
+          stonetable(stonetable_), id_timer(-1), id_laser1(-1) {}
+};
 
-    class OxydLoader {
-    public:
-        OxydLoader (const Level &level_, 
-                    const LoaderConfig& config_);
+class OxydLoader {
+public:
+    OxydLoader(const OxydLib::Level& level_, const LoaderConfig& config_);
 
-        virtual ~OxydLoader()
-        {}
+    virtual ~OxydLoader() {}
 
-        void load();
+    void load();
 
-        Stone *make_laser (int type);
-        Stone *make_timer (int x, int y);
+    Stone* make_laser(int type);
+    Stone* make_timer(int x, int y);
 
-        /* ---------- OxydLoader interface ---------- */
+    /* ---------- OxydLoader interface ---------- */
 
-        virtual Stone *make_stone (int type, int x, int y);
-        virtual Item  *make_item (int type, int x, int y);
+    virtual Stone* make_stone(int type, int x, int y);
+    virtual Item* make_item(int type, int x, int y);
 
+    /* ---------- Variables ---------- */
+    const OxydLib::Level& level;
+    LoaderConfig config;
 
-        /* ---------- Variables ---------- */
-        const Level &level;
-        LoaderConfig config;
+private:
+    /* ---------- Private methods ---------- */
+    void load_floor();
+    void load_items();
+    void load_stones();
+    void load_actors();
+    void parse_specials();
+    void scramble_puzzles();
 
-    private:
-        /* ---------- Private methods ---------- */
-        void load_floor ();
-        void load_items ();
-        void load_stones ();
-        void load_actors ();
-        void parse_specials ();
-        void scramble_puzzles ();
+    void connect_rubberbands();
+    void connect_signals();
+    Actor* get_actor(int idx);
 
-        void connect_rubberbands ();
-        void connect_signals ();
-        Actor *get_actor (int idx);
+    /* ---------- Private variables ---------- */
+    std::vector<Actor*> m_actors;
+    bool harmless_medi;
+};
 
+class Oxyd1Loader : public OxydLoader {
+public:
+    Oxyd1Loader(const OxydLib::Level& level_, const LoaderConfig& config_)
+        : OxydLoader(level_, config_) {}
 
-        /* ---------- Private variables ---------- */
-        std::vector<Actor *> m_actors;
-        bool harmless_medi;
-    };
+    virtual Stone* make_stone(int type, int x, int y) { return 0; }
+};
 
-    class Oxyd1Loader : public OxydLoader {
-    public:
-        Oxyd1Loader (const OxydLib::Level &level_,
-                     const LoaderConfig &config_)
-        : OxydLoader (level_, config_)
-        {}
-    
-        virtual Stone *make_stone (int type, int x, int y) { return 0; }
-    };
+class PerOxydLoader : public OxydLoader {
+public:
+    PerOxydLoader(const OxydLib::Level& level_, const LoaderConfig& config_)
+        : OxydLoader(level_, config_) {}
 
-    class PerOxydLoader : public OxydLoader {
-    public:
-        PerOxydLoader (const OxydLib::Level &level_, 
-                       const LoaderConfig &config_)
-        : OxydLoader (level_, config_)
-        {}
-        
-        virtual Stone *make_stone (int type, int x, int y);
-    };
-
+    virtual Stone* make_stone(int type, int x, int y);
+};
 
 /* -------------------- LevelPack_Oxyd -------------------- */
 
-    class LevelPack_Oxyd : public lev::Index {
-    public:
-        LevelPack_Oxyd (OxydVersion ver, DatFile *dat,
-                        int idx_start, int idx_end, bool twoplayers);
+class LevelPack_Oxyd : public lev::Index {
+public:
+    LevelPack_Oxyd(OxydLib::OxydVersion ver, OxydLib::DatFile* dat, int idx_start, int idx_end,
+            bool twoplayers);
 
-        void load_oxyd_level (size_t index);
-        virtual void updateFromFolder();
+    void load_oxyd_level(size_t index);
+    virtual void updateFromFolder();
 
-        /* ---------- LevelPack interface ---------- */
-        string get_name() const;
-        int size() const { return nlevels; }
-        std::string get_default_SoundSet() const;
-        bool needs_twoplayers() const;
-    protected:
-        virtual bool has_easymode(size_t /*index*/) const;
-        GameMode get_gamemode() const;
+    /* ---------- LevelPack interface ---------- */
+    std::string get_name() const;
+    int size() const { return nlevels; }
+    std::string get_default_SoundSet() const;
+    bool needs_twoplayers() const;
 
-    private:
-        /* ---------- Private interface ---------- */
+protected:
+    virtual bool has_easymode(size_t /*index*/) const;
+    OxydLib::GameMode get_gamemode() const;
 
-        virtual void load (const Level &level) = 0;
+private:
+    /* ---------- Private interface ---------- */
 
-        /* ---------- Private methods ---------- */
+    virtual void load(const OxydLib::Level& level) {}
 
-        GameType get_gametype() const;
-        OxydVersion get_version () const {
-            return m_datfile->getVersion();
-        }
-        int get_default_location() const;
+    /* ---------- Private methods ---------- */
 
-        /* ---------- Variables ---------- */
-        DatFile     *m_datfile; // just a reference (owned by GameInfo)
-        bool         m_twoplayers; // true -> twoplayer game
+    GameType get_gametype() const;
+    OxydLib::OxydVersion get_version() const { return m_datfile->getVersion(); }
+    int get_default_location() const;
 
-        int m_index_start; // first index of this level pack
-        int level_index[120];
-        int nlevels;
-    };
+    /* ---------- Variables ---------- */
+    OxydLib::DatFile* m_datfile = nullptr; // just a reference (owned by GameInfo)
+    bool m_twoplayers = false;             // true -> twoplayer game
 
-    class LP_Oxyd1 : public LevelPack_Oxyd {
-        // LevelPack_Oxyd interface
-        void load (const Level &);
-    public:
-        LP_Oxyd1 (DatFile *dat, bool twoplayers);
-    };
+    int m_index_start = 0; // first index of this level pack
+    int level_index[120];
+    int nlevels = 0;
+};
 
-    class LP_OxydExtra : public LevelPack_Oxyd {
-        // LevelPack_Oxyd interface
-        void load (const Level &);
-    public:
-        LP_OxydExtra (DatFile *dat);
-    };
+class LP_Oxyd1 : public LevelPack_Oxyd {
+    // LevelPack_Oxyd interface
+    void load(const OxydLib::Level&);
 
-    class LP_PerOxyd : public LevelPack_Oxyd {
-        // LevelPack_Oxyd interface
-        void load (const Level &);
-    public:
-        LP_PerOxyd (DatFile *dat, bool twoplayers);
-        static bool hasEasymode(size_t index);
-    };
+public:
+    LP_Oxyd1(OxydLib::DatFile* dat, bool twoplayers);
+};
 
-    class LP_OxydMagnum : public LevelPack_Oxyd {
-        // LevelPack_Oxyd interface
-        void load (const Level &);
-    public:
-        LP_OxydMagnum(OxydVersion, DatFile *dat);
-    };
+class LP_OxydExtra : public LevelPack_Oxyd {
+    // LevelPack_Oxyd interface
+    void load(const OxydLib::Level&);
 
-    /* -------------------- CommandString -------------------- */
+public:
+    LP_OxydExtra(OxydLib::DatFile* dat);
+};
 
-    /** A class used to decode "command strings" used for 
+class LP_PerOxyd : public LevelPack_Oxyd {
+    // LevelPack_Oxyd interface
+    void load(const OxydLib::Level&);
+
+public:
+    LP_PerOxyd(OxydLib::DatFile* dat, bool twoplayers);
+    static bool hasEasymode(size_t index);
+};
+
+class LP_OxydMagnum : public LevelPack_Oxyd {
+    // LevelPack_Oxyd interface
+    void load(const OxydLib::Level&);
+
+public:
+    LP_OxydMagnum(OxydLib::OxydVersion, OxydLib::DatFile* dat);
+};
+
+/* -------------------- CommandString -------------------- */
+
+/** A class used to decode "command strings" used for
         settings in Oxyd levels. */
-    class CommandString {
-    public:
-        CommandString(const string &cmd);
+class CommandString {
+public:
+    CommandString(const std::string& cmd);
 
-        int get_int (int min, int max, int dflt);
-        int get_char ();
-        bool get_bool (bool dflt);
-    private:
-        // Variables
-        string           m_cmd;
-        string::iterator m_iter;
+    int get_int(int min, int max, int dflt);
+    int get_char();
+    bool get_bool(bool dflt);
+
+private:
+    // Variables
+    std::string m_cmd;
+    std::string::iterator m_iter;
+};
+
+/* -------------------- GameInfo -------------------- */
+
+class GameInfo {
+public:
+    GameInfo();
+    GameInfo(OxydLib::OxydVersion ver_, const std::string& game_, const std::string& datfile_name_,
+            const bool searchDAT);
+    ~GameInfo();
+
+    bool is_present() const { return m_present; }
+    OxydLib::DatFile* getDatfile() { return datFile.get(); }
+
+private:
+    // Variables.
+    OxydLib::OxydVersion ver;
+    std::string game;
+    std::unique_ptr<OxydLib::DatFile> datFile;
+    std::string datFilePath;
+    bool m_present;
+
+    // Private methods.
+    void openDatFile();
+    lev::Index* makeLevelIndex(bool twoplayer);
+};
+
+enum MarbleInfoIndices {
+    // valid for all actor types:
+    MI_FORCE = 0,
+
+    // marbles only:
+
+    // Jack/Rotor only:
+    MI_RANGE = 1,
+    MI_GOHOME = 2,
+
+    // Horse:
+    MI_HORSETARGET1 = 1,
+    MI_HORSETARGET2 = 2,
+    MI_HORSETARGET3 = 3,
+    MI_HORSETARGET4 = 4,
+};
+
+class MarbleInfo {
+    enum {
+        MAX_MARBLE_INFO_FIELDS = 11
+    };
+    enum {
+        DEFAULT_VALUE = -1
     };
 
+    int value[MAX_MARBLE_INFO_FIELDS];
+    bool interpreted[MAX_MARBLE_INFO_FIELDS];
 
-    /* -------------------- GameInfo -------------------- */
+public:
+    MarbleInfo(const OxydLib::Marble& marble);
+    ~MarbleInfo();
 
-    class GameInfo {
-    public:
-        GameInfo();
-        GameInfo (OxydVersion ver_, const string &game_, const string &datfile_name_, const bool searchDAT);
-        ~GameInfo();
+    bool is_default(int idx) {
+        assert(idx >= 0 && idx < MAX_MARBLE_INFO_FIELDS);
+        return value[idx] == DEFAULT_VALUE;
+    }
 
-        bool is_present() const { return m_present; }
-        DatFile *getDatfile() { return datfile.get(); }
-
-    private:
-        // Variables.
-        OxydVersion  ver;
-        string       game;
-        std::unique_ptr<DatFile>     datfile;
-        string       datfile_path;
-        bool         m_present;
-
-        // Private methods.
-        void       openDatFile();
-        lev::Index *makeLevelIndex(bool twoplayer);
-    };
-
-
-    enum MarbleInfoIndices {
-        // valid for all actor types:
-        MI_FORCE = 0,
-
-        // marbles only:
-
-        // Jack/Rotor only:
-        MI_RANGE = 1,
-        MI_GOHOME = 2,
-
-        // Horse:
-        MI_HORSETARGET1 = 1,
-        MI_HORSETARGET2 = 2,
-        MI_HORSETARGET3 = 3,
-        MI_HORSETARGET4 = 4,
-    };
-
-    class MarbleInfo {
-        enum { MAX_MARBLE_INFO_FIELDS = 11 };
-        enum { DEFAULT_VALUE = -1 };
-
-        int  value[MAX_MARBLE_INFO_FIELDS];
-        bool interpreted[MAX_MARBLE_INFO_FIELDS];
-
-    public:
-        MarbleInfo(const Marble& marble);
-        ~MarbleInfo();
-
-        bool is_default(int idx) {
-            assert(idx >= 0 && idx<MAX_MARBLE_INFO_FIELDS);
-            return value[idx] == DEFAULT_VALUE;
-        }
-
-        int get_value(int idx) {
-            assert(!is_default(idx)); // you cannot ask for default value (not stored here)
-            interpreted[idx] = true;
-            return value[idx];
-        }
-        int get_value (int idx, int default_) {
-            if (!is_default(idx))
-                return get_value (idx);
-            else
-                return default_;
-        }
-    };
+    int get_value(int idx) {
+        assert(!is_default(idx)); // you cannot ask for default value (not stored here)
+        interpreted[idx] = true;
+        return value[idx];
+    }
+    int get_value(int idx, int default_) {
+        if (!is_default(idx))
+            return get_value(idx);
+        else
+            return default_;
+    }
+};
 
 /* -------------------- Global Variables -------------------- */
 
-    extern const char * oxyd1_item_map[];
-    extern const char *oxyd1_floor_map[];
-    extern const char *oxyd1_stone_map[];
+extern const char* oxyd1_item_map[];
+extern const char* oxyd1_floor_map[];
+extern const char* oxyd1_stone_map[];
 
-    extern const char * peroxyd_item_map[];
-    extern const char *peroxyd_floor_map[];
-    extern const char *peroxyd_stone_map[];
+extern const char* peroxyd_item_map[];
+extern const char* peroxyd_floor_map[];
+extern const char* peroxyd_stone_map[];
 
-    extern const char * oxydmag_item_map[];
-    extern const char *oxydmag_floor_map[];
-    extern const char *oxydmag_stone_map[];
+extern const char* oxydmag_item_map[];
+extern const char* oxydmag_floor_map[];
+extern const char* oxydmag_stone_map[];
 
-    extern const char * oxydextra_item_map[];
-    extern const char *oxydextra_floor_map[];
-    extern const char *oxydextra_stone_map[];
+extern const char* oxydextra_item_map[];
+extern const char* oxydextra_floor_map[];
+extern const char* oxydextra_stone_map[];
 
-}
+} // namespace enigma::oxyd
 
 #endif

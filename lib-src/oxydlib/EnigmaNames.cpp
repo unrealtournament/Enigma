@@ -19,6 +19,8 @@
 // ======================================================================== //
 #include "EnigmaNames.h"
 #include "OxydVersion.h"
+#include <cstdio>
+#include <cstdlib>
 
 #define PLAIN_SPEC_ONLY
 #define UNUSED "<unused>"
@@ -32,7 +34,7 @@
 #include "../../src/ox_peroxyd.cc"
 
 using namespace enigma_names;
-using namespace oxyd;
+using namespace enigma;
 using namespace OxydLib;
 
 // ____________________________________________________________
