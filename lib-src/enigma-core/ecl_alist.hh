@@ -53,7 +53,7 @@ public:
     VAL &operator[](const key_type &key) {
         auto i = find(key);
         if (i == this->end())
-            i = this->insert(this->end(), make_pair(key, VAL()));
+            i = this->insert(this->end(), std::make_pair(key, VAL()));
         return i->second;
     }
 

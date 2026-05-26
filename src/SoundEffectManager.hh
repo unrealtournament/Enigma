@@ -34,11 +34,11 @@
  *  following uses:
  *    (a) Sound Sets, possibly user defined,
  *    (b) Access to oxyd's sound data,
- *    (c) Sound damping for loud objects with user defined data,
+ *    (c) Sound damping for loud objects with user-defined data,
  *    (d) A "Default" mode which switches the sound set between level packs.
  *    (e) A "silence string" that can be written instead of playing the sound.
  *  For this, six layers of sound information exist.
- *  Note: A sound effect is given by a wav-file and several data how to play it.
+ *  Note: A sound effect is given by a wav-file and some data on how to play it.
  *        An object may choose a sound effect to play. Then it becomes a sound
  *        event (= sound effect + position etc.).
  *
@@ -57,10 +57,10 @@
  *            activate a sound set.
  *    (5) SoundEvent
  *         -> A struct to hold information about a sound event, like the
- *            effect's name, position, priority, volume etc.
+ *            effect's name, position, priority, volume, etc.
  *    (6) SoundDamping
  *         -> Each time an object makes noise, a SoundDamping-record
- *            is created with an entry of the objects address (as void *).
+ *            is created with an entry of the object's address (as void *).
  *            This class modulates the volume with which the next effect
  *            connected to this object is played.
  *
@@ -83,7 +83,7 @@
  *  holds as a representative of the calling object. The SoundDamping-records
  *  are evaluated and finally erased by World::tick_sound_dampings. 
  *
- *  The values used in the sound damping systes can be user defined. In the
+ *  The values used in the sound damping systes can be user-defined. In the
  *  following, we use the defaults:
  *
  *  tick_sound_dampings is only to be evaluated every 10th tick (0.1s).
@@ -95,7 +95,7 @@
  *  Examples:
  *    1) Frequency less than one sound event per 0.6 seconds.
  *       Then there is no damping at all.
- *    2) N events per second. For each event, factor (F) is raised by
+ *    2) N events per second. For each event, the factor (F) is raised by
  *       one. And each 0.1 seconds it is multiplied with 0.9. We now
  *       have N/10 events per 0.1 seconds, hence in equilibrium f
  *       oscillates between
@@ -105,14 +105,13 @@
  *  to N with half-life of less than a second. This is then evaluated
  *  in getVolume.
  * 
- *  World::getVolume returns the volume, if object OBJECT_CALLING wants
+ *  World::getVolume returns the volume if object OBJECT_CALLING wants
  *  to play sound effect NAME with default volume DEF_VOLUME. Often played
  *  sounds from always the same object are damped to reduce noise-level.
  *  Note that OBJECT_CALLING == nullptr is explicitly allowed and used e.g.
  *  for all laser-sounds. The damping factor is increased by 1.0 for each
- *  event, and multiplied with 0.9 each 0.1 seconds, thereby approximately
+ *  event and multiplied by 0.9 every 0.1 seconds, thereby approximately
  *  equals the average number of events per second.
- *
  */
 
 /** -------------- Compatibility with 1.00 --------------
@@ -155,14 +154,16 @@ namespace sound
 
     /*! Sound set handling */
     void InitSoundSets();
-    void SetActiveSoundSet(std::string soundset_name);
-    void SetDefaultSoundSet(std::string soundset_name);
+    void SetActiveSoundSet(const std::string& soundset_name);
+    void SetDefaultSoundSet(const std::string& soundset_name);
 
     /*! Define a new sound event. */
-    void DefineSoundEffect(std::string soundset_key, std::string name, std::string filename,
+    void DefineSoundEffect(const std::string& soundset_key, const std::string& name,
+            const std::string& filename,
                            double volume, bool loop, bool global, int priority,
                            double damp_max, double damp_inc, double damp_mult,
-                           double damp_min, double damp_tick, std::string silence_string);
+                           double damp_min, double damp_tick,
+            const std::string& silence_string);
 
     /*! Trigger a sound event.  Return whether the event was handled. */
     bool EmitSoundEvent (const std::string &eventname,
@@ -170,10 +171,10 @@ namespace sound
                          double volume = 1.0, bool force_global = false);
     bool EmitSoundEventGlobal (const std::string &eventname, double volume = 1.0);
 
-    /*! Send the silence string of a sound effect to command line. */
+    /*! Send the silence string of a sound effect to the command line. */
     void WriteSilenceString (const std::string &eventname);
 
-    /*! Helper functions for options menu */
+    /*! Helper functions for the options menu */
     int GetOptionSoundSetCount();
     int GetOptionSoundSet();
     void SetOptionSoundSet(int value);
@@ -200,8 +201,8 @@ namespace sound
         DampingData damp;
 
     public:
-        SoundDamping(std::string effect_name_, const void *origin_);
-        bool is_equal(std::string name2, const void *origin2) {
+        SoundDamping(const std::string& effect_name_, const void *origin_);
+        bool is_equal(const std::string& name2, const void *origin2) const {
             return (origin2 == origin) && (effect_name == name2);
         }
         float get_volume(float def_volume);
@@ -231,10 +232,10 @@ namespace sound
         SoundEvent ();
         
         // Effective volume calculation
-        double    effectiveVolume(double dist);
+        double    effectiveVolume(double dist) const;
         
         // Merge another sound event onto this one.
-        bool      merge(SoundEvent se);
+        bool      merge(const SoundEvent& se);
     };
 
 /* -------------------- SoundEffect and SoundEffectRepository ---------------- */
@@ -244,13 +245,13 @@ namespace sound
 
     class SoundEffect {
     public:
-        SoundEffect(std::string name_, std::string soundset_key_, std::string filename_,
-                       double volume_, bool loop_, bool global_, int priority_,
-                       double damp_max_, double damp_inc_, double damp_mult_,
-                       double damp_min_, double damp_tick_, std::string silence_string_)
-        : name(std::move(name_)), soundset_key(std::move(soundset_key_)), filename(std::move(filename_)), volume(volume_),
-          loop(loop_), global(global_), priority(priority_),
-          silence_string(std::move(silence_string_)) {
+        SoundEffect(const std::string& name_, const std::string& soundset_key_,
+                const std::string& filename_, double volume_, bool loop_, bool global_,
+                int priority_, double damp_max_, double damp_inc_, double damp_mult_,
+                double damp_min_, double damp_tick_, std::string silence_string_)
+            : name(name_), filename(filename_), soundset_key(soundset_key_),
+              silence_string(std::move(silence_string_)), volume(volume_), loop(loop_),
+              global(global_), priority(priority_) {
             damp.maxi = damp_max_;
             damp.incr = damp_inc_;
             damp.mult = damp_mult_;
@@ -258,9 +259,9 @@ namespace sound
             damp.tick = damp_tick_;
         }
 
-        SoundEffect()  // standard empty data set, compare sound-defaults.lua
-        : name("EMPTY_EVENT"), filename(""), soundset_key(""), volume(1.0),
-          loop(false), global(false), priority(1), silence_string("") {
+        SoundEffect() // standard empty data set, compare sound-defaults.lua
+            : name("EMPTY_EVENT"), filename(""), soundset_key(""), silence_string(""), volume(1.0),
+              loop(false), global(false), priority(1) {
             damp.maxi = 20.0;
             damp.incr =  1.0;
             damp.mult =  1.0;
@@ -268,10 +269,10 @@ namespace sound
             damp.tick =  0.9;
         }
 
-        void setFilename(std::string filename_) { filename = filename_; }
+        void setFilename(const std::string& filename_) { filename = filename_; }
         std::string getFilename() const { return filename; }
         bool play(const ecl::V2 &pos = ecl::V2(), double vol = 1.0, bool glob = false);
-        DampingData getDampingData() { return damp; }
+        DampingData getDampingData() const { return damp; }
         std::string getSoundSetKey() { return soundset_key; }
         std::string getSilenceString() { return silence_string; }
 
@@ -302,10 +303,10 @@ namespace sound
           oxyd_ver(OxydLib::OxydVersion_Invalid), button_position(-1) {}
 
         bool activate();
-        OxydLib::OxydVersion getOxydVersion() { return oxyd_ver; }
-        bool isOxyd() { return is_oxyd; }
+        OxydLib::OxydVersion getOxydVersion() const { return oxyd_ver; }
+        bool isOxyd() const { return is_oxyd; }
         std::string getSoundSetKey() { return soundset_key; }
-        int getButtonPosition() { return button_position; }
+        int getButtonPosition() const { return button_position; }
         void setButtonPosition(int pos) { button_position = pos; }
 
     private:
@@ -328,35 +329,37 @@ namespace sound
 
         // ---------- Sound effect repository and sound sets ----------
 
-        void setActiveSoundSetKey(std::string soundset_key) {active_sound_set_key=soundset_key;}
+        void setActiveSoundSetKey(const std::string& soundset_key) {active_sound_set_key=soundset_key;}
         std::string getActiveSoundSetKey() { return active_sound_set_key; }
-        void setDefaultSoundSet(std::string soundset_name) {default_sound_set=soundset_name;}
+        void setDefaultSoundSet(const std::string& soundset_name) {default_sound_set=soundset_name;}
         std::string getDefaultSoundSet() { return default_sound_set; }
-        std::string effectKey(std::string effect_name, std::string soundset_name = "");
-        DampingData getDampingData(std::string effect_name) {
+        std::string effectKey(const std::string& effect_name, const std::string& soundset_name = "");
+        DampingData getDampingData(const std::string& effect_name) {
             return sound_effects[effectKey(effect_name)].getDampingData(); }
-        void defineSoundEffect(std::string soundset_key, std::string name, SoundEffect se) {
+        void defineSoundEffect(
+                const std::string& soundset_key, const std::string& name, const SoundEffect& se) {
             sound_effects[effectKey(name, soundset_key)] = se;
         }
         bool emitSoundEvent (const std::string &eventname, const ecl::V2 &pos = ecl::V2 (), 
                              double volume = 1.0, bool force_global = false);
         void writeSilenceString (const std::string &eventname);
         void initSoundSets();
-        bool defineSoundSet(std::string soundset_name, std::string soundset_key, int button_position);
-        bool defineSoundSetOxyd(std::string soundset_name, std::string soundset_key,
+        bool defineSoundSet(
+                const std::string& soundset_name, const std::string& soundset_key, int button_position);
+        bool defineSoundSetOxyd(const std::string& soundset_name, const std::string& soundset_key,
                                 OxydLib::OxydVersion oxyd_ver, int button_position);
         std::string getOxydSoundSet(OxydLib::OxydVersion oxyd_ver);
 
-        int convertToOldSoundSetNumber(std::string soundset_name);
+        int convertToOldSoundSetNumber(const std::string& soundset_name);
         std::string convertFromOldSoundSetNumber(int soundset_number);
 
-        void setActiveSoundSet(std::string soundset_name);
+        void setActiveSoundSet(const std::string& soundset_name);
         void preloadSoundEffects();
 
         void setSoundSetCount(int count) { sound_set_count = count; }
-        int getSoundSetCount() { return sound_set_count; }
+        int getSoundSetCount() const { return sound_set_count; }
         
-        int getSoundSetButtonPosition(std::string soundset_name) {
+        int getSoundSetButtonPosition(const std::string& soundset_name) {
             return sound_sets[soundset_name].getButtonPosition();
         }
         std::string getSoundSetByPosition(int button_position);

@@ -45,12 +45,12 @@ void sound::InitSoundSets() {
     SoundEffectManager::instance()->initSoundSets();
 }
 
-void sound::SetActiveSoundSet(std::string soundset_name)
+void sound::SetActiveSoundSet(const std::string& soundset_name)
 {
     SoundEffectManager::instance()->setActiveSoundSet(soundset_name);
 }
 
-void sound::SetDefaultSoundSet(std::string soundset_name)
+void sound::SetDefaultSoundSet(const std::string& soundset_name)
 {
     SoundEffectManager::instance()->setDefaultSoundSet(soundset_name);
     if(app.state->getString("SoundSetName") == "Default")
@@ -59,10 +59,10 @@ void sound::SetDefaultSoundSet(std::string soundset_name)
 
 /*! The following function is an interface to add sound events to Enigma.
   It is accessed via sound-defaults.lua and user sound definitions. */
-void sound::DefineSoundEffect(std::string soundset_key, std::string name, std::string filename,
-                              double volume, bool loop, bool global, int priority,
-                              double damp_max, double damp_inc, double damp_mult,
-                              double damp_min, double damp_tick, std::string silence_string) {
+void sound::DefineSoundEffect(const std::string& soundset_key, const std::string& name,
+        const std::string& filename, double volume, bool loop, bool global, int priority,
+        double damp_max, double damp_inc, double damp_mult, double damp_min, double damp_tick,
+        const std::string& silence_string) {
     if(soundset_key == "") {
         Log << "Warning: Tried to define sound event '" << name
             << "' without sound set key. Skipped.\n";
@@ -149,12 +149,12 @@ SoundEvent::SoundEvent ()
   playing_time(0)
 {}
 
-double SoundEvent::effectiveVolume(double dist) {
+double SoundEvent::effectiveVolume(double dist) const {
     double reduced_dist = std::max(0.0, dist - fullvol_range);
     return (1 - reduced_dist / range) * volume;
 }
 
-bool SoundEvent::merge(SoundEvent se) {
+bool SoundEvent::merge(const SoundEvent& se) {
     if (has_position && se.has_position) {
         /*! Merge the soundevent se onto this one. The loudness profile
            of a soundevent se is that of a cylinder shaped center region
@@ -178,10 +178,10 @@ bool SoundEvent::merge(SoundEvent se) {
 
 /* -------------------- SoundEffectManager -------------------- */
 
-SoundEffectManager *SoundEffectManager::theSingleton = 0;
+SoundEffectManager *SoundEffectManager::theSingleton = nullptr;
     
 SoundEffectManager* SoundEffectManager::instance() {
-    if (theSingleton == 0) {
+    if (theSingleton == nullptr) {
         theSingleton = new SoundEffectManager();
     }
     return theSingleton;
@@ -197,7 +197,8 @@ SoundEffectManager::SoundEffectManager()
 /*! This function defines how to put soundset_key and eventname together to
   create an eventkey. */
 
-std::string SoundEffectManager::effectKey(std::string effect_name, std::string soundset_name)
+std::string SoundEffectManager::effectKey(
+        const std::string& effect_name, const std::string& soundset_name)
 {
     if (soundset_name == "")
         return getActiveSoundSetKey() + "#" + effect_name;
@@ -205,31 +206,30 @@ std::string SoundEffectManager::effectKey(std::string effect_name, std::string s
         return soundset_name + "#" + effect_name;
 }
 
-/*! This function searches the known sound sets for a sound set with given
-  oxyd version, and returns the sound set name (or empty string if none). */
-
+/*! This function searches the known sound sets for a sound set with the given
+  oxyd version and returns the sound set name (or empty string if none). */
 std::string SoundEffectManager::getOxydSoundSet(OxydLib::OxydVersion oxyd_ver)
 {
-    for (SoundSetRepository::iterator i = sound_sets.begin();
-             i != sound_sets.end(); ++i)
-        if((*i).second.getOxydVersion() == oxyd_ver)
-            return (*i).first;
+    for (auto i = sound_sets.begin(); i != sound_sets.end(); ++i) {
+        if (i->second.getOxydVersion() == oxyd_ver)
+            return i->first;
+    }
     return "";
 }
 
 /*! Enigma 1.00 only knew the option "SoundSet", which was an integer. This
   was quite unhandy if one wanted to add additional sound sets. Since 1.01
   Enigma features the option "SoundSetName". Still, old "SoundSet" is needed
-  if user wants to switch to <= 1.00 again; so here are the conversion
+  if the user wants to switch to <= 1.00 again; so here are the conversion
   functions. Any user sound set is mapped to 0 ("Default").  */
 
-int SoundEffectManager::convertToOldSoundSetNumber(std::string soundset_name)
+int SoundEffectManager::convertToOldSoundSetNumber(const std::string& soundset_name)
 {
     if(soundset_name == "Default")  return 0;
     if(soundset_name == "Enigma")   return 1;
     SoundSet sd = sound_sets[soundset_name];
     if(sd.isOxyd())
-        return ((int) sd.getOxydVersion()) + 2;
+        return static_cast<int>(sd.getOxydVersion()) + 2;
     return 0;
 }
 
@@ -237,28 +237,26 @@ std::string SoundEffectManager::convertFromOldSoundSetNumber(int soundset_number
 {
     if(soundset_number == 0)  return "Default";
     if(soundset_number == 1)  return "Enigma";
-    return getOxydSoundSet((OxydLib::OxydVersion) (soundset_number - 2));
+    return getOxydSoundSet(static_cast<OxydLib::OxydVersion>(soundset_number - 2));
 }
 
 /* -------------------- Sound set handling -------------------- */
 
-/*! These functions fill in data for the sound sets, initialises and
-  activates them. Return false, if something went wrong, e.g. when an
-  oxyd sound set is mentioned, but the corresponding oxyd version
+/*! These functions fill in data for the sound sets and initialize and
+  activate them. They return false if something went wrong, e.g., when an
+  oxyd sound set is mentioned but the corresponding oxyd version
   wasn't found. */
 
-bool SoundEffectManager::defineSoundSet(std::string soundset_name, std::string soundset_key,
-                                 int button_position)
-{
+bool SoundEffectManager::defineSoundSet(
+        const std::string& soundset_name, const std::string& soundset_key, int button_position) {
     sound_sets[soundset_name] = SoundSet(soundset_key, button_position);
     Log << "Added sound set '" << soundset_name << "' (key '" << soundset_key
         << "') on position " << button_position << ".\n";
     return true;
 }
 
-bool SoundEffectManager::defineSoundSetOxyd(std::string soundset_name, std::string soundset_key,
-                                     OxydLib::OxydVersion oxyd_ver, int button_position)
-{
+bool SoundEffectManager::defineSoundSetOxyd(const std::string& soundset_name,
+        const std::string& soundset_key, OxydLib::OxydVersion oxyd_ver, int button_position) {
     if(oxyd::FoundOxyd(oxyd_ver)) {
         sound_sets[soundset_name] =
             SoundSet(soundset_key, button_position, (OxydLib::OxydVersion) oxyd_ver);
@@ -297,16 +295,18 @@ void SoundEffectManager::initSoundSets()
     // Define user sound sets, as given by sound_effects
     for (SoundEffectRepository::iterator i = sound_effects.begin();
          i != sound_effects.end(); ++i) {
-        std::string soundset_key = (*i).second.getSoundSetKey();
-        bool found = false;
-        // ignore Oxyd* and Magnum* sound effects, if no 
-        if ((soundset_key != "Oxyd*") && (soundset_key != "Magnum*")) {
-            for (SoundSetRepository::iterator j = sound_sets.begin();
-                 j != sound_sets.end(); ++j)
-                if((*j).second.getSoundSetKey() == soundset_key)
+        // ignore Oxyd* and Magnum* sound effects, if no
+        if (std::string soundset_key = i->second.getSoundSetKey();
+                soundset_key != "Oxyd*" && soundset_key != "Magnum*") {
+            bool found = false;
+            for (auto j = sound_sets.begin(); j != sound_sets.end(); ++j) {
+                if (j->second.getSoundSetKey() == soundset_key)
                     found = true;
-            if(!found)
-                if (defineSoundSet (soundset_key, soundset_key, pos))  pos++;
+            }
+            if (!found) {
+                if (defineSoundSet(soundset_key, soundset_key, pos))
+                    pos++;
+            }
         }
     }
     Log << "Found " << pos - 1 << " different sound sets.\n";
@@ -326,7 +326,7 @@ void SoundEffectManager::initSoundSets()
         Log << "Activated sound set '" << soundset_name << "'.\n";
     }
     else {
-        // Fallback, happens e.g. when oxyd sound set can't be established or 
+        // Fallback. This happens, for example, when an oxyd sound set can't be established or
         // a user soundset is given which doesn't exist anymore.
         Log << "Warning: Soundset '" << soundset_name << "' not available.\n";
         if (sound_sets["Enigma"].activate()) {
@@ -338,7 +338,7 @@ void SoundEffectManager::initSoundSets()
     }
 }
 
-void SoundEffectManager::setActiveSoundSet(std::string soundset_name)
+void SoundEffectManager::setActiveSoundSet(const std::string& soundset_name)
 {
     std::string soundset_key = sound_sets[soundset_name].getSoundSetKey();
     if (soundset_key == getActiveSoundSetKey())
@@ -378,8 +378,8 @@ std::string SoundEffectManager::getSoundSetByPosition(int button_position)
 {
     for (SoundSetRepository::iterator i = sound_sets.begin();
              i != sound_sets.end(); ++i)
-        if((*i).second.getButtonPosition() == button_position)
-            return (*i).first;
+        if(i->second.getButtonPosition() == button_position)
+            return i->first;
     return "";
 }
 
@@ -424,7 +424,7 @@ void SoundEffectManager::writeSilenceString (const std::string &eventname)
     std::string effectkey = effectKey(eventname);
     SoundEffectRepository::iterator i = sound_effects.find(effectkey);
     if (i != sound_effects.end()) {
-        std::string silence_string = (*i).second.getSilenceString();
+        std::string silence_string = i->second.getSilenceString();
         if (silence_string != "")
             client::Msg_ShowText (silence_string, true);
     }
@@ -435,9 +435,8 @@ void SoundEffectManager::writeSilenceString (const std::string &eventname)
 /*! These methods are connected to the sound damping mechanism, designed
   to reduce the noise created by some objects like st_lightpassenger. */
 
-SoundDamping::SoundDamping(std::string effect_name_, const void *origin_)
-: effect_name(effect_name_), origin(origin_)
-{
+SoundDamping::SoundDamping(const std::string& effect_name_, const void* origin_)
+    : effect_name(effect_name_), origin(origin_) {
     damp = SoundEffectManager::instance()->getDampingData(effect_name_);
     factor = damp.incr;
     //Log << "New damping entry " << effect_name << " with " << damp.incr << ".\n";
@@ -454,7 +453,7 @@ float SoundDamping::get_volume(float def_volume) {
 }
 
 bool SoundDamping::tick() {
-    // return true, if this entity is to be destroyed.
+    // return true if this entity is to be destroyed.
     factor *= damp.tick;
     return (factor <= damp.mini);
 }
