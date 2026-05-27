@@ -203,7 +203,7 @@ namespace enigma {
             server::InfiniteReincarnation = val.toBool();
         } else if (key == "ShowMoves") {
             server::ShowMoves = val.toBool();
-            display::GetStatusBar()->show_move_counter (server::ShowMoves);
+            display::GetStatusBar()->showMoveCounter (server::ShowMoves);
         } else if (key == "SublevelTitle") {
             server::SublevelTitle = val.toString();
         } else if (key == "SurviveFinish") {

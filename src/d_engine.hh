@@ -20,15 +20,13 @@
 
 #include "d_follower.hh"
 #include "display_internal.hh"
-#include "display.hh"
+#include "ecl_alist.hh"
+#include "ecl_array2.hh"
 #include "ecl_geom.hh"
 #include "ecl_math.hh"
-#include "ecl_array2.hh"
-#include "ecl_alist.hh"
-
 #include "SDL.h"
 
-namespace display {
+namespace enigma::display {
 
 class DisplayLayer;
 
@@ -67,9 +65,9 @@ public:
     /* "Video" coordinates are like screen coordinates, except the
        origin coincides with the world origin, not the current
        scrolling position. */
-    void world_to_video(const ecl::V2 &pos, int *x, int *y);
+    void world_to_video(const ecl::V2 &pos, int *x, int *y) const;
     void video_to_screen(int x, int y, int *xx, int *yy);
-    void video_to_world(const ecl::Rect &r, ecl::Rect &s);
+    void video_to_world(const ecl::Rect &r, ecl::Rect &s) const;
 
     ecl::V2 to_world(const ecl::V2 &pos);
 
@@ -78,12 +76,9 @@ public:
     void mark_redraw_screen();
     void mark_redraw_area(const WorldArea &wa, int delay = 0);
 
-    void redraw_screen_area(const ScreenArea &a);
-    void redraw_world_area(const WorldArea &a);
-
-    void update_screen();
-    void draw_all(ecl::GC &gc);
-    void update_offset();
+    void updateScreen();
+    void drawAll(ecl::GC &gc);
+    void updateOffset();
 
 private:
     void update_layer(DisplayLayer *l, WorldArea wa);
@@ -96,7 +91,7 @@ private:
     // Offset of screen
     ecl::V2 m_offset;       // Offset in world units
     ecl::V2 m_new_offset;   // New offset in world units
-    int m_screenoffset[2];  // Offset in screen units
+    int m_screenoffset[2] = {};  // Offset in screen units
 
     // Screen area occupied by level display
     ecl::Rect m_area;
@@ -121,9 +116,9 @@ public:
     /* ---------- DisplayLayer interface ---------- */
     virtual void prepare_draw(const WorldArea &) {}
     virtual void draw(ecl::GC &gc, const WorldArea &a, int x, int y) = 0;
-    virtual void draw_onepass(ecl::GC & /*gc*/) {}
+    virtual void drawSinglePass(ecl::GC & /*gc*/) {}
     virtual void tick(double /*dtime*/) {}
-    virtual void new_world(int /*w*/, int /*h*/) {}
+    virtual void newWorld(int /*w*/, int /*h*/) {}
 
     // Functions.
     void mark_redraw_area(const ecl::Rect &r) { get_engine()->mark_redraw_area(r); }
@@ -134,56 +129,55 @@ private:
 
 /* -------------------- ModelLayer -------------------- */
 
-/*! The base class for all layers that contains Models. */
+/// The base class for all layers that contains Models.
 class ModelLayer : public DisplayLayer {
 public:
-    ModelLayer() {}
+    ModelLayer() = default;
 
     // DisplayLayer interface
     void tick(double dtime) override;
-    void new_world(int, int) override;
+    void newWorld(int w, int h) override;
 
     // Member functions
     void activate(Model *m);
-    void deactivate(Model *m);
-    void maybe_redraw_model(Model *m, bool immediately = false);
+    void deactivate(Model *model);
+    void maybeRedrawModel(Model *m, bool immediately = false);
 
     virtual int redraw_size() const { return 2; }
 
 private:
     // Variables
-    ModelList m_active_models;
-    ModelList m_active_models_new;
+    ModelList activeModels;
+    ModelList newActiveModels;
 };
 
 /* -------------------- DL_Grid -------------------- */
 
-/*! Layer for grid-aligned models (stones, floor tiles, items). */
-
+/// Layer for grid-aligned models (stones, floor tiles, items).
 class DL_Grid : public ModelLayer {
 public:
-    DL_Grid(int redrawsize = 1);
-    ~DL_Grid();
+    explicit DL_Grid(int redrawSize = 1);
+    ~DL_Grid() override;
 
-    void set_model(int x, int y, std::unique_ptr<Model> m);
-    Model *get_model(int x, int y);
-    std::unique_ptr<Model> yield_model(int x, int y);
+    void setModel(int x, int y, std::unique_ptr<Model> m);
+    Model *getModel(int x, int y);
+    std::unique_ptr<Model> yieldModel(int x, int y);
+
+    // DisplayLayer interface.
+    void newWorld(int w, int h) override;
+    void draw(ecl::GC &gc, const WorldArea &a, int x, int y) override;
+
+    // ModelLayer interface
+    int redraw_size() const override { return m_redrawSize; }
 
 private:
     // DL_Grid interface.
     void mark_redraw(int x, int y);
 
-    // DisplayLayer interface.
-    void new_world(int w, int h) override;
-    void draw(ecl::GC &gc, const WorldArea &a, int x, int y) override;
-
-    // ModelLayer interface
-    virtual int redraw_size() const override { return m_redrawsize; }
-
     // Variables.
     typedef ecl::Array2<std::unique_ptr<Model>> ModelArray;
     ModelArray m_models;
-    int m_redrawsize;
+    int m_redrawSize;
 };
 
 /* -------------------- Sprites -------------------- */
@@ -192,19 +186,19 @@ class Sprite : public ecl::Nocopy {
 public:
     std::unique_ptr<Model> model;
     ecl::V2 pos;
-    int screenpos[2];
+    int screenPos[2];
     SpriteLayer layer;
     bool visible;
     Sprite *above[3];
     Sprite *beneath[3];
 
-    Sprite(ecl::V2 p, SpriteLayer l, std::unique_ptr<Model> m)
-    : model(std::move(m)), pos(p), layer(l), visible(true) {
-        screenpos[0] = screenpos[1] = 0;
+    Sprite(const ecl::V2& pos, SpriteLayer layer, std::unique_ptr<Model> model)
+        : model(std::move(model)), pos(pos), layer(layer), visible(true) {
+        screenPos[0] = screenPos[1] = 0;
         above[0] = above[1] = above[2] = nullptr;
         beneath[0] = beneath[1] = beneath[2] = nullptr;
     }
-    ~Sprite() {}
+    ~Sprite() = default;
 };
 
 typedef std::vector<Sprite *> SpriteList;
@@ -212,45 +206,45 @@ typedef std::vector<Sprite *> SpriteList;
 class DL_Sprites : public ModelLayer {
 public:
     DL_Sprites();
-    ~DL_Sprites();
+    ~DL_Sprites() override;
 
     /* ---------- DisplayLayer interface ---------- */
     void draw(ecl::GC &gc, const WorldArea &a, int x, int y) override;
-    void draw_onepass(ecl::GC &gc) override;
-    void new_world(int, int) override;
+    void drawSinglePass(ecl::GC &gc) override;
+    void newWorld(int, int) override;
 
     /* ---------- Member functions ---------- */
-    SpriteId add_sprite(Sprite *sprite, bool isDispensible = false);
-    void kill_sprite(SpriteId id);
-    void move_sprite(SpriteId, const ecl::V2 &newpos);
-    void replace_sprite(SpriteId id, std::unique_ptr<Model> m);
+    SpriteId addSprite(Sprite *sprite, bool isDispensible = false);
+    void killSprite(SpriteId id);
+    void moveSprite(SpriteId, const ecl::V2 &newpos);
+    void replaceSprite(SpriteId id, std::unique_ptr<Model> m);
 
-    void redraw_sprite_region(SpriteId id);
-    void draw_sprites(bool shades, ecl::GC &gc, const WorldArea &a);
+    void redrawSpriteRegion(SpriteId id);
+    void drawSprites(bool shades, ecl::GC &gc, const WorldArea &a);
 
-    Model *get_model(SpriteId id) { return sprites[id]->model.get(); }
+    Model *getModel(SpriteId id) { return sprites[id]->model.get(); }
 
-    void set_maxsprites(unsigned m, unsigned c) {
-        maxsprites = m;
-        dispensiblesprites = c;
+    void setMaxSprites(unsigned newMaxSprites, unsigned newDispensibleSprites) {
+        maxSprites = newMaxSprites;
+        dispensableSprites = newDispensibleSprites;
     }
 
-    Sprite *get_sprite(SpriteId id);
+    Sprite *getSprite(SpriteId id);
 
-    static const SpriteId MAGIC_SPRITEID = 1000000;
+    static constexpr SpriteId MAGIC_SPRITE_ID = 1000000;
     SpriteList sprites;
     SpriteList bottomSprites;  // bottom sprite for each x
 
-private:
-    void update_sprite_region(Sprite *s, bool is_add, bool is_redraw_only = false);
-
     // ModelLayer interface
-    virtual void tick(double /*dtime*/) override;
+    void tick(double /*dtime*/) override;
+
+private:
+    void updateSpriteRegion(Sprite *s, bool is_add, bool is_redraw_only = false);
 
     // Variables.
-    unsigned numsprites;          // Current number of sprites
-    unsigned maxsprites;          // Maximum number of sprites
-    unsigned dispensiblesprites;  // Threshold above which just critical sprites are accepted
+    unsigned numSprites;          // Current number of sprites
+    unsigned maxSprites;          // Maximum number of sprites
+    unsigned dispensableSprites;  // Threshold above which just critical sprites are accepted
 };
 
 /* -------------------- Shadows -------------------- */
@@ -260,19 +254,20 @@ class StoneShadowCache;
 class DL_Shadows : public DisplayLayer {
 public:
     DL_Shadows(DL_Grid *grid, DL_Sprites *sprites);
-    ~DL_Shadows();
+    ~DL_Shadows() override;
 
-    void new_world(int w, int h) override;
+    void newWorld(int w, int h) override;
     void draw(ecl::GC &gc, int xpos, int ypos, int x, int y);
 
+    // DisplayLayer interface
     void draw(ecl::GC &gc, const WorldArea &a, int x, int y) override;
+    void prepare_draw(const WorldArea &) override;
 
 private:
     /* ---------- Private functions ---------- */
     bool has_actor(int x, int y);
-    void prepare_draw(const WorldArea &) override;
 
-    Model *get_shadow_model(int x, int y);
+    Model *getShadowModel(int x, int y);
 
     /* ---------- Variables ---------- */
     DL_Grid *m_grid;        // Stone models
@@ -290,7 +285,7 @@ private:
 
 struct Line {
     ecl::V2 start, end;
-    ecl::V2 oldstart, oldend;
+    ecl::V2 oldStart, oldEnd;
     int r = 0, g = 0, b = 0;
     bool thick = false;
 
@@ -306,14 +301,14 @@ public:
     DL_Lines() : m_id(1) {}
 
     void draw(ecl::GC & /*gc*/, const WorldArea & /*a*/, int /*x*/, int /*y*/) override {}
-    void draw_onepass(ecl::GC &gc) override;
+    void drawSinglePass(ecl::GC &gc) override;
 
-    RubberHandle add_line(const ecl::V2 &p1, const ecl::V2 &p2, unsigned short rc,
-                          unsigned short gc, unsigned short bc, bool isThick);
-    void set_startpoint(unsigned id, const ecl::V2 &p1);
-    void set_endpoint(unsigned id, const ecl::V2 &p2);
-    void kill_line(unsigned id);
-    void new_world(int w, int h) override;
+    LineHandle addLine(const ecl::V2& start, const ecl::V2& end, unsigned short red,
+            unsigned short green, unsigned short blue, bool isThick);
+    void setStart(unsigned id, const ecl::V2 &start);
+    void setEnd(unsigned id, const ecl::V2 &end);
+    void killLine(unsigned id);
+    void newWorld(int w, int h) override;
 
 private:
     // Private methods.
@@ -343,10 +338,10 @@ public:
 
     DisplayEngine *get_engine() const { return m_engine; }
 
-    SpriteHandle add_effect(const ecl::V2 &pos, std::unique_ptr<Model> m, bool isDispensible = false);
+    SpriteHandle add_effect(const ecl::V2 &pos, std::unique_ptr<Model> m, bool isDispensable = false);
     SpriteHandle add_sprite(const ecl::V2 &pos, std::unique_ptr<Model> m);
 
-    RubberHandle add_line(ecl::V2 p1, ecl::V2 p2, unsigned short rc, unsigned short gc,
+    LineHandle add_line(ecl::V2 p1, ecl::V2 p2, unsigned short rc, unsigned short gc,
                           unsigned short bc, bool isThick);
 
     void new_world(int w, int h);
@@ -374,15 +369,15 @@ public:
     GameDisplay(const ScreenArea &gameArea, ScreenArea inventoryarea);
     ~GameDisplay();
 
-    StatusBar *get_status_bar() const;
+    StatusBar *getStatusBar() const;
 
     void tick(double dtime);
-    void new_world(int w, int h);
+    void newWorld(int width, int height);
 
-    void resize_game_area(int w, int h);
+    void resizeGameArea(int width, int height);
 
     /* ---------- Scrolling ---------- */
-    void set_follow_mode(FollowMode followMode);
+    void setFollowMode(FollowMode followMode);
     void updateFollowMode();
     void follow_center();
     void set_follow_sprite(SpriteId id);
@@ -412,6 +407,6 @@ private:
     ScreenArea inventoryarea;
 };
 
-}  // namespace display
+} // namespace enigma::display
 
 #endif

@@ -65,7 +65,7 @@ namespace enigma {
         double innerThreshold;
         double minLength;
         double maxLength;
-        display::RubberHandle model;
+        display::LineHandle model;
         
         Object * anchor2Object() const;
         ecl::V2 posAnchor2() const;

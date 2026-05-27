@@ -322,7 +322,7 @@ void Client::on_mousebutton(SDL_Event &e) {
 
 void Client::rotate_inventory(int direction) {
     m_user_input = "";
-    display::GetStatusBar()->hide_text();
+    display::GetStatusBar()->hideText();
     player::RotateInventory(direction);
 }
 
@@ -359,7 +359,7 @@ void Client::process_userinput() {
     commandHistory[0] = newCommand;
     newCommand = "";
     consoleIndex = 0;
-    display::GetStatusBar()->hide_text();
+    display::GetStatusBar()->hideText();
     server::Msg_Command(commandHistory[0]);
 }
 
@@ -383,7 +383,7 @@ void Client::user_input_backspace() {
             Msg_ShowText(newCommand, false);
         else {
             consoleIndex = 0;
-            display::GetStatusBar()->hide_text();
+            display::GetStatusBar()->hideText();
         }
     } else if (consoleIndex > 1) {
         newCommand = commandHistory[consoleIndex - 2];
@@ -393,7 +393,7 @@ void Client::user_input_backspace() {
             Msg_ShowText(newCommand, false);
         } else {
             consoleIndex = 0;
-            display::GetStatusBar()->hide_text();
+            display::GetStatusBar()->hideText();
         }
     }
 }
@@ -406,7 +406,7 @@ void Client::user_input_previous() {
             Msg_ShowText(documentHistory[docIndex], true);
         } else {
             consoleIndex = 0;
-            display::GetStatusBar()->hide_text();
+            display::GetStatusBar()->hideText();
         }
     } else if (consoleIndex == 0) {
         if (newCommand.length() > 0) {
@@ -421,7 +421,7 @@ void Client::user_input_previous() {
         Msg_ShowText(commandHistory[consoleIndex - 2], false);
     } else {  // top of history or new command without history
         consoleIndex = 0;
-        display::GetStatusBar()->hide_text();
+        display::GetStatusBar()->hideText();
     }
 }
 
@@ -433,11 +433,11 @@ void Client::user_input_next() {
             Msg_ShowText(documentHistory[docIndex], true);
         } else {
             consoleIndex = 0;
-            display::GetStatusBar()->hide_text();
+            display::GetStatusBar()->hideText();
         }
     } else if (consoleIndex == 1 || (consoleIndex == 2 && newCommand.size() == 0)) {
         consoleIndex = 0;
-        display::GetStatusBar()->hide_text();
+        display::GetStatusBar()->hideText();
     } else if (consoleIndex > 1) {
         --consoleIndex;
         Msg_ShowText(consoleIndex == 1 ? newCommand : commandHistory[consoleIndex - 2], false);
@@ -741,7 +741,7 @@ void Client::tick(double dtime) {
         }
 
         m_total_game_time += dtime;
-        display::GetStatusBar()->set_time(m_total_game_time);
+        display::GetStatusBar()->setTime(m_total_game_time);
     // fall through
     case cls_finished: {
         m_timeaccu += dtime;
@@ -1027,7 +1027,7 @@ void Msg_Sparkle(const ecl::V2 &pos) {
 }
 
 void Msg_ShowText(const std::string &text, bool scrolling, double duration) {
-    display::GetStatusBar()->show_text(text, scrolling, duration);
+    display::GetStatusBar()->showText(text, scrolling, duration);
 }
 
 void Msg_ShowDocument(const std::string &text, bool scrolling, double duration) {

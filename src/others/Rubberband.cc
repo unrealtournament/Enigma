@@ -136,8 +136,8 @@ namespace enigma {
     }
 
     void Rubberband::tick(double /*dt*/) {
-        model.update_first(anchor1->getPos());
-        model.update_second(posAnchor2());
+        model.setStartPoint(anchor1->getPos());
+        model.setEndPoint(posAnchor2());
     }
 
     void Rubberband::applyForces(double dt) {

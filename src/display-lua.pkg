@@ -20,7 +20,7 @@
 
 $#include "display.hh"
 $#include "d_models.hh"
-$using namespace display;
+$using namespace enigma::display;
 $using ecl::Rect;
 $using ecl::Surface;
 

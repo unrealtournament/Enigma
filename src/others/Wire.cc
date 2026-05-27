@@ -77,8 +77,8 @@ namespace enigma {
     }
     
     void Wire::tick(double dt) {  // TODO maybe we should let the stones inform the wires on every move
-        model.update_first(anchor1->getOwnerPos().center());
-        model.update_second(anchor2->getOwnerPos().center());
+        model.setStartPoint(anchor1->getOwnerPos().center());
+        model.setEndPoint(anchor2->getOwnerPos().center());
     }
     
     

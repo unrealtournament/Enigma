@@ -601,5 +601,5 @@ void player::RedrawInventory() {
         Item *it = inv->get_item(i);
         modelnames.push_back(it->get_inventory_model());
     }
-    display::GetStatusBar()->set_inventory(CurrentPlayer() == 0 ? YIN : YANG, modelnames);
+    display::GetStatusBar()->setInventory(CurrentPlayer() == 0 ? YIN : YANG, modelnames);
 }

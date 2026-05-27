@@ -48,7 +48,7 @@ namespace enigma {
     private:
         Stone * anchor1;
         Stone * anchor2;
-        display::RubberHandle model;
+        display::LineHandle model;
         
         void switchAnchor(Object *oldAnchor, Object *newAnchor, Object *otherAnchor);
     };

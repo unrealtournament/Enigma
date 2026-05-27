@@ -23,7 +23,7 @@
 #include "ecl_math.hh"
 #include "ecl_video.hh"
 
-namespace display {
+namespace enigma::display {
 
 //----------------------------------------
 // Definition of models
@@ -85,10 +85,6 @@ void DefineAlias(const char *name, const char *othername);
 // Models on the grid
 //----------------------------------------
 
-using enigma::GridPos;
-using enigma::GridLayer;
-using enigma::GridLoc;
-
 Model *SetModel(const GridLoc &l, const std::string &modelname);
 Model *SetModel(const GridLoc &l, std::unique_ptr<Model> m);
 void KillModel(const GridLoc &l);
@@ -121,7 +117,11 @@ void FocusReferencePoint();
 
 /* -------------------- Sprites -------------------- */
 
-enum SpriteLayer { SPRITE_ACTOR, SPRITE_EFFECT, SPRITE_DEBRIS };
+enum SpriteLayer {
+    SPRITE_ACTOR,
+    SPRITE_EFFECT,
+    SPRITE_DEBRIS
+};
 
 typedef unsigned int SpriteId;
 
@@ -156,42 +156,41 @@ SpriteHandle AddSprite(const ecl::V2 &pos, const char *modelname = nullptr);
 
 class DL_Lines;
 
-class RubberHandle {
+class LineHandle {
 public:
-    explicit RubberHandle(DL_Lines *layer = nullptr, unsigned id = 0);
-    explicit operator unsigned() const { return id; }
+    explicit LineHandle(DL_Lines *layer = nullptr, unsigned id = 0);
+    unsigned getId() const { return id; }
 
-    void update_first(const ecl::V2 &p1);
-    void update_second(const ecl::V2 &p2);
+    void setStartPoint(const ecl::V2 &start);
+    void setEndPoint(const ecl::V2 &end);
     void kill();
-
-    DL_Lines *line_layer;
+private:
+    DL_Lines *lineLayer;
     unsigned id;
 };
 
 // Adds a rubber band between points p1 and p2.
-RubberHandle AddRubber(const ecl::V2 &p1, const ecl::V2 &p2, unsigned short red, unsigned short green,
-                       unsigned short blue, bool isThick);
+LineHandle AddRubber(const ecl::V2& start, const ecl::V2& end, unsigned short red,
+        unsigned short green, unsigned short blue, bool isThick);
 
 /* -------------------- Status bar -------------------- */
 
 class StatusBar {
 public:
     virtual ~StatusBar() = default;
-    virtual void set_inventory(enigma::Player activePlayer,
-                               const std::vector<std::string> &modelnames) = 0;
+    virtual void setInventory(Player activePlayer, const std::vector<std::string>& modelNames) = 0;
 
-    virtual void show_text(const std::string &str, bool scrolling, double duration) = 0;
-    virtual void hide_text() = 0;
+    virtual void showText(const std::string &str, bool scrolling, double duration) = 0;
+    virtual void hideText() = 0;
 
-    virtual void show_move_counter(bool active) = 0;
+    virtual void showMoveCounter(bool active) = 0;
     virtual void setCMode(bool flag) = 0;
     virtual void setBasicModes(std::string flags) = 0;
 
-    virtual void set_time(double time) = 0;
-    virtual void set_speed(double speed) = 0;
-    virtual void set_travelled_distance(double distance) = 0;
-    virtual void set_counter(int nummoves) = 0;
+    virtual void setTime(double time) = 0;
+    virtual void setSpeed(double speed) = 0;
+    virtual void setTravelledDistance(double distance) = 0;
+    virtual void setCounter(int nummoves) = 0;
 };
 
 StatusBar *GetStatusBar();
@@ -233,6 +232,6 @@ void Tick(double dtime);
 void SetTextSpeed(int newspeed);
 int GetTextSpeed();
 
-}  // namespace display
+} // namespace enigma::display
 
 #endif

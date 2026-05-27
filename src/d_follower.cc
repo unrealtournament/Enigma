@@ -16,56 +16,55 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 #include "d_follower.hh"
+
 #include "d_engine.hh"
 #include "ecl_math.hh"
 #include "errors.hh"
 
 #include <algorithm>
 
-namespace display {
+namespace enigma::display {
 
 /* -------------------- Follower -------------------- */
 
-Follower::Follower(DisplayEngine *e) : m_boundary_x(0.5), m_boundary_y(0.5), m_engine(e) {
+Follower::Follower(DisplayEngine* engine) : borderX(0.5), borderY(0.5), m_engine(engine) {
 }
 
 void Follower::center(const ecl::V2 &point) {
-    double borderh = m_boundary_x;
-    double borderv = m_boundary_y;
     double hoff = get_hoff();
     double voff = get_voff();
 
     ecl::V2 off = point;
-    off[0] = floor((off[0] - borderh) / hoff) * hoff;
-    off[1] = floor((off[1] - borderv) / voff) * voff;
+    off[0] = floor((off[0] - borderX) / hoff) * hoff;
+    off[1] = floor((off[1] - borderY) / voff) * voff;
 
     set_offset(off);
 }
 
 double Follower::get_hoff() const {
     ScreenArea gamearea = m_engine->get_area();
-    double result = gamearea.w / m_engine->get_tilew() - m_boundary_x * 2;
-    ASSERT(result > 0, enigma::XLevelRuntime,
+    double result = gamearea.w / m_engine->get_tilew() - borderX * 2;
+    ASSERT(result > 0, XLevelRuntime,
            "FollowThreshold must be less than half of level width/height and 10/6.5");
     return result;
 }
 
 double Follower::get_voff() const {
-    ScreenArea gamearea = m_engine->get_area();
-    double result = gamearea.h / m_engine->get_tileh() - m_boundary_y * 2;
-    ASSERT(result > 0, enigma::XLevelRuntime,
+    ScreenArea gameArea = m_engine->get_area();
+    double result = gameArea.h / m_engine->get_tileh() - borderY * 2;
+    ASSERT(result > 0, XLevelRuntime,
            "FollowThreshold must be less than half of level width/height and 10/6.5");
     return result;
 }
 
-bool Follower::set_offset(ecl::V2 offs) {
-    DisplayEngine *e = get_engine();
-    offs[0] = std::max(offs[0], 0.0);
-    offs[1] = std::max(offs[1], 0.0);
-    offs[0] = std::min(offs[0], double(e->get_width() - get_hoff() - m_boundary_x * 2));
-    offs[1] = std::min(offs[1], double(e->get_height() - get_voff() - m_boundary_y * 2));
-    if (offs != e->get_offset()) {
-        e->set_offset(offs);
+bool Follower::set_offset(ecl::V2 offset) {
+    DisplayEngine *engine = getEngine();
+    offset[0] = std::max(offset[0], 0.0);
+    offset[1] = std::max(offset[1], 0.0);
+    offset[0] = std::min(offset[0], double(engine->get_width() - get_hoff() - borderX * 2));
+    offset[1] = std::min(offset[1], double(engine->get_height() - get_voff() - borderY * 2));
+    if (offset != engine->get_offset()) {
+        engine->set_offset(offset);
         return true;
     }
     return false;
@@ -76,34 +75,33 @@ bool Follower::set_offset(ecl::V2 offs) {
 // Determine whether the screen must be scrolled or not and change the
 // coordinate origin of the screen accordingly.
 void Follower_Screen::tick(double, const ecl::V2 &point) {
-    DisplayEngine *engine = get_engine();
+    DisplayEngine *engine = getEngine();
     ecl::V2 oldoff = engine->get_offset();
     Follower::center(point);
     if (oldoff != engine->get_offset())
         engine->mark_redraw_screen();
 }
 
-Follower_Screen::Follower_Screen(DisplayEngine *e, double borderx, double bordery) : Follower(e) {
-    m_boundary_x = borderx;
-    m_boundary_y = bordery;
+Follower_Screen::Follower_Screen(DisplayEngine* engine, double borderX, double borderY)
+    : Follower(engine) {
+    setBorder(borderX, borderY);
 }
 
 /* -------------------- Follower_Scrolling -------------------- */
 
-Follower_Scrolling::Follower_Scrolling(DisplayEngine *e, bool screenwise_, double borderx,
-                                       double bordery)
-: Follower(e), currently_scrolling(false), scrollspeed(0), resttime(0), screenwise(screenwise_) {
-    m_boundary_x = borderx;
-    m_boundary_y = bordery;
+Follower_Scrolling::Follower_Scrolling(DisplayEngine *engine, bool screenWise, double borderX,
+                                       double borderY)
+: Follower(engine), currently_scrolling(false), scrollspeed(0), resttime(0), screenwise(screenWise) {
+    setBorder(borderX, borderY);
 }
 
 void Follower_Scrolling::center(const ecl::V2 &point) {
     Follower::center(point);
-    curpos = destpos = get_engine()->get_offset();
+    curpos = destpos = getEngine()->get_offset();
 }
 
 void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
-    DisplayEngine *engine = get_engine();
+    DisplayEngine *engine = getEngine();
 
     if (!currently_scrolling) {
         ScreenArea gamearea = engine->get_area();
@@ -113,11 +111,11 @@ void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
         int sx, sy;
         engine->world_to_screen(point, &sx, &sy);
 
-        bool scrollx_p = (sx < gamearea.x + m_boundary_x * tilew)
-                || (sx >= gamearea.x + gamearea.w - m_boundary_x * tilew);
+        bool scrollx_p = (sx < gamearea.x + getBorderX() * tilew)
+                || (sx >= gamearea.x + gamearea.w - getBorderX() * tilew);
 
-        bool scrolly_p = (sy < gamearea.y + m_boundary_y * tileh)
-                || (sy >= gamearea.y + gamearea.h - m_boundary_y * tileh);
+        bool scrolly_p = (sy < gamearea.y + getBorderY() * tileh)
+                || (sy >= gamearea.y + gamearea.h - getBorderY() * tileh);
 
         if (scrollx_p || scrolly_p) {
             ecl::V2 olddest = destpos;
@@ -131,8 +129,8 @@ void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
             if (screenwise) {
                 double hoff = get_hoff();
                 double voff = get_voff();
-                destpos[0] = floor((point[0] - m_boundary_x) / hoff) * hoff;
-                destpos[1] = floor((point[1] - m_boundary_y) / voff) * voff;
+                destpos[0] = floor((point[0] - getBorderX()) / hoff) * hoff;
+                destpos[1] = floor((point[1] - getBorderY()) / voff) * voff;
             } else {
                 destpos = point - ecl::V2(gamearea.w / tilew, gamearea.h / tileh) / 2;
                 // round to grid - a hack just for 20x13 screen TODO rewrite for Enigma 1.2
@@ -176,31 +174,33 @@ void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
 
 /* -------------------- Follower_Smooth -------------------- */
 
-Follower_Smooth::Follower_Smooth(DisplayEngine *e) : Follower(e) {
+Follower_Smooth::Follower_Smooth(DisplayEngine *engine) : Follower(engine) {
 }
 
-ecl::V2 Follower_Smooth::calc_offset(const ecl::V2 &point) {
-    DisplayEngine *engine = get_engine();
-    ScreenArea gamearea = engine->get_area();
-    int tilew = engine->get_tilew();
-    int tileh = engine->get_tileh();
+ecl::V2 Follower_Smooth::calcOffset(const ecl::V2 &point) {
+    DisplayEngine *engine = getEngine();
+    ScreenArea gameArea = engine->get_area();
+    int tileWidth = engine->get_tilew();
+    int tileHeight = engine->get_tileh();
 
-    ecl::V2 destpos = point - ecl::V2(double(gamearea.w) / tilew, double(gamearea.h) / tileh) / 2;
+    ecl::V2 destPos = point
+            - ecl::V2(double(gameArea.w) / tileWidth, double(gameArea.h) / tileHeight) / 2;
     // Round to integer pixel offset
-    destpos[0] = ecl::round_nearest<int>(destpos[0] * tilew) / double(tilew);
-    destpos[1] = ecl::round_nearest<int>(destpos[1] * tileh) / double(tileh);
-    destpos[0] = ecl::Clamp(destpos[0], 0.0, (double)engine->get_width() - gamearea.w / tilew);
-    destpos[1] = ecl::Clamp(destpos[1], 0.0, (double)engine->get_height() - gamearea.h / tileh);
-    return destpos;
+    destPos[0] = ecl::round_nearest<int>(destPos[0] * tileWidth) / double(tileWidth);
+    destPos[1] = ecl::round_nearest<int>(destPos[1] * tileHeight) / double(tileHeight);
+    destPos[0] = ecl::Clamp(destPos[0], 0.0, (double)engine->get_width() - gameArea.w / tileWidth);
+    destPos[1] = ecl::Clamp(
+            destPos[1], 0.0, (double)engine->get_height() - gameArea.h / tileHeight);
+    return destPos;
 }
 
 void Follower_Smooth::tick(double /*time*/, const ecl::V2 &point) {
-    DisplayEngine *engine = get_engine();
-    engine->move_offset(calc_offset(point));
+    getEngine()->move_offset(calcOffset(point));
 }
 
 void Follower_Smooth::center(const ecl::V2 &point) {
-    set_offset(calc_offset(point));
+    setBorder(0.5, 0.5);
+    set_offset(calcOffset(point));
 }
 
 }  // namespace display

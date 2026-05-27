@@ -1711,13 +1711,13 @@ bool WorldInitLevel() {
     BroadcastMessage("_init", Value(),
                      GridLayerBits(GRID_ITEMS_BIT | GRID_STONES_BIT | GRID_FLOOR_BIT));
 
-    for (auto &elem : level->others) {
-        SendMessage(elem, "_init", Value());
+    for (Other* other : level->others) {
+        SendMessage(other, "_init", Value());
     }
 
     server::InitMoveCounter();
     display::StatusBar *status_bar = display::GetStatusBar();
-    status_bar->show_move_counter(server::ShowMoves);
+    status_bar->showMoveCounter(server::ShowMoves);
     status_bar->setCMode(server::NoCollisions);
     status_bar->setBasicModes(std::string() +
                               (server::GameCompatibility == GAMET_ENIGMA ? "" : "x") +

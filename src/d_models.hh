@@ -19,13 +19,12 @@
 #define D_MODELS_HH
 
 #include "display_internal.hh"
-#include "display.hh"
 #include "ecl_video.hh"
 #include "ecl_geom.hh"
 #include <vector>
 #include <string>
 
-namespace display {
+namespace enigma::display {
 
 /* -------------------- Image -------------------- */
 
