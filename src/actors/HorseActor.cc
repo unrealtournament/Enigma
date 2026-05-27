@@ -86,10 +86,10 @@ namespace enigma {
             updateTarget();
             if (objFlags & OBJBIT_AUTOMOVE) {
                 if (!(objFlags & OBJBIT_STEADY) &&
-                        ecl::square(get_vel()) * 0.6 / strength > ecl::length(target - get_pos()) - 0.05)
-                    add_force(- normalize(get_vel()) * strength);
+                        ecl::square(getVel()) * 0.6 / strength > ecl::length(target - getPos()) - 0.05)
+                    addForce(- normalize(getVel()) * strength);
                 else
-                    add_force(normalize(target - get_pos()) * strength);
+                    addForce(normalize(target - getPos()) * strength);
             }
         }
         Actor::think(dtime);
@@ -107,7 +107,7 @@ namespace enigma {
             // target not defined so far
             ASSERT(getDestinationByIndex(destidx, target), XLevelRuntime, "Horse actor missing valid destination");
             objFlags &= ~OBJBIT_NEWDEST;
-        } else if (touched || length(target - get_pos()) < ((objFlags & OBJBIT_STEADY) ? 0.2 : 0.1)) {
+        } else if (touched || length(target - getPos()) < ((objFlags & OBJBIT_STEADY) ? 0.2 : 0.1)) {
             int theid = getId();  // in future user might kill actors on callback
             performAction(true);
             // target reached or? try next one

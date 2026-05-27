@@ -169,7 +169,7 @@ void ChargeStone::setAttr(const std::string& key, const Value &val) {
 
     void FlashStone::actor_hit(const StoneContact &sc) {
         if (Actor *other = FindOtherMarble(sc.actor)) {
-            other->add_force (distortedVelocity(sc.actor->get_vel(), 20));
+            other->addForce (distortedVelocity(sc.actor->getVel(), 20));
         }
         set_anim("st_flash-anim");
     }

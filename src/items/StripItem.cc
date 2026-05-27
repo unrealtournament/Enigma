@@ -51,7 +51,7 @@ namespace enigma {
 
         double velocity = 0;
         if (a != nullptr)
-            velocity = ecl::length(a->get_actorinfo()->vel);
+            velocity = ecl::length(a->getVel());
 
         // calculate the maximal horizontal or vertical distance from the center:
         // gurantee that a large marble can touch a neighboring stone at speed 0,
@@ -70,11 +70,13 @@ namespace enigma {
         double xcenter = get_pos().x + 0.5;
         DirectionBits cbits = getConnections();
 
-        return (((fabs(position[1] - ycenter) <= MAXDIST) && ((fabs(position[0] - xcenter) <= MAXDIST)  ||
-                   ((position[0] <= xcenter + MAXDIST) && (cbits & WESTBIT)) || ((position[0] >= xcenter - MAXDIST) && (cbits & EASTBIT))))
-                || ((fabs(position[0] - xcenter) <= MAXDIST)
-                && (((position[1] <= ycenter + MAXDIST) && (cbits & NORTHBIT)) || ((position[1] >= ycenter - MAXDIST) && (cbits & SOUTHBIT)))))
-                ? true : false;
+        return (fabs(position[1] - ycenter) <= MAXDIST
+                       && (fabs(position[0] - xcenter) <= MAXDIST
+                               || (position[0] <= xcenter + MAXDIST && (cbits & WESTBIT))
+                               || (position[0] >= xcenter - MAXDIST && (cbits & EASTBIT))))
+                || (fabs(position[0] - xcenter) <= MAXDIST
+                        && ((position[1] <= ycenter + MAXDIST && (cbits & NORTHBIT))
+                                || (position[1] >= ycenter - MAXDIST && (cbits & SOUTHBIT))));
     }
 
     double StripItem::getFriction(ecl::V2 position, double defaultFriction, Actor *a) {
@@ -86,7 +88,7 @@ namespace enigma {
 
     ecl::V2 StripItem::calcMouseforce(Actor *a, ecl::V2 mouseForce, ecl::V2 floorForce) {
         Value v = getAttr("adhesion");
-        if (v && covers_floor(a->get_pos(), a))
+        if (v && covers_floor(a->getPos(), a))
             return mouseForce * v.toDouble();
         return floorForce;
     }

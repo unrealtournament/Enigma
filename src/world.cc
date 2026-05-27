@@ -343,7 +343,7 @@ Value World::getNamedPosition(const std::string &name) {
         case Object::STONE:
         case Object::FLOOR:
         case Object::ITEM: return dynamic_cast<GridObject *>(o)->get_pos();
-        case Object::ACTOR: return dynamic_cast<Actor *>(o)->get_pos();
+        case Object::ACTOR: return dynamic_cast<Actor *>(o)->getPos();
         default: return Value(GridPos(-1, -1));
         }
     }
@@ -370,7 +370,7 @@ PositionList World::getPositionList(const std::string &tmpl, Object *reference) 
         case Object::ITEM:
             positions.push_back(dynamic_cast<GridObject *>(object)->get_pos());
             break;
-        case Object::ACTOR: positions.push_back(dynamic_cast<Actor *>(object)->get_pos()); break;
+        case Object::ACTOR: positions.push_back(dynamic_cast<Actor *>(object)->getPos()); break;
         default:
             // ignore
             break;
@@ -388,14 +388,14 @@ PositionList World::getPositionList(const std::string &tmpl, Object *reference) 
 }
 
 void World::add_actor(Actor *a) {
-    add_actor(a, a->get_pos());
+    add_actor(a, a->getPos());
 }
 
 void World::add_actor(Actor *a, const V2 &pos) {
     actorList.push_back(a);
-    a->m_actorinfo.pos = pos;
-    a->m_actorinfo.gridpos = GridPos(pos);
-    a->m_actorinfo.field = getField(a->m_actorinfo.gridpos);
+    a->actorInfo.pos = pos;
+    a->actorInfo.gridpos = GridPos(pos);
+    a->actorInfo.field = getField(a->actorInfo.gridpos);
 
     // Insert the actor as new rightmost_actor and (maybe) sort.
     // This makes use of did_move_actor. See version 1.1, rev.549
@@ -418,7 +418,7 @@ void World::add_actor(Actor *a, const V2 &pos) {
         a->on_creation(pos);
     }
 
-    if (get_id(a) == ac_pearl_white || get_id(a) == ac_pearl_black)
+    if (a->getActorId() == ac_pearl_white || a->getActorId() == ac_pearl_black)
         ChangeMeditation(+1, 0, 0, 0);
 }
 
@@ -449,10 +449,12 @@ Actor *World::yield_actor(Actor *a) {
 void World::exchange_actors(Actor *a1, Actor *a2) {
     // Exchange actor positions and sort via did_move_actor.
     // A version without did_move_actor is in version 1.1, rev.549.
-    ecl::V2 oldpos_a1 = a1->get_actorinfo()->pos;
-    a1->get_actorinfo()->pos = a2->get_actorinfo()->pos;
+    ActorInfo &actorInfo1 = a1->getMutableActorInfo();
+    ActorInfo &actorInfo2 = a2->getMutableActorInfo();
+    V2 oldPos1 = actorInfo1.pos;
+    actorInfo1.pos = actorInfo2.pos;
     did_move_actor(a1);
-    a2->get_actorinfo()->pos = oldpos_a1;
+    actorInfo2.pos = oldPos1;
     did_move_actor(a2);
 }
 
@@ -477,7 +479,7 @@ void World::tick(double dtime) {
     doPerformPendingActions();
     // do kill lasered actors in same time step
     for (auto actor : actorList) {
-        Item *it = actor->get_actorinfo()->field->item;
+        Item *it = actor->getActorInfo().field->item;
         if (it != nullptr && get_id(it) == it_laserbeam) {
             it->actor_hit(actor);
         }
@@ -536,7 +538,7 @@ void World::scramblePuzzles() {
 
 ecl::V2 World::drunkenMouseforce(Actor *actor, const V2 &mforce) {
     V2 f = mforce;
-    if (actor->get_controllers() != 0) {
+    if (actor->getControllers() != 0) {
         if (actor->is_drunken()) {
             int t1 = (int)server::LevelTime;
             double base1 = fmod(t1 * M_PI, 2.0) - 1.0;
@@ -557,9 +559,9 @@ ecl::V2 World::get_local_force(Actor *a) {
     double friction = 0;
 
     if (a->is_on_floor()) {
-        if (Floor *floor = a->m_actorinfo.field->floor) {
+        if (Floor *floor = a->actorInfo.field->floor) {
             // Mouse force
-            if (a->get_controllers() != 0) {
+            if (a->getControllers() != 0) {
                 m = floor->process_mouseforce(a, mouseForce.get_force(a));
             }
             // Friction
@@ -569,16 +571,16 @@ ecl::V2 World::get_local_force(Actor *a) {
             floor->add_force(a, f);
         }
 
-        if (Item *item = a->m_actorinfo.field->item) {
-            friction = item->getFriction(a->get_pos(), friction, a);
-            if (a->get_controllers() != 0) {
+        if (Item *item = a->actorInfo.field->item) {
+            friction = item->getFriction(a->getPos(), friction, a);
+            if (a->getControllers() != 0) {
                 m = item->calcMouseforce(a, mouseForce.get_force(a), m);
             }
             item->add_force(a, f);
         }
     }
 
-    a->m_actorinfo.friction = friction;
+    a->actorInfo.friction = friction;
     f += drunkenMouseforce(a, m);
 
     return f;
@@ -595,14 +597,14 @@ ecl::V2 World::get_global_force(Actor *a) {
     force += server::ConstantForce;
 
     // Electrostatic forces between actors.
-    double charge1 = get_charge(a);
+    double charge1 = a->getCharge();
     if (charge1 != 0.0) {
         for (auto a2 : actorList) {
             if (a2 == a)
                 continue;
-            double charge2 = get_charge(a2);
+            double charge2 = a2->getCharge();
             if (charge2 != 0.0) {
-                V2 distv = a->get_pos_force() - a2->get_pos_force();
+                V2 distv = a->getPosForce() - a2->getPosForce();
                 double dist = distv.normalize();
                 if (dist != 0.0)
                     force += server::ElectricForce * charge1 * charge2 / dist * distv;
@@ -659,7 +661,7 @@ void World::find_contact_with_stone(Actor* actor, GridPos p, StoneContact& c,
     if (isWindow)
         wsides = stone->getFaces(actor->is_invisible());
 
-    const ActorInfo &ai = *actor->get_actorinfo();
+    const ActorInfo &ai = actor->getActorInfo();
     double r = ai.radius;
 
     int x = p.x, y = p.y;
@@ -939,7 +941,7 @@ void World::find_contact_with_edge(Actor *a, GridPos p0, GridPos p1, GridPos p2,
         // join stones to a block without rounded edges
         find_contact_with_stone(a, p1, c1, winFacesActorStone, false,
                                 s1);  // collision with straight neighbour only
-        if (c1.normal * (a->get_actorinfo()->vel) >=
+        if (c1.normal * (a->getVel()) >=
             0 /* &&  s1 has restituion 1.0 */)  // leaving a oneway or door
             find_contact_with_stone(a, p0, c0, winFacesActorStone, true,
                                     s0);  // collide with diagonal stone
@@ -949,7 +951,7 @@ void World::find_contact_with_edge(Actor *a, GridPos p0, GridPos p1, GridPos p2,
         // join stones to a block without rounded edges
         find_contact_with_stone(a, p2, c2, winFacesActorStone, false,
                                 s2);  // contact with straight neighbour only
-        if (c2.normal * (a->get_actorinfo()->vel) >=
+        if (c2.normal * (a->getVel()) >=
             0 /* &&  s2 has restitution 1.0 */)  // leaving a oneway or door
             find_contact_with_stone(a, p0, c0, winFacesActorStone, true,
                                     s0);  // collide with diagonal stone
@@ -1009,7 +1011,7 @@ void World::find_stone_contacts(Actor *a, StoneContact &c0, StoneContact &c1, St
     c1.actor = a;
     c2.actor = a;
 
-    ActorInfo &ai = *a->get_actorinfo();
+    const ActorInfo &ai = a->getActorInfo();
     double re = ai.radius + contact_e;
     GridPos g = GridPos(ecl::round_down<int>(ai.pos[0]), ecl::round_down<int>(ai.pos[1]));
     double x = ai.pos[0];
@@ -1159,7 +1161,7 @@ void World::find_stone_contacts(Actor *a, StoneContact &c0, StoneContact &c1, St
   'stonepos' and no 'stone' entry.) */
 void World::handle_stone_contact(StoneContact &sc) {
     Actor *a = sc.actor;
-    ActorInfo &ai = *a->get_actorinfo();
+    ActorInfo &ai = a->getMutableActorInfo();
     double restitution = 1.0;  // 0.85;
 
     if (server::NoCollisions && (sc.stoneId != st_borderstone) &&
@@ -1245,10 +1247,10 @@ void World::handle_actor_contacts() {
     Actor *a = leftmostActor;
     while (a != nullptr) {
         Actor *candidate = a->right;
-        double actingradius = a->m_actorinfo.radius + Actor::max_radius;
-        double max_x = a->m_actorinfo.pos[0] + actingradius;
-        while (candidate != nullptr && candidate->m_actorinfo.pos[0] <= max_x) {
-            double ydist = candidate->m_actorinfo.pos[1] - a->m_actorinfo.pos[1];
+        double actingradius = a->actorInfo.radius + Actor::maxRadius;
+        double max_x = a->actorInfo.pos[0] + actingradius;
+        while (candidate != nullptr && candidate->actorInfo.pos[0] <= max_x) {
+            double ydist = candidate->actorInfo.pos[1] - a->actorInfo.pos[1];
             ydist = (ydist < 0) ? -ydist : ydist;
             if (ydist <= actingradius) {
                 handle_actor_contact(a, candidate);
@@ -1259,11 +1261,11 @@ void World::handle_actor_contacts() {
     }
 }
 
+/// Determine whether there is a collision between actor1 and actor2.
 void World::handle_actor_contact(Actor *actor1, Actor *actor2) {
-    // Calculate if there is a collision between actor1 and actor2.
 
-    ActorInfo &a1 = *actor1->get_actorinfo();
-    ActorInfo &a2 = *actor2->get_actorinfo();
+    ActorInfo &a1 = actor1->getMutableActorInfo();
+    ActorInfo &a2 = actor2->getMutableActorInfo();
 
     if (a1.ignore_contacts || a2.ignore_contacts)
         return;
@@ -1332,7 +1334,7 @@ void World::handle_stone_contacts(unsigned actoridx) {
 
     Actor *actor = actorList[actoridx];
 
-    if (actor->m_actorinfo.ignore_contacts)  // used by the cannonball for example
+    if (actor->actorInfo.ignore_contacts)  // used by the cannonball for example
         return;
 
     // Find contacts without any sideeffects
@@ -1358,7 +1360,7 @@ void World::moveActors(double dtime) {
     size_t nactors = actorList.size();
     for (unsigned i = 0; i < nactors; ++i) {
         Actor *a = actorList[i];
-        ActorInfo &ai = *a->get_actorinfo();
+        ActorInfo &ai = a->getMutableActorInfo();
         // extrapolate actor position for better accuracy of forces
         if (!ai.grabbed)
             ai.pos_force = ai.pos + dtime * 0.4 * ai.vel;
@@ -1374,7 +1376,7 @@ void World::moveActors(double dtime) {
     while (rest_time > 0) {
         for (unsigned i = 0; i < nactors; ++i) {
             Actor *a = actorList[i];
-            ActorInfo &ai = *a->get_actorinfo();
+            ActorInfo &ai = a->getMutableActorInfo();
 
             // the "6" is a historical accident, don't change it!
             ai.force = ai.forceacc * 6;
@@ -1400,7 +1402,7 @@ void World::moveActors(double dtime) {
         registerCriticalPositions = true;
         for (unsigned i = 0; i < nactors; ++i) {
             Actor *a = actorList[i];
-            ActorInfo &ai = *a->get_actorinfo();
+            const ActorInfo &ai = a->getActorInfo();
             if (!ai.grabbed)
                 handle_stone_contacts(i);
         }
@@ -1409,7 +1411,7 @@ void World::moveActors(double dtime) {
 
         for (unsigned i = 0; i < nactors; ++i) {
             Actor *a = actorList[i];
-            ActorInfo &ai = *a->get_actorinfo();
+            ActorInfo &ai = a->getMutableActorInfo();
             double dtime = dt;
 
             if (!a->can_move()) {
@@ -1434,7 +1436,7 @@ void World::moveActors(double dtime) {
 void World::advanceActor(Actor *actor, double &dtime) {
     const double MAXVEL = 70;  // 70 grids/s  < min_actor_radius/timestep !
 
-    ActorInfo &ai = *actor->get_actorinfo();
+    ActorInfo &ai = actor->getMutableActorInfo();
     V2 oldPos = ai.pos;
     V2 force = ai.force;
 
@@ -1457,7 +1459,7 @@ void World::advanceActor(Actor *actor, double &dtime) {
 
     // Friction influence
     double friction = server::FrictionFactor * ai.friction;
-    if (actor->has_spikes())
+    if (actor->hasSpikes())
         friction += 7.0 * server::FrictionFactor;
 
     double vv = length(ai.vel);
@@ -1534,19 +1536,19 @@ void World::advanceActor(Actor *actor, double &dtime) {
 }
 
 void World::did_move_actor(Actor *a) {
-    a->m_actorinfo.gridpos = GridPos(a->m_actorinfo.pos);
-    a->m_actorinfo.field = getField(a->m_actorinfo.gridpos);
+    a->actorInfo.gridpos = GridPos(a->actorInfo.pos);
+    a->actorInfo.field = getField(a->actorInfo.gridpos);
 
-    double ax = a->m_actorinfo.pos[0];
+    double ax = a->actorInfo.pos[0];
     Actor *old_left = a->left;
     Actor *old_right = a->right;
     Actor *new_left = old_left;
     Actor *new_right = old_right;
     // find new position in actor list
-    while (new_left != nullptr && new_left->m_actorinfo.pos[0] > ax) {
+    while (new_left != nullptr && new_left->actorInfo.pos[0] > ax) {
         new_left = new_left->left;
     };
-    while (new_right != nullptr && new_right->m_actorinfo.pos[0] < ax) {
+    while (new_right != nullptr && new_right->actorInfo.pos[0] < ax) {
         new_right = new_right->right;
     };
     if (new_left != old_left || new_right != old_right) {
@@ -1688,7 +1690,7 @@ bool WorldInitLevel() {
     bool seen_player0 = false;
 
     for (auto a : level->actorList) {
-        a->on_creation(a->get_actorinfo()->pos);
+        a->on_creation(a->getPos());
         SendMessage(a, "_init", Value());
 
         if (Value v = a->getAttr("owner")) {
@@ -2234,12 +2236,12 @@ void WarpActor(Actor *a, double newx, double newy, bool keep_velocity) {
                                                           "level grid. (And hyperspace travel is "
                                                           "not implemented yet, sorry.)");
     if (!keep_velocity)
-        a->get_actorinfo()->vel = V2();
+        a->getMutableActorInfo().vel = V2();
     a->warp(newpos);
 }
 
 void FastRespawnActor(Actor *a, bool keep_velocity) {
-    const V2 &p = a->get_respawnpos();
+    const V2 &p = a->getRespawnPos();
     WarpActor(a, p[0], p[1], keep_velocity);
 }
 
@@ -2249,8 +2251,8 @@ void RespawnActor(Actor *a) {
 }
 
 Actor *FindActorByID(ActorID id) {
-    for (auto &actor : level->actorList) {
-        if (get_id(actor) == id)
+    for (Actor* actor : level->actorList) {
+        if (actor->getActorId() == id)
             return actor;
     }
     return nullptr;
@@ -2258,8 +2260,8 @@ Actor *FindActorByID(ActorID id) {
 
 unsigned CountActorsOfKind(ActorID id) {
     unsigned count = 0;
-    for (auto &actor : level->actorList) {
-        if (get_id(actor) == id)
+    for (Actor* actor : level->actorList) {
+        if (actor->getActorId() == id)
             ++count;
     }
     return count;
@@ -2269,7 +2271,7 @@ Actor *FindOtherMarble(Actor *thisMarble) {
     if (!thisMarble)
         return nullptr;
 
-    switch (get_id(thisMarble)) {
+    switch (thisMarble->getActorId()) {
     case ac_marble_black: return FindActorByID(ac_marble_white);
     case ac_marble_white: return FindActorByID(ac_marble_black);
     default: return nullptr;
@@ -2285,16 +2287,16 @@ bool ExchangeMarbles(Actor *marble1) {
 }
 
 void GrabActor(Actor *a) {
-    a->get_actorinfo()->grabbed = true;
+    a->getMutableActorInfo().grabbed = true;
 }
 
 void ReleaseActor(Actor *a) {
-    a->get_actorinfo()->grabbed = false;
+    a->getMutableActorInfo().grabbed = false;
 }
 
 bool GetActorsInRange(ecl::V2 center, double range, std::vector<Actor *> &actors) {
     for (auto &a : level->actorList) {
-        if (length(a->get_pos() - center) < range)
+        if (length(a->getPos() - center) < range)
             actors.push_back(a);
     }
     return !actors.empty();
@@ -2339,13 +2341,10 @@ void ChangeMeditation(int diffMeditatists, int diffIndispensableHollows,
   has enough velocity to move the stone. Return either the direction
   the stone should move or NODIR. */
 Direction GetPushDirection (const StoneContact &sc) {
-    ActorInfo *ai  = sc.actor->get_actorinfo();
-    Direction  dir = contact_face(sc);
-
     // Make sure the speed component towards the face of the stone is
     // large enough and pointing towards the stone.
-    if (dir != enigma::NODIR && ai->vel * sc.normal < -4)
-        return reverse(dir);
+    if (contact_face(sc) != NODIR && sc.actor->getVel() * sc.normal < -4)
+        return reverse(contact_face(sc));
     return NODIR;
 }
 

@@ -117,7 +117,7 @@ namespace enigma {
         GetActorsInsideField(get_pos(), actors);
         for (std::vector<Actor *>::iterator itr = actors.begin(); itr != actors.end(); ++itr) {
             if (!((*itr)->is_flying() || (*itr)->isMoribund())) {
-                mass += (*itr)->get_actorinfo()->mass;
+                mass += (*itr)->getMass();
             }
         }
         return mass >= getAttr("min").toDouble();

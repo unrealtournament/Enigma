@@ -19,33 +19,32 @@
  */
 
 #include "items/Drop.hh"
-//#include "errors.hh"
 #include "main.hh"
 #include "player.hh"
 #include "world.hh"
 
 namespace enigma {
 
-    Actor *replace_actor(Actor *olda, Actor *newa) {
-        ActorInfo *info = newa->get_actorinfo();
-        info->vel = olda->get_vel();
-        info->charge = olda->get_actorinfo()->charge;
-        info->last_gridpos = olda->get_actorinfo()->gridpos;
+    Actor *replace_actor(Actor *oldActor, Actor *newActor) {
+        ActorInfo &actorInfo = newActor->getMutableActorInfo();
+        actorInfo.vel = oldActor->getVel();
+        actorInfo.charge = oldActor->getCharge();
+        actorInfo.last_gridpos = oldActor->get_gridpos();
 
-        Value v = olda->getAttr("owner");
+        Value v = oldActor->getAttr("owner");
         if (v) {
-            player::ReplaceActor(v.toInt(), olda, newa);
+            player::ReplaceActor(v.toInt(), oldActor, newActor);
         }
 
-        AddActor(olda->get_pos()[0], olda->get_pos()[1], newa);
-        if (!YieldActor (olda)) {
-            enigma::Log << "Strange: could not remove old actor\n";
+        AddActor(oldActor->getPos()[0], oldActor->getPos()[1], newActor);
+        if (!YieldActor (oldActor)) {
+            Log << "Strange: could not remove old actor\n";
         }
-        SendMessage(newa, "_update_mass", v);
-        SendMessage(newa, "_update_pin", v);
-        olda->hide();
-        newa->show();
-        return olda;
+        SendMessage(newActor, "_update_mass", v);
+        SendMessage(newActor, "_update_pin", v);
+        oldActor->hide();
+        newActor->show();
+        return oldActor;
     }
 
     class DropCallback : public enigma::TimeHandler {
@@ -58,8 +57,7 @@ namespace enigma {
         {}
 
         // TimerHandler interface
-        virtual void alarm()
-        {
+        virtual void alarm() {
             replace_actor (rotor, old);
 
             delete rotor;
@@ -80,7 +78,7 @@ namespace enigma {
         const double ROTOR_LIFETIME = 5.0;
 
         int     iplayer = a->getAttr("owner").toInt();
-        ActorID theid   = get_id (a);
+        ActorID theid   = a->getActorId();
 
         if (theid == ac_marble_black || theid == ac_marble_white) {
             // Kill ALL rubberbands connected with the actor:

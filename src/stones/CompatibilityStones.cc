@@ -32,7 +32,7 @@ namespace enigma {
     }
     
     void DongleStone::actor_hit(const StoneContact &sc) {
-        if (sc.actor->getAttr("owner") && sc.actor->get_vel() * sc.normal < -4) {
+        if (sc.actor->getAttr("owner") && sc.actor->getVel() * sc.normal < -4) {
             KillStone(get_pos());
             client::Msg_ShowText("We don't sell books..", false, 2.0);
         }

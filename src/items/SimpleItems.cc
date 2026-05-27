@@ -130,7 +130,7 @@ namespace enigma {
      }
 
     bool DeathItem::actor_hit(Actor *a) {
-        ActorInfo &ai = * a->get_actorinfo();
+        const ActorInfo &ai = a->getActorInfo();
         if (!ai.grabbed) {
             SendMessage(a, "_shatter");
             if (state == 0) {
@@ -465,7 +465,7 @@ namespace enigma {
         const double MAXDIST = 0.3;
         double ycenter = get_pos().y + 0.5;
         double xcenter = get_pos().x + 0.5;
-        ecl::V2 apos = a->get_pos();
+        ecl::V2 apos = a->getPos();
         if (a->is_on_floor() && (fabs(apos[1] - ycenter) <= MAXDIST) && (fabs(apos[0] - xcenter) <= MAXDIST)) {
             set_anim("it_springboard_anim");
             SendMessage(a, "_jump");

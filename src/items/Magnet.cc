@@ -97,7 +97,7 @@ namespace enigma {
     
     ecl::V2 Magnet::globalForce(Actor *a) {
         // only switched on magnets are registered
-        ecl::V2 dv = get_pos().center() - a->get_pos_force();
+        ecl::V2 dv = get_pos().center() - a->getPosForce();
         double squareDist = square(dv);
 
         return (squareDist >= 0.04 && squareDist < squareRange) ?

@@ -65,7 +65,7 @@ namespace enigma {
     }
 
     StoneResponse PortalStone::collision_response(const StoneContact &sc) {
-        ActorID theid = get_id(sc.actor);
+        ActorID theid = sc.actor->getActorId();
         if (   (state == HORSE && theid == ac_horse)
             || (state == PEARL && theid == ac_pearl_white)
             || (state == GLASS && theid == ac_marble_glass))

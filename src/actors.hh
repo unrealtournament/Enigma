@@ -51,7 +51,7 @@ struct ActorTraits {
     ActorID id;
     unsigned id_mask;
     float radius;
-    float default_mass;
+    float defaultMass;
 };
 
 /* -------------------- ActorInfo -------------------- */
@@ -116,7 +116,7 @@ class Actor : public StateObject, public display::ModelCallback {
     friend class ActorsInRangeIterator;
 
 public:
-    static const double max_radius;
+    static const double maxRadius;
 
     // ModelCallback interface
     void animcb() override;
@@ -153,84 +153,76 @@ public:
     /* ---------- Methods ---------- */
     void move();
     virtual void move_screen();
-    void warp(const ecl::V2 &newpos);
-    bool sound_event(const char *name, double vol = 1.0);
+    void warp(const ecl::V2 &newPos);
+    bool sound_event(const char *name, double volume = 1.0);
 
     void respawn();
     void set_respawnpos(const ecl::V2 &p);
     void remove_respawnpos();
     void find_respawnpos();
-    const ecl::V2 &get_respawnpos() const;
-    const ecl::V2 &get_startpos() const;
+    const ecl::V2 &getRespawnPos() const;
+    const ecl::V2 &getStartPos() const;
 
     virtual void hide();
     void show();
 
-    void add_force(const ecl::V2 &f);
+    void addForce(const ecl::V2 &f);
     virtual void beforeStoneBounce(const StoneContact &) {}
     virtual void afterStoneBounce(const StoneContact &) {}
 
     /* ---------- Accessors ---------- */
-    ActorInfo *get_actorinfo();
-    const ActorInfo &get_actorinfo() const;
-    const ecl::V2 &get_pos() const;
-    const ecl::V2 &get_pos_force() const;
-    double getRadius() const { return m_actorinfo.radius; }
+    ActorInfo &getMutableActorInfo();
+    const ActorInfo &getActorInfo() const;
+    const ecl::V2& getPos() const { return actorInfo.pos; }
+    const ecl::V2 &getPosForce() const;
 
-    const ecl::V2 &get_vel() const { return m_actorinfo.vel; }
+    ActorID getActorId() const { return get_traits().id; }
 
-    bool has_spikes() const { return spikes; }
+    double getRadius() const { return actorInfo.radius; }
+    double getMass() const { return actorInfo.mass; }
+    double getCharge() const { return actorInfo.charge; }
+    const ecl::V2 &getVel() const { return actorInfo.vel; }
 
-    static double get_max_radius();  // max. radius of all actors
+    bool hasSpikes() const { return spikes; }
 
-    int get_controllers() const { return controllers; }
+    static double getMaxRadius();  // max. radius of all actors
+
+    int getControllers() const { return controllers; }
     bool isSteerable() const { return adhesion != 0.0; }
     double get_mouseforce() const { return adhesion; }
 
-    bool controlled_by(int player) const { return (get_controllers() & (1 + player)) != 0; }
+    bool controlled_by(int player) const { return (getControllers() & (1 + player)) != 0; }
 
-    const GridPos &get_gridpos() const { return m_actorinfo.gridpos; }
-    virtual double squareDistance(const Object *other) const override;
-    virtual bool isSouthOrEastOf(const Object *other) const override;
+    const GridPos &get_gridpos() const { return actorInfo.gridpos; }
+    double squareDistance(const Object *other) const override;
+    bool isSouthOrEastOf(const Object *other) const override;
 
 protected:
-    virtual Object::ObjectType getObjectType() const override { return Object::ACTOR; }
+    ObjectType getObjectType() const override { return ACTOR; }
 
-    Actor(const ActorTraits &tr);
-    void set_model(const std::string &modelname);
-    void set_anim(const std::string &modelname);
+    Actor(const ActorTraits &traits);
+    void setModel(const std::string &modelName);
+    void setAnim(const std::string &modelName);
 
-    display::SpriteHandle &get_sprite() { return m_sprite; }
+    display::SpriteHandle &getSprite() { return sprite; }
 
     /* ---------- Variables ---------- */
-    ActorInfo m_actorinfo;
+    ActorInfo actorInfo;
     bool centerRespawn;   // default, like on flag drop or sink, fall, shatter
     bool inplaceRespawn;  // respawn on exactly last valid position, use on suicide to prevent
                           // shortcuts
 private:
-    Actor *left;  // x-coordinate sorted double linked list
-    Actor *right;
-    display::SpriteHandle m_sprite;
-    ecl::V2 startingpos;
-    ecl::V2 respawnpos;
+    Actor* left = nullptr; // x-coordinate sorted doubly linked list
+    Actor* right = nullptr;
+    display::SpriteHandle sprite;
+    ecl::V2 startingPos;
+    ecl::V2 respawnPos;
     bool flagRespawn;
-    bool firstGridStep;
+    bool firstGridStep = false;
     bool spikes;  // set by "it_pin"
-    int controllers;
-    double adhesion;
+    int controllers = 0;
+    double adhesion = 0.0;
 };
-
-inline ActorID get_id(Actor *a) {
-    return a->get_traits().id;
-}
-
-inline double get_mass(const Actor *a) {
-    return a->get_actorinfo().mass;
-}
-
-inline double get_charge(const Actor *a) {
-    return a->get_actorinfo().charge;
-}
 
 class ActorsInRangeIterator {
 public:

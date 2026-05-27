@@ -86,7 +86,7 @@ namespace enigma {
                             || (color
                                     && ((color == BLACK && t == ACBLACK)
                                             || (color == WHITE && t == ACWHITE)))))
-                || (t == BUG && get_id(sc.actor) == ac_bug)) {
+                || (t == BUG && sc.actor->getActorId() == ac_bug)) {
             doBreak();
         } else
             Stone::actor_hit(sc);

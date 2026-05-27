@@ -844,7 +844,7 @@ en_get_pos(lua_State *L)
     if (GridObject *gobj = dynamic_cast<GridObject*>(obj))
         p = gobj->get_pos();
     else if (Actor *a = dynamic_cast<Actor*>(obj)) {
-        p = GridPos(a->get_pos());
+        p = GridPos(a->getPos());
     }
     else
         p = GridPos(-1, -1);
@@ -1380,7 +1380,7 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
             if (GridObject *gobj = dynamic_cast<GridObject*>(*itr)) {
                 p = gobj->getOwnerPos();
             } else if (Actor *a = dynamic_cast<Actor*>(*itr)) {
-                p = GridPos(a->get_pos());
+                p = GridPos(a->getPos());
             } else {
                 continue;  // no valid position
             }
@@ -1513,7 +1513,7 @@ static int xyObject(lua_State *L) {
     if (GridObject *gobj = dynamic_cast<GridObject*>(obj)) {
         p = gobj->getOwnerPos();
     } else if (Actor *a = dynamic_cast<Actor*>(obj)) {
-        p = GridPos(a->get_pos());
+        p = GridPos(a->getPos());
     } else {
         throwLuaError(L, "xy access to not existing object");
         return 0;
@@ -1857,7 +1857,7 @@ static int dispatchObjectReadAccess(lua_State *L) {
         if (GridObject *gobj = dynamic_cast<GridObject*>(obj)) {
             p = gobj->getOwnerPos();
         } else if (Actor *a = dynamic_cast<Actor*>(obj)) {
-            p = GridPos(a->get_pos());
+            p = GridPos(a->getPos());
         } else {
             p = GridPos(-1, -1);
         }
@@ -2680,7 +2680,7 @@ static int dispatchWorldWriteAccess(lua_State *L) {
             if (GridObject *gobj = dynamic_cast<GridObject*>(obj)) {
                 p = gobj->getOwnerPos();
             } else if (Actor *a = dynamic_cast<Actor*>(obj)) {
-                p = GridPos(a->get_pos());
+                p = GridPos(a->getPos());
             } else {  // NULL object
                 // ignore not existing objects
                 return 0;                
@@ -2698,7 +2698,7 @@ static int dispatchWorldWriteAccess(lua_State *L) {
                     if (GridObject *gobj = dynamic_cast<GridObject*>(obj)) {
                         p = gobj->getOwnerPos();
                     } else if (Actor *a = dynamic_cast<Actor*>(obj)) {
-                        p = GridPos(a->get_pos());
+                        p = GridPos(a->getPos());
                     }
                     x = p.x;
                     y = p.y;

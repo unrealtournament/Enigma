@@ -335,7 +335,7 @@ namespace enigma {
                         case Object::FLOOR:
                         case Object::ITEM:
                             return dynamic_cast<GridObject*>(obj)->getOwnerPos().toVec();
-                        case Object::ACTOR: return dynamic_cast<Actor*>(obj)->get_pos();
+                        case Object::ACTOR: return dynamic_cast<Actor*>(obj)->getPos();
                         default: break;
                     }
                 } else if (type != OBJECT) {
@@ -437,7 +437,7 @@ namespace enigma {
                         case Object::FLOOR:
                         case Object::ITEM:
                             return dynamic_cast<GridObject*>(obj)->getOwnerPos().center();
-                        case Object::ACTOR: return dynamic_cast<Actor*>(obj)->get_pos();
+                        case Object::ACTOR: return dynamic_cast<Actor*>(obj)->getPos();
                         default: break;
                     }
                 else if (type != OBJECT) {

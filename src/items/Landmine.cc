@@ -32,7 +32,7 @@ namespace enigma {
     bool Landmine::actor_hit (Actor *a) {
         const double ITEM_RADIUS = 0.3;
         if (!a->is_flying()) {
-            double dist = length(a->get_pos() - get_pos().center());
+            double dist = length(a->getPos() - get_pos().center());
             if (dist < ITEM_RADIUS)
                 explode();
         }

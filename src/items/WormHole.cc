@@ -137,7 +137,7 @@ namespace enigma {
     
     ecl::V2 WormHole::globalForce(Actor *a) {
         // only switched on wormholes are registered
-        ecl::V2 dv = get_pos().center() - a->get_pos_force();
+        ecl::V2 dv = get_pos().center() - a->getPosForce();
         double squareDist = square(dv);
 
         return (squareDist >= 0.025 && squareDist < squareRange) ?
@@ -150,7 +150,7 @@ namespace enigma {
     }
     
     bool WormHole::near_center_p(Actor *a) {
-        return (square(a->get_pos() - get_pos().center()) < 0.015625);  // 0.125 ^ 2
+        return (square(a->getPos() - get_pos().center()) < 0.015625);  // 0.125 ^ 2
     }
     
     ItemTraits WormHole::traits[2] = {

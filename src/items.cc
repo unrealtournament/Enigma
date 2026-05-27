@@ -140,7 +140,7 @@ bool Item::actor_hit(Actor *actor) {
     double radius = 0.3;
     if (tr.radius != 0.0)
         radius = tr.radius;
-    return length(actor->get_pos() - get_pos().center()) < radius;
+    return length(actor->getPos() - get_pos().center()) < radius;
 }
 
 std::list<GridPos> Item::warpSpreadPos(bool isWater) {

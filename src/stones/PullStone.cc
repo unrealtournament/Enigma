@@ -106,14 +106,14 @@ namespace enigma {
         ObjectList actors;
         for (std::vector<Actor*>::iterator i = found_actors.begin(); i != e; ++i) {
             Actor *actor = *i;
-            GridPos actor_pos(actor->get_pos());
+            GridPos actor_pos(actor->getPos());
             double r = actor->getRadius();
     
             if (actor_pos == newPos) { // if the actor is in the dest field
                 actors.push_back(actor);
                 SendMessage(actor, "_freeze");
 
-                ecl::V2 dest = actor->get_pos();
+                ecl::V2 dest = actor->getPos();
                 dest[0] = ecl::Clamp<double> (dest[0], oldPos.x+0.01, oldPos.x+0.99);
                 dest[1] = ecl::Clamp<double> (dest[1], oldPos.y+0.01, oldPos.y+0.99);
 

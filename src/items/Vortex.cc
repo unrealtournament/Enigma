@@ -136,10 +136,10 @@ namespace enigma {
     }
 
     bool Vortex::actor_hit(Actor *actor) {
-        if (state == OPEN && (length((actor->get_pos()) - get_pos().center()) < 0.25)
+        if (state == OPEN && (length((actor->getPos()) - get_pos().center()) < 0.25)
                 && actor->can_be_warped()) {
             prepare_for_warp(actor);
-        } else if (state == CLOSED && (length((actor->get_pos()) - get_pos().center()) > 0.25)
+        } else if (state == CLOSED && (length((actor->getPos()) - get_pos().center()) > 0.25)
                 && getAttr("autoopen").toBool()) {
             toggleState();
         }

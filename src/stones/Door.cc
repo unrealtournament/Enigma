@@ -114,10 +114,10 @@ namespace enigma {
         else {
             DirectionBits faces = (DirectionBits)(ALL_DIRECTIONS ^ getConnections());
             StoneResponse result = STONE_PASS;
-            if ((has_dir(faces, WEST) && (get_pos().x >= sc.actor->get_pos()[0])) ||
-                    (has_dir(faces, SOUTH) && (get_pos().y + 1 <= sc.actor->get_pos()[1])) ||
-                    (has_dir(faces, EAST) && (get_pos().x + 1 <= sc.actor->get_pos()[0])) ||
-                    (has_dir(faces, NORTH) && (get_pos().y >= sc.actor->get_pos()[1])))
+            if ((has_dir(faces, WEST) && (get_pos().x >= sc.actor->getPos()[0])) ||
+                    (has_dir(faces, SOUTH) && (get_pos().y + 1 <= sc.actor->getPos()[1])) ||
+                    (has_dir(faces, EAST) && (get_pos().x + 1 <= sc.actor->getPos()[0])) ||
+                    (has_dir(faces, NORTH) && (get_pos().y >= sc.actor->getPos()[1])))
                 result = STONE_REBOUND;
             return result;
         }

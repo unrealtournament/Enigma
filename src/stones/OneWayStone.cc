@@ -83,10 +83,10 @@ namespace enigma {
 
         if (!sc.actor->is_flying() && (!c || c == accolor)) {
             StoneResponse result = STONE_PASS;
-            if ((state == WEST && (get_pos().x >= sc.actor->get_pos()[0])) ||
-                    (state == SOUTH && (get_pos().y + 1 <= sc.actor->get_pos()[1])) ||
-                    (state == EAST && (get_pos().x + 1 <= sc.actor->get_pos()[0])) ||
-                    (state == NORTH && (get_pos().y >= sc.actor->get_pos()[1]))) {
+            if ((state == WEST && (get_pos().x >= sc.actor->getPos()[0])) ||
+                    (state == SOUTH && (get_pos().y + 1 <= sc.actor->getPos()[1])) ||
+                    (state == EAST && (get_pos().x + 1 <= sc.actor->getPos()[0])) ||
+                    (state == NORTH && (get_pos().y >= sc.actor->getPos()[1]))) {
                 result = STONE_REBOUND;
             }
             return result;

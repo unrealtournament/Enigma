@@ -67,7 +67,7 @@ namespace enigma {
     void BrakeStone::actor_inside(Actor *a) {
         static const double BRAKE_RADIUS = 0.3;
         GridPos p = get_pos();
-        double dist = ecl::length(a->get_pos() - p.center());
+        double dist = ecl::length(a->getPos() - p.center());
 
         if (dist < BRAKE_RADIUS) {
             if (player::PickupAsItem(a, this, "it_brake"))

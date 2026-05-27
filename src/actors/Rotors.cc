@@ -71,7 +71,7 @@ namespace enigma {
         Actor *a;
         while((a = air_it.next()) != nullptr) {
             if (a->is_movable() && !a->is_invisible()) {
-                ecl::V2 v = a->get_pos() - get_pos();
+                ecl::V2 v = a->getPos() - getPos();
                 if ((attacknearest && !attackCurrentOnly) ||
                     (attackCurrentOnly && a == player::GetMainActor(
                      player::CurrentPlayer()))) {
@@ -88,14 +88,14 @@ namespace enigma {
     
         if (!target && gohome) { 
             // no actors focussed -> return to start position
-            target_vec = get_respawnpos()-get_pos();
+            target_vec = getRespawnPos()-getPos();
         }
     
         double target_dist = length(target_vec);
     
         if (target_dist > 0.2)
             target_vec.normalize();
-        add_force(target_vec * cforce);
+        addForce(target_vec * cforce);
     
         Actor::think(dtime);
     }

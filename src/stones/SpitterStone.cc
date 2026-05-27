@@ -127,7 +127,7 @@ namespace enigma {
             if (lifepos != -1) {
                 delete inv->yield_item(lifepos);
                 player::RedrawInventory (inv);
-                ecl::V2 vel = distortedVelocity(sc.actor->get_vel(), 1.0);
+                ecl::V2 vel = distortedVelocity(sc.actor->getVel(), 1.0);
                 double maxvel = getAttr("range").toDouble() / 0.56;
                 if (maxvel * maxvel < square(vel))
                     vel = maxvel * normalize(vel);

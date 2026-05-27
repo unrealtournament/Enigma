@@ -141,7 +141,8 @@ namespace enigma {
         ItemID theid = get_id(this);
 
         if (whiteball == nullptr && !a->is_flying() && !a->is_dead()
-                && (get_id(a) == ac_pearl_white || get_id(a) == ac_pearl_black) && isMeditating(a)) {
+                && (a->getActorId() == ac_pearl_white || a->getActorId() == ac_pearl_black)
+                && isMeditating(a)) {
             // meditatist entered a free hollow
             whiteball  = a;
             enter_time = server::LevelTime;
@@ -165,15 +166,15 @@ namespace enigma {
     }
 
     void Meditation::add_force(Actor *a, ecl::V2 &f) {
-        ecl::V2 v = a->get_pos() - get_pos().center();
+        ecl::V2 v = a->getPos() - get_pos().center();
         double dist = ecl::length(v);
 
         if (dist > (std::abs(state) > 1 ? 0.5 : 0.3))
             return;
 
         if (dist <= 0) { // exactly on hill-top
-            ActorInfo *ai = a->get_actorinfo();
-            if (length(ai->vel) <= 0) { // no velocity
+            const ActorInfo &ai = a->getActorInfo();
+            if (length(ai.vel) <= 0) { // no velocity
                 // we are never "exactly" on the top!
                 double x = DoubleRand(-0.03, 0.05);
                 double y = DoubleRand(-0.03, 0.05);
@@ -196,14 +197,14 @@ namespace enigma {
 
     ecl::V2 Meditation::calcMouseforce(Actor *a, ecl::V2 mouseForce, ecl::V2 floorForce) {
         Value v = getAttr("adhesion");
-        if (v && covers_floor(a->get_pos(), a))
+        if (v && covers_floor(a->getPos(), a))
             return mouseForce * v.toDouble();
         else
             return floorForce;
     }
 
     bool Meditation::isMeditating(Actor *a) {
-        double dist = ecl::length(a->get_pos() - get_pos().center());
+        double dist = ecl::length(a->getPos() - get_pos().center());
         return dist < 0.24 || ((state <= HOLLOW || state >= HILL) && dist < 0.4) ;
     }
 
@@ -220,14 +221,15 @@ namespace enigma {
     }
 
     void Meditation::checkActors() {
-        ItemID theid = get_id(this);
         std::vector<Actor*> actors;
         GetActorsInsideField(get_pos(), actors);
-        for (std::vector<Actor*>::iterator itr = actors.begin(); itr != actors.end(); ++itr) {
-            if (!(*itr)->is_flying() &&  whiteball==nullptr
-                    && (get_id(*itr)==ac_pearl_white || get_id(*itr)==ac_pearl_black) && isMeditating(*itr)) {
+        for (Actor* actor : actors) {
+            if (!actor->is_flying() && whiteball == nullptr
+                    && (actor->getActorId() == ac_pearl_white
+                            || actor->getActorId() == ac_pearl_black)
+                    && isMeditating(actor)) {
                  // meditatist entered a free hollow
-                whiteball  = *itr;
+                whiteball  = actor;
                 enter_time = server::LevelTime;
                 break;
             }

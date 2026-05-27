@@ -133,8 +133,8 @@ namespace enigma {
 
             double forcefac = getDefaultedAttr("strength", server::BumperForce).toDouble();
 
-            ecl::V2 vec = normalize(sc.actor->get_pos() - get_pos().center());
-            sc.actor->add_force(distortedVelocity(vec, forcefac));                
+            ecl::V2 vec = normalize(sc.actor->getPos() - get_pos().center());
+            sc.actor->addForce(distortedVelocity(vec, forcefac));                
 
             sound_event("bumper");
             state = PULSING;

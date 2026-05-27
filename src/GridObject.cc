@@ -185,7 +185,7 @@ namespace enigma {
         if (isDisplayable()) {
             const Actor *a = dynamic_cast<const Actor *>(other);
             if (a != nullptr) {
-                ecl::V2 apos = a->get_pos();
+                ecl::V2 apos = a->getPos();
                 return (apos[0] - pos.x)*(apos[0] - pos.x) + (apos[1] - pos.y)*(apos[1] - pos.y);
             }
             const GridObject *g = dynamic_cast<const GridObject *>(other);
@@ -200,7 +200,7 @@ namespace enigma {
         if (isDisplayable()) {
             const Actor *a = dynamic_cast<const Actor *>(other);
             if (a != nullptr) {
-                ecl::V2 apos = a->get_pos();
+                ecl::V2 apos = a->getPos();
                 return (apos[1] < pos.y) || ((apos[1] == pos.y) && (apos[0] < pos.x));
             }
             const GridObject *g = dynamic_cast<const GridObject *>(other);

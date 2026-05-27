@@ -154,7 +154,7 @@ namespace enigma {
             return;
 
         Actor *actor = sc.actor;
-        double impulse = -(actor->get_vel() * sc.normal) * get_mass(actor);
+        double impulse = -(actor->getVel() * sc.normal) * actor->getMass();
         double threshold = 22;
         if (player::WieldedItemIs(sc.actor, "it_hammer"))
             threshold -= 7;
@@ -262,12 +262,12 @@ namespace enigma {
         // we do not have to worry about the level border as no face can be pushed into the border
         std::vector<Actor*> foundActors;
         const double range_one_field = 1.415
-                + Actor::get_max_radius(); // approx. 1 field [ > sqrt(1+1) ]
+                + Actor::getMaxRadius(); // approx. 1 field [ > sqrt(1+1) ]
         GetActorsInRange(get_pos().center(), range_one_field, foundActors);
         for (auto actor : foundActors) {
             if (actor == initiator)
                 continue;
-            ecl::V2 actorPos = actor->get_pos();
+            ecl::V2 actorPos = actor->getPos();
             double radius = actor->getRadius();
             GridPos windowPos(get_pos());
 
@@ -296,7 +296,7 @@ namespace enigma {
             };
 
             // Compute updated position for actor
-            ecl::V2 dest = actor->get_pos();
+            ecl::V2 dest = actor->getPos();
             if (dir == EAST || dir == WEST) {
                 dest[0] = dir == EAST ? windowPos.x + 1 + radius : windowPos.x - radius;
                 if (hasWindowFace(neighborPos, NORTH)) {

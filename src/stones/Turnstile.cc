@@ -258,15 +258,15 @@ namespace enigma {
             if (ac->isMoribund())
                 continue;
 
-            const ecl::V2 &ac_center = ac->get_pos();
+            const ecl::V2 &ac_center = ac->getPos();
             GridPos   ac_pos(ac_center);
             int dx  = ac_pos.x-pv_pos.x;
             int dy  = ac_pos.y-pv_pos.y;
 
-            // ignore if actor is not inside the turnstile square or is not
-            // in distance of the the rotating arms
+            // Ignore if actor is not inside the turnstile square or is not
+            // in distance of the rotating arms.
             if ((dx<-1 || dx>1 || dy<-1 || dy>1) ||
-                    (length(ac->get_pos() - pv_pos.center()) > 1.58114 + ac->get_actorinfo()->radius))
+                    (length(ac->getPos() - pv_pos.center()) > 1.58114 + ac->getRadius()))
                 continue;
 
             int idx_source = to_index[dx+1][dy+1];
@@ -315,12 +315,12 @@ namespace enigma {
                 continue;
             }
 
-            // Keep the actors rotated position within grid, but ensure that
+            // Keep the actor's rotated position within the grid, but ensure that
             // - actors once warped keep warping on further turnstile turns
             // - small marbles end up in meditation hollows
-            ecl::V2 offset = ac->get_pos() - ac->get_gridpos().center();
-            if (ecl::length(offset) > 0.5 - ac->get_actorinfo()->radius)
-                offset =  (0.5 - ac->get_actorinfo()->radius) * ecl::normalize(offset);
+            ecl::V2 offset = ac->getPos() - ac->get_gridpos().center();
+            if (ecl::length(offset) > 0.5 - ac->getRadius())
+                offset =  (0.5 - ac->getRadius()) * ecl::normalize(offset);
             WarpActor(ac, ac_target_pos.x + 0.5 + (clockwise ? -offset[1] : offset[1]),
                      ac_target_pos.y + 0.5 + (clockwise ? offset[0] : -offset[0]), false);
 

@@ -318,7 +318,7 @@ void player::AddActor(unsigned iplayer, Actor *a) {
 
     if (players[iplayer].actors.size() == 1) {
         // the ``main actor'' was set
-        client::Msg_PlayerPosition(iplayer, a->get_pos());
+        client::Msg_PlayerPosition(iplayer, a->getPos());
     }
 }
 
@@ -488,7 +488,7 @@ void player::Tick(double dtime) {
 void player::MessagePlayerPositionsToClient() {
     for (unsigned iplayer = 0; iplayer < players.size(); ++iplayer)
         if (Actor *ac = player::GetMainActor(iplayer))
-            client::Msg_PlayerPosition(iplayer, ac->get_pos());
+            client::Msg_PlayerPosition(iplayer, ac->getPos());
 }
 
 void player::InhibitPickup(bool flag) {
@@ -530,7 +530,7 @@ bool player::PickupAsItem(Actor *a, GridObject *obj, const std::string& kind) {
             inv->add_item(item);
             obj->transferIdentity(item);
             player::RedrawInventory(inv);
-            sound::EmitSoundEvent("pickup", a->get_pos());
+            sound::EmitSoundEvent("pickup", a->getPos());
             return true;
         } else {
             DisposeObject(item);
@@ -551,7 +551,7 @@ void player::ActivateFirstItem() {
              itr != players[icurrent_player].actors.end() && ac == nullptr; ++itr) {
             if (!(*itr)->is_dead()) {
                 ac = *itr;
-                p = GridPos(ac->get_pos());
+                p = GridPos(ac->getPos());
                 can_drop_item = ac->can_drop_items();
             }
         }

@@ -200,7 +200,7 @@ namespace enigma {
 
     bool BasicBall::on_collision(Actor *a) {
         if (getAttr("color") == GLASS && !is_flying() && !a->is_flying()) {
-            ecl::V2 dv = get_vel() - a->get_vel();
+            ecl::V2 dv = getVel() - a->getVel();
             Log << dv*dv;
             Log << "\n";
             if (dv*dv > 16)
@@ -210,7 +210,7 @@ namespace enigma {
     }
 
     void BasicBall::on_creation(const ecl::V2 &p) {
-        bool recreation = m_actorinfo.created;
+        bool recreation = actorInfo.created;
         Actor::on_creation(p);
         if (server::CreatingPreview) {
             change_state(NORMAL);
@@ -274,38 +274,38 @@ namespace enigma {
 
         switch (state) {
             case SHATTERING:
-                set_model(kind+"-shattered");
+                setModel(kind+"-shattered");
                 change_state(DEAD);
                 break;
             case BUBBLING:
-                set_model("invisible");
+                setModel("invisible");
                 change_state(DEAD);
                 break;
             case FALLING:
-                set_model(kind+"-fallen"); // invisible
-                if (get_id (this) == ac_pearl_white)
+                setModel(kind+"-fallen"); // invisible
+                if (getActorId() == ac_pearl_white)
                     sound_event("shattersmall");
                 else
                     sound_event("shatter");
                 change_state(DEAD);
                 break;
             case JUMPING:
-                set_model(kind);
+                setModel(kind);
                 change_state(NORMAL);
                 break;
             case APPEARING:
-                set_model(kind);
+                setModel(kind);
                 change_state(NORMAL);
                 break;
             case DISAPPEARING:
-                set_model("ring-anim");
+                setModel("ring-anim");
                 break;
             case FALLING_VORTEX: {
-                set_model(kind+"-fallen"); // invisible
+                setModel(kind+"-fallen"); // invisible
                 break;
             }
             case RISING_VORTEX: {
-                set_model(kind);
+                setModel(kind);
                 if (Item *it = GetItem(get_gridpos())) {
                     ItemID theid = get_id(it);
                     if (theid == it_vortex_open || theid == it_vortex_closed)
@@ -327,9 +327,9 @@ namespace enigma {
         double sink_speed  = 0.0;
         double raise_speed = 0.0;   // at this velocity don't sink; above: raise
 
-        Floor *fl = m_actorinfo.field->floor;
-        Item *it = m_actorinfo.field->item;
-        if (!(it != nullptr && it->covers_floor(get_pos(), this)) && fl != nullptr)
+        Floor *fl = actorInfo.field->floor;
+        Item *it = actorInfo.field->item;
+        if (!(it != nullptr && it->covers_floor(getPos(), this)) && fl != nullptr)
             fl->get_sink_speed (sink_speed, raise_speed);
 
         if (sink_speed == 0.0 || has_shield() || getAttr("color") == GLASS) {
@@ -337,13 +337,13 @@ namespace enigma {
             sinkModel = -1;
         }
         else {
-            ActorInfo *ai = get_actorinfo();
-            double sinkSpeed = sink_speed * (1 - length(ai->vel) / raise_speed);
+            ActorInfo &ai = getMutableActorInfo();
+            double sinkSpeed = sink_speed * (1 - length(ai.vel) / raise_speed);
             sinkDepth += sinkSpeed*dtime;
 
             if (sinkDepth >= maxSinkDepth) {
-                set_model(getModelBaseName() + "-sunk");
-                ai->vel = ecl::V2();     // stop!
+                setModel(getModelBaseName() + "-sunk");
+                ai.vel = ecl::V2();     // stop!
                 sound_event ("swamp");
                 change_state(BUBBLING);
             }
@@ -389,31 +389,31 @@ namespace enigma {
         switch (newstate) {
             case NORMAL:
                 if (oldstate == APPEARING) {
-                    ActorInfo *ai = get_actorinfo();
-                    ai->forceacc = ecl::V2();
+                    ActorInfo &ai = getMutableActorInfo();
+                    ai.forceacc = ecl::V2();
                 }
                 ReleaseActor(this);
                 break;
 
             case SHATTERING:
-                if (get_id (this) == ac_marble_white)
+                if (getActorId() == ac_marble_white)
                     sound_event("shattersmall");
                 else
                     sound_event("shatter");
                 GrabActor(this);
-                set_anim(kind+"-shatter");
+                setAnim(kind+"-shatter");
                 break;
 
             case BUBBLING:
                 GrabActor(this);
         //         sound::PlaySound("drown");
                 m_invisible_rest_time = 0;
-                set_anim("ac-drowned");
+                setAnim("ac-drowned");
                 break;
             case FALLING:
             case FALLING_VORTEX:
                 GrabActor(this);
-                set_anim(kind+"-fall");
+                setAnim(kind+"-fall");
                 break;
             case DEAD:
                 disable_shield();
@@ -426,7 +426,7 @@ namespace enigma {
                 break;
             case JUMPING:
                 sound_event("jump");
-                set_anim(kind+"-jump");
+                setAnim(kind+"-jump");
                 // notify objects on grid about the jumping - used by it_trigger
                 SendMessage(GetFloor(get_gridpos()), "_jumping", true);
                 SendMessage(GetItem(get_gridpos()), "_jumping", true);
@@ -434,20 +434,20 @@ namespace enigma {
                 break;
             case APPEARING:
             case RISING_VORTEX:
-                set_anim(kind+"-appear");
+                setAnim(kind+"-appear");
                 GrabActor(this);
                 break;
             case JUMP_VORTEX:
                 ASSERT(oldstate == RISING_VORTEX, XLevelRuntime,
                     "BasicBall: change to state JUMP_VORTEX but not RISING_VORTEX");
                 vortex_normal_time = 0;
-                set_model(kind);
+                setModel(kind);
                 ReleaseActor(this);
                 break;
             case DISAPPEARING:
                 GrabActor(this);
                 disable_shield();
-                set_anim(kind+"-disappear");
+                setAnim(kind+"-disappear");
                 break;
             case RESURRECTED:
                 disable_shield();
@@ -460,19 +460,17 @@ namespace enigma {
 
     void BasicBall::update_model() {
         if (m_invisible_rest_time > 0)
-            get_sprite().hide();
+            getSprite().hide();
         else
-            get_sprite().show();
+            getSprite().show();
 
         switch (state) {
             case NORMAL:
                 if (sinkDepth > minSinkDepth && sinkDepth < maxSinkDepth) {
                     set_sink_model(getModelBaseName());
-                }
-                else {
-                    ActorInfo *ai = get_actorinfo();
-                    int xpos = ecl::round_nearest<int> (ai->pos[0] * 32.0);
-                    int ypos = ecl::round_nearest<int> (ai->pos[1] * 32.0);
+                } else {
+                    int xpos = ecl::round_nearest<int>(getPos()[0] * 32.0);
+                    int ypos = ecl::round_nearest<int> (getPos()[1] * 32.0);
 
                     bool shinep = ((xpos + ypos) % 2) != 0;
                     set_shine_model (shinep);
@@ -492,7 +490,7 @@ namespace enigma {
 
             std::string img = m+"-sink";
             img.append(1, static_cast<char>('0'+modelnum));
-            set_model(img);
+            setModel(img);
 
             sinkModel = modelnum;
         }
@@ -503,9 +501,9 @@ namespace enigma {
         if (shinep != lastshinep) {
             std::string modelname = getModelBaseName();
             if (shinep)
-                set_model (modelname + "-shine");
+                setModel (modelname + "-shine");
             else
-                set_model (modelname);
+                setModel (modelname);
             lastshinep = shinep;
         }
     }
@@ -521,18 +519,18 @@ namespace enigma {
             newstate = HALONORMAL;
 
         if (newstate != m_halostate) {
-            double radius = get_actorinfo()->radius;
-            std::string halokind;
+            double radius = getRadius();
 
-            // Determine which halomodel has to be used:
+            // Determine which halo model to use:
+            std::string haloModel;
             if (radius == 19.0/64) { // Halo for normal balls
-                halokind = "halo";
+                haloModel = "halo";
             } else if (radius == 13.0f/64) { // Halo for small balls
-                halokind = "halo-small";
+                haloModel = "halo-small";
             }
 
-            if (m_halostate == NOHALO){
-                m_halosprite = display::AddSprite (get_pos(), halokind.c_str());
+            if (m_halostate == NOHALO) {
+                m_halosprite = display::AddSprite (getPos(), haloModel.c_str());
             }
             switch (newstate) {
             case NOHALO:
@@ -542,15 +540,15 @@ namespace enigma {
                 break;
             case HALOBLINK:
                 // blink for the last 3 seconds
-                m_halosprite.replace_model (display::MakeModel (halokind+"-blink"));
+                m_halosprite.replace_model (display::MakeModel (haloModel+"-blink"));
                 break;
             case HALONORMAL:
-                m_halosprite.replace_model (display::MakeModel (halokind));
+                m_halosprite.replace_model (display::MakeModel (haloModel));
                 break;
             }
             m_halostate = newstate;
         } else if (m_halostate != NOHALO) {
-            m_halosprite.move (get_pos());
+            m_halosprite.move (getPos());
         }
     }
 
@@ -561,8 +559,8 @@ namespace enigma {
                 return;
             }
             if (sc.outerCorner && sc.isContact) {
-                ActorInfo *ai  = sc.actor->get_actorinfo();
-                if (ai->vel * ai->vel > 3)
+                const ActorInfo &ai  = sc.actor->getActorInfo();
+                if (ai.vel * ai.vel > 3)
                     change_state_noshield(SHATTERING);
             }
         }
@@ -605,7 +603,7 @@ namespace enigma {
 
     void Pearl::sink(double dtime) {
         if (server::GameCompatibility != GAMET_ENIGMA) {
-            if (m_actorinfo.field->floor->isKind("fl_swamp"))
+            if (actorInfo.field->floor->isKind("fl_swamp"))
                 return;    // do not sink pearls in swamp in oxyd modes
         }
         BasicBall::sink(dtime);

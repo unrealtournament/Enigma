@@ -150,7 +150,7 @@ bool LaserBeam::actor_hit(Actor *actor) {
     DirectionBits directions = (DirectionBits)(objFlags & 15);
 
 //    double r = get_radius(actor);
-    ecl::V2 p = actor->get_pos();
+    ecl::V2 p = actor->getPos();
     GridPos gp = get_pos();
 
     // distance of actor from center of the grid

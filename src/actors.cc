@@ -17,28 +17,29 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  */
+#include "actors.hh"
 
-#include "errors.hh"
 #include "enigma.hh"
-#include "player.hh"
+#include "errors.hh"
 #include "Inventory.hh"
-#include "SoundEffectManager.hh"
-#include "server.hh"
-#include "world.hh"
 #include "main.hh"
+#include "player.hh"
+#include "server.hh"
+#include "SoundEffectManager.hh"
+#include "world.hh"
 
 #include <iostream>
 #include <set>
 
 namespace enigma {
 
-const double Actor::max_radius = 24.0 / 64;
+const double Actor::maxRadius = 24.0 / 64;
 
 /* -------------------- ActorsInRangeIterator -------------------- */
 
 ActorsInRangeIterator::ActorsInRangeIterator(Actor *center, double range, unsigned type_mask)
 : centerActor(center), currentActor(center), moveLeft(true), rangeDist(range), typeMask(type_mask) {
-    xCenter = center->m_actorinfo.pos[0];
+    xCenter = center->actorInfo.pos[0];
 }
 
 Actor *ActorsInRangeIterator::next() {
@@ -47,11 +48,11 @@ Actor *ActorsInRangeIterator::next() {
             currentActor = moveLeft ? currentActor->left : currentActor->right;
         }
         bool foundCandidate =
-            currentActor && std::abs(xCenter - currentActor->m_actorinfo.pos[0]) <= rangeDist;
+            currentActor && std::abs(xCenter - currentActor->actorInfo.pos[0]) <= rangeDist;
         if (foundCandidate) {
             unsigned id_mask = currentActor->get_traits().id_mask;
             if (id_mask & typeMask &&
-                length(currentActor->m_actorinfo.pos - centerActor->m_actorinfo.pos) < rangeDist) {
+                length(currentActor->actorInfo.pos - centerActor->actorInfo.pos) < rangeDist) {
                 break;
             }
         } else if (moveLeft) {
@@ -67,23 +68,17 @@ Actor *ActorsInRangeIterator::next() {
 
 /* -------------------- Actor -------------------- */
 
-Actor::Actor(const ActorTraits &tr)
-: StateObject(tr.name),
-  flagRespawn(false),
-  centerRespawn(true),
-  inplaceRespawn(false),
-  spikes(false),
-  controllers(0),
-  left(nullptr),
-  right(nullptr) {
+Actor::Actor(const ActorTraits& traits)
+    : StateObject(traits.name), centerRespawn(true), inplaceRespawn(false), flagRespawn(false),
+      spikes(false) {
     setAttr("adhesion", 0.0);
 
     // copy default properties to dynamic properties
-    m_actorinfo.mass = tr.default_mass;
-    m_actorinfo.radius = tr.radius;
-    m_actorinfo.created = false;
+    actorInfo.mass = traits.defaultMass;
+    actorInfo.radius = traits.radius;
+    actorInfo.created = false;
 
-    ASSERT(m_actorinfo.radius <= get_max_radius(), XLevelRuntime,
+    ASSERT(actorInfo.radius <= getMaxRadius(), XLevelRuntime,
            "Actor: radius of actor too large");
 }
 
@@ -93,7 +88,7 @@ void Actor::setAttr(const std::string &key, const Value &val) {
     } else if (key == "adhesion") {
         adhesion = val.toDouble();
     } else if (key == "charge") {
-        m_actorinfo.charge = val.toDouble();
+        actorInfo.charge = val.toDouble();
     } else
         Object::setAttr(key, val);
 }
@@ -104,26 +99,26 @@ Value Actor::getAttr(const std::string &key) const {
     } else if (key == "adhesion") {
         return adhesion;
     } else if (key == "charge") {
-        return m_actorinfo.charge;
+        return actorInfo.charge;
     } else if (key == "mass") {
-        return m_actorinfo.mass;
+        return actorInfo.mass;
     } else
         return StateObject::getAttr(key);
 }
 
 Value Actor::message(const Message &m) {
     if (m.message == "_freeze") {
-        m_actorinfo.frozen_vel = m_actorinfo.vel;
-        m_actorinfo.vel = ecl::V2();
+        actorInfo.frozen_vel = actorInfo.vel;
+        actorInfo.vel = ecl::V2();
     } else if (m.message == "_revive") {
-        m_actorinfo.vel = m_actorinfo.frozen_vel;
+        actorInfo.vel = actorInfo.frozen_vel;
     } else if (m.message == "_update_mass") {
         if (getAttr("owner") == m.value) {
-            m_actorinfo.mass =
-                get_traits().default_mass + player::GetInventory(this)->getAttr("mass").toDouble();
-            ASSERT(m_actorinfo.mass > 0, XLevelRuntime, "Actor mass <= 0!");
+            actorInfo.mass =
+                get_traits().defaultMass + player::GetInventory(this)->getAttr("mass").toDouble();
+            ASSERT(actorInfo.mass > 0, XLevelRuntime, "Actor mass <= 0!");
             SendMessage(GetFloor(get_gridpos()), "_update_mass", true, this);
-            //                Log << "Actor new mass " << m_actorinfo.mass << "\n";
+            //                Log << "Actor new mass " << actorInfo.mass << "\n";
         }
     } else if (m.message == "_update_pin") {
         if (getAttr("owner") == m.value) {
@@ -138,38 +133,34 @@ bool Actor::on_collision(Actor *a) {
     return false;
 }
 
-ActorInfo *Actor::get_actorinfo() {
-    return &m_actorinfo;
+ActorInfo &Actor::getMutableActorInfo() {
+    return actorInfo;
 }
 
-const ActorInfo &Actor::get_actorinfo() const {
-    return m_actorinfo;
+const ActorInfo &Actor::getActorInfo() const {
+    return actorInfo;
 }
 
-const ecl::V2 &Actor::get_pos() const {
-    return m_actorinfo.pos;
+const ecl::V2 &Actor::getPosForce() const {
+    return actorInfo.pos_force;
 }
 
-const ecl::V2 &Actor::get_pos_force() const {
-    return m_actorinfo.pos_force;
-}
-
-double Actor::get_max_radius() {
-    return max_radius;
+double Actor::getMaxRadius() {
+    return maxRadius;
 }
 
 void Actor::think(double /*dtime*/) {
-    if (m_actorinfo.field) {
-        Floor *fl = m_actorinfo.field->floor;
-        Item *it = m_actorinfo.field->item;
-        bool item_covers_floor = (it && it->covers_floor(m_actorinfo.pos, this));
+    if (actorInfo.field) {
+        Floor *fl = actorInfo.field->floor;
+        Item *it = actorInfo.field->item;
+        bool item_covers_floor = (it && it->covers_floor(actorInfo.pos, this));
         if (!item_covers_floor && fl && this->is_on_floor())
             fl->actor_contact(this);
     }
 }
 
 void Actor::set_respawnpos(const ecl::V2 &p) {
-    respawnpos = p;
+    respawnPos = p;
     flagRespawn = true;
 }
 
@@ -180,26 +171,26 @@ void Actor::remove_respawnpos() {
 void Actor::find_respawnpos() {
 }
 
-const ecl::V2 &Actor::get_respawnpos() const {
-    return flagRespawn ? respawnpos : startingpos;
+const ecl::V2 &Actor::getRespawnPos() const {
+    return flagRespawn ? respawnPos : startingPos;
 }
 
-const ecl::V2 &Actor::get_startpos() const {
-    return startingpos;
+const ecl::V2 &Actor::getStartPos() const {
+    return startingPos;
 }
 
 void Actor::respawn() {
-    ecl::V2 p = startingpos;  // default respawn on initial position
+    ecl::V2 p = startingPos;  // default respawn on initial position
     if (flagRespawn || server::AutoRespawn) {
         if (inplaceRespawn)
-            p = respawnpos;
+            p = respawnPos;
         else if (centerRespawn)
-            p = GridPos(respawnpos).center();
+            p = GridPos(respawnPos).center();
         else {  // respawn in nearest edge of grid (thus avoiding laser beams)
-            p = respawnpos;
-            GridPos gp(respawnpos);
-            double dx = respawnpos[0] - gp.x;
-            double dy = respawnpos[1] - gp.y;
+            p = respawnPos;
+            GridPos gp(respawnPos);
+            double dx = respawnPos[0] - gp.x;
+            double dy = respawnPos[1] - gp.y;
             if (dx > 0.28 && dx < 0.5)
                 p[0] = gp.x + 0.28;
             else if (dx < 0.72 && dx >= 0.5)
@@ -215,27 +206,27 @@ void Actor::respawn() {
     on_respawn(p);
 }
 
-void Actor::add_force(const ecl::V2 &f) {
-    m_actorinfo.forceacc += f;
+void Actor::addForce(const ecl::V2 &f) {
+    actorInfo.forceacc += f;
 }
 
 void Actor::init() {
-    m_sprite = display::AddSprite(get_pos());
+    sprite = display::AddSprite(getPos());
 }
 
 void Actor::on_creation(const ecl::V2 &p) {
-    if (!m_actorinfo.created) {  // avoid reinitialization on it_drop usage
-        m_actorinfo.created = true;
-        startingpos = get_pos();
+    if (!actorInfo.created) {  // avoid reinitialization on it_drop usage
+        actorInfo.created = true;
+        startingPos = getPos();
         if (Value vx = getAttr("velocity_x")) {
-            m_actorinfo.vel = ecl::V2(vx.toDouble(), m_actorinfo.vel[1]);
+            actorInfo.vel = ecl::V2(vx.toDouble(), actorInfo.vel[1]);
         }
         if (Value vy = getAttr("velocity_y")) {
-            m_actorinfo.vel = ecl::V2(m_actorinfo.vel[0], vy.toDouble());
+            actorInfo.vel = ecl::V2(actorInfo.vel[0], vy.toDouble());
         }
     }
-    set_model(getKind());
-    m_sprite.move(p);
+    setModel(getKind());
+    sprite.move(p);
     move();
 }
 
@@ -243,52 +234,52 @@ void Actor::on_respawn(const ecl::V2 & /*pos*/) {
     centerRespawn = true;
 }
 
-void Actor::warp(const ecl::V2 &newpos) {
-    m_actorinfo.pos = newpos;
+void Actor::warp(const ecl::V2 &newPos) {
+    actorInfo.pos = newPos;
     DidMoveActor(this);
-    m_actorinfo.vel = ecl::V2();
-    m_sprite.move(newpos);
+    actorInfo.vel = ecl::V2();
+    sprite.move(newPos);
     move();
-    // notify rubberbands that may now exceed max/min limits
-    ObjectList olist = getAttr("rubbers").toObjectList();  // a private deletion resistant copy
-    for (ObjectList::iterator itr = olist.begin(); itr != olist.end(); ++itr)
-        SendMessage(*itr, "_recheck");
+    // notify rubber bands, which may now exceed their max/min limits
+    ObjectList objList = getAttr("rubbers").toObjectList();
+    for (Object* obj : objList)
+        SendMessage(obj, "_recheck");
 }
 
 void Actor::move() {
-    if (m_actorinfo.field) {
-        if (m_actorinfo.gridpos != m_actorinfo.last_gridpos) {
+    if (actorInfo.field) {
+        if (actorInfo.gridpos != actorInfo.last_gridpos) {
             // Actor entered a new field -> notify floor and item objects
             // first leave old - avoid the possibility that an actor presses
             // two triggers at once.
             firstGridStep = true;
-            if (const Field *of = GetField(m_actorinfo.last_gridpos)) {
+            if (const Field *of = GetField(actorInfo.last_gridpos)) {
                 if (Floor *fl = of->floor)
                     fl->actor_leave(this);
                 if (Item *it = of->item)
                     it->actor_leave(this);
             }
             // then enter new field
-            if (Floor *fl = m_actorinfo.field->floor)
+            if (Floor *fl = actorInfo.field->floor)
                 fl->actor_enter(this);
-            if (Item *it = m_actorinfo.field->item)
+            if (Item *it = actorInfo.field->item)
                 it->actor_enter(this);
         }
 
-        Item *it = m_actorinfo.field->item;
+        Item *it = actorInfo.field->item;
         if (it && it->actor_hit(this))
-            player::PickupItem(this, m_actorinfo.gridpos);
+            player::PickupItem(this, actorInfo.gridpos);
 
-        if (Stone *st = m_actorinfo.field->stone)
+        if (Stone *st = actorInfo.field->stone)
             st->actor_inside(this);
 
         if (firstGridStep && !is_flying()) {
             firstGridStep = false;
         } else if (!flagRespawn && !isMoribund() && !is_flying()) {
-            Floor *fl = m_actorinfo.field->floor;
+            Floor *fl = actorInfo.field->floor;
             if (fl != nullptr) {
                 if (fl->getAdhesion() != 0) {
-                    respawnpos = m_actorinfo.pos;
+                    respawnPos = actorInfo.pos;
                 }
             } else {
                 // Should never happen but occurs when there is no floor set
@@ -299,52 +290,52 @@ void Actor::move() {
             }
         }
     }
-    m_actorinfo.last_gridpos = m_actorinfo.gridpos;
+    actorInfo.last_gridpos = actorInfo.gridpos;
 }
 
 void Actor::move_screen() {
-    m_sprite.move(m_actorinfo.pos);
+    sprite.move(actorInfo.pos);
 }
 
-void Actor::set_model(const std::string &name) {
-    m_sprite.replace_model(display::MakeModel(name));
+void Actor::setModel(const std::string &name) {
+    sprite.replace_model(display::MakeModel(name));
 }
 
 void Actor::animcb() {
 }
 
 void Actor::hide() {
-    m_sprite.hide();
+    sprite.hide();
 }
 
 void Actor::show() {
-    m_sprite.show();
+    sprite.show();
 }
 
-void Actor::set_anim(const std::string &modelname) {
-    set_model(modelname.c_str());
-    get_sprite().set_callback(this);
+void Actor::setAnim(const std::string &modelName) {
+    setModel(modelName);
+    getSprite().set_callback(this);
 }
 
 bool Actor::can_move() const {
     if (Stone *st = GetStone(get_gridpos())) {
-        if (!server::NoCollisions ||
-            !(get_traits().id_mask & (1 << ac_marble_white | 1 << ac_marble_black |
-                                      1 << ac_marble_glass |
-                                      1 << ac_pearl_white | 1 << ac_pearl_black)))
+        if (!server::NoCollisions
+                || !(get_traits().id_mask
+                        & (1 << ac_marble_white | 1 << ac_marble_black | 1 << ac_marble_glass
+                                | 1 << ac_pearl_white | 1 << ac_pearl_black)))
             return !st->is_sticky(this);
     }
     return true;
 }
 
-bool Actor::sound_event(const char *name, double vol) {
-    return sound::EmitSoundEvent(name, get_pos(), GetVolume(name, this, vol));
+bool Actor::sound_event(const char *name, double volume) {
+    return sound::EmitSoundEvent(name, getPos(), GetVolume(name, this, volume));
 }
 
 double Actor::squareDistance(const Object *other) const {
     const Actor *a = dynamic_cast<const Actor *>(other);
     if (a != nullptr)
-        return ecl::square(get_pos() - a->get_pos());
+        return ecl::square(getPos() - a->getPos());
     else
         return other->squareDistance(this);
 }
@@ -352,8 +343,8 @@ double Actor::squareDistance(const Object *other) const {
 bool Actor::isSouthOrEastOf(const Object *other) const {
     const Actor *a = dynamic_cast<const Actor *>(other);
     if (a != nullptr)
-        return (get_pos()[1] > -a->get_pos()[1]) ||
-               ((get_pos()[1] == a->get_pos()[1]) && (get_pos()[0] > -a->get_pos()[0]));
+        return (getPos()[1] > -a->getPos()[1]) ||
+               ((getPos()[1] == a->getPos()[1]) && (getPos()[0] > -a->getPos()[0]));
     else
         return !(other->isSouthOrEastOf(this));
 }

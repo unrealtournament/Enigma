@@ -57,7 +57,7 @@ namespace enigma {
     
     bool Bottle::actor_hit(Actor *a) {
         if (state == BROKEN) {
-            ActorInfo &ai = * a->get_actorinfo();
+            const ActorInfo &ai = a->getActorInfo();
             if (!ai.grabbed && a->is_on_floor()) {
                 SendMessage(a, "_shatter");
             }
