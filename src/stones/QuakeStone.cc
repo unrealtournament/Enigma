@@ -104,7 +104,7 @@ namespace enigma {
     }
     
     void QuakeStone::quake() {
-        Object *ox = GetObjectTemplate("st_oxyd");
+        Object *ox = GetObjectPrototype("st_oxyd");
         SendMessage(ox, "closeall");
         sound_event("quake");
     }

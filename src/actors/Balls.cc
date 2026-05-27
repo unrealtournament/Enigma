@@ -560,7 +560,7 @@ namespace enigma {
                 change_state_noshield(SHATTERING);
                 return;
             }
-            if (sc.outerCorner && sc.is_contact) {
+            if (sc.outerCorner && sc.isContact) {
                 ActorInfo *ai  = sc.actor->get_actorinfo();
                 if (ai->vel * ai->vel > 3)
                     change_state_noshield(SHATTERING);

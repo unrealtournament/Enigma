@@ -525,7 +525,7 @@ int en_make_object (lua_State *L)
 static int
 en_get_object_template(lua_State *L)
 {
-    Object *obj = GetObjectTemplate(lua_tostring(L, 1));
+    Object *obj = GetObjectPrototype(lua_tostring(L, 1));
     pushobject(L, obj);
     return 1;
 }

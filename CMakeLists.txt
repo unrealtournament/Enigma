@@ -17,6 +17,7 @@ find_package(CURL REQUIRED)
 
 Include(FindIntl)
 
+add_compile_definitions(ENABLE_ASSERT="")
 add_compile_definitions(SYSTEM_DATA_DIR="")
 add_compile_definitions(DOCDIR="")
 add_compile_definitions(LOCALEDIR="")

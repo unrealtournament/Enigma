@@ -423,7 +423,7 @@ void OxydLoader::load_stones() {
     // Note that scramble items have two purposes: Scrambling the puzzle items and indicating
     // that oxyd stones shall be shuffled.
     if (level.getNumScrambleItems() == 0) {
-        SendMessage(GetObjectTemplate("st_oxyd"), "shuffle");
+        SendMessage(GetObjectPrototype("st_oxyd"), "shuffle");
     }
 }
 

@@ -96,7 +96,7 @@ namespace enigma {
     }
 
     void Horse::afterStoneBounce(const StoneContact &sc) {
-        if ((objFlags & OBJBIT_AUTOMOVE) && (sc.stonepos == GridPos(target))) {
+        if ((objFlags & OBJBIT_AUTOMOVE) && (sc.stonePos == GridPos(target))) {
             updateTarget(true);
         }
         Actor::afterStoneBounce(sc);

@@ -50,7 +50,7 @@ namespace enigma {
         // usage within a st-window
         Stone *stone = GetStone(get_pos());
         if (stone && (stone->getClass() == "st_window")
-            && SendMessage(stone, "inner_pull", dir).toBool()) {
+                && SendMessage(stone, "inner_pull", dir).toBool()) {
         }
         
         // usage in front of a stone

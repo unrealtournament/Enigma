@@ -48,8 +48,8 @@ struct Impulse {
     bool byWire;
 
     // Constructors
-    Impulse(Object *sender_, GridPos dest_, Direction dir_, bool sendByWire = false)
-    : sender(sender_), dest(std::move(dest_)), dir(dir_), byWire(sendByWire) {}
+    Impulse(Object* sender_, GridPos dest_, Direction dir_, bool sendByWire = false)
+        : sender(sender_), dest(dest_), dir(dir_), byWire(sendByWire) {}
 };
 
 struct Action {
@@ -59,8 +59,10 @@ struct Action {
     std::string name;  // action name for message, function name for callback
     Value val;
 
-    Action(int senderId_, bool isCallback_, int targetId_, std::string name_, Value val_)
-    : senderId(senderId_), isCallback(isCallback_), targetId(targetId_), name(std::move(name_)), val(val_) {}
+    Action(int senderId_, bool isCallback_, int targetId_, const std::string& name_,
+            const Value& val_)
+        : senderId(senderId_), isCallback(isCallback_), targetId(targetId_), name(name_),
+          val(val_) {}
 };
 
 struct Message {
@@ -74,8 +76,7 @@ struct Message {
     Message(std::string message, const Value &value, Object *sender);
 };
 
-/*! The different kinds of materials objects in Enigma can be made
-  of. */
+/// The different kinds of materials objects can be made of.
 enum MaterialType {
     MATERIAL_GLASS,
     MATERIAL_METAL,
@@ -89,18 +90,18 @@ enum MaterialType {
 struct StoneContact {
     // Variables.
     Actor *actor = nullptr;
-    GridPos stonepos;
-    StoneID stoneid = st_INVALID;
+    GridPos stonePos;
+    StoneID stoneId = st_INVALID;
     StoneResponse response = STONE_PASS;
 
-    ecl::V2 contact_point;          // Where do the shapes meet? (world coordinates)
+    ecl::V2 contactPoint;           // Where do the shapes meet? (world coordinates)
     ecl::V2 normal;                 // The surface normal at the contact point
     DirectionBits faces = NODIRBIT; // Faces hit on contact - may be two on edge contact
     bool outerCorner;               // Did actor hit an outer corner of the stone
-    bool is_collision;              // Actor moves towards the stone, not away
+    bool isCollision;               // Actor moves towards the stone, not away
     bool ignore;                    // Ignore this contact
-    bool new_collision;             // True if actor did not touch the stone before
-    bool is_contact;                // if false, contact_point is closest feature
+    bool isNewCollision;            // True if actor did not touch the stone before
+    bool isContact;                 // if false, contact_point is closest feature
     std::string sound;
 
     // Constructor.
@@ -126,7 +127,7 @@ public:
 
 /* The global timer for all objects that need to be notified at
    regular intervals. */
-extern enigma::Timer GameTimer;
+extern Timer GameTimer;
 
 /* Output a message whenever a message is being sent. */
 extern bool TrackMessages;
@@ -142,7 +143,7 @@ void InitWorld();
 void WorldPrepareLevel();
 
 /* Create a new, empty world with width `w' and height `h`. */
-void Resize(int w, int h);
+void Resize(int width, int height);
 int Width();
 int Height();
 
@@ -325,14 +326,14 @@ Actor *MakeActor(const char *kind);
 
 void DisposeObject(Object *o);
 
-/* Register a new object. */
-void BootRegister(Object *obj, const char *kind = nullptr, bool isRegistration = true);
-void Register(const std::string &kind, Object *obj);
+/// Register a new object as a prototype. All game objects are created
+/// by cloning these prototypes.
+void BootRegister(Object *obj, const char *name = nullptr, bool isRegistration = true);
 
 /* Shutdown object repository */
 void Repos_Shutdown();
 
-Object *GetObjectTemplate(const std::string &kind);
+Object *GetObjectPrototype(const std::string &kind);
 
 /* Print information about all registered objects to stdout. */
 void DumpObjectInfo();

@@ -250,7 +250,7 @@ namespace enigma {
             else if (val.toDouble() == 0)
                 server::SwampSinkSpeed = 10000;
             else {
-                ASSERT((double)val > 0, XLevelRuntime, "SwampSinkTime less zero");
+                ASSERT(val.toDouble() > 0, XLevelRuntime, "SwampSinkTime less zero");
                 server::SwampSinkSpeed = 7.0 / val.toDouble();
             }
         } else if (key == "WaterSinkTime") {
@@ -259,7 +259,7 @@ namespace enigma {
             else if (val.toDouble() == 0)
                 server::WaterSinkSpeed = 10000;
             else {
-                ASSERT((double)val > 0, XLevelRuntime, "SwampSinkTime less zero");
+                ASSERT(val.toDouble() > 0, XLevelRuntime, "SwampSinkTime less zero");
                 server::WaterSinkSpeed = 7.0 / val.toDouble();
             }
         } else if (key == "WormholeStrength") {

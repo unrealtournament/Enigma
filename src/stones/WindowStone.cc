@@ -6,7 +6,7 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- *  
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -19,17 +19,19 @@
  */
 
 #include "stones/WindowStone.hh"
+
 #include "actors.hh"
 #include "items.hh"
 #include "main.hh"
 #include "player.hh"
 #include "server.hh"
 #include "world.hh"
+
 #include <vector>
 
 namespace enigma {
     
-    WindowStone::WindowStone(std::string faces) : Stone() {
+    WindowStone::WindowStone(const std::string& faces) {
         setAttr("faces", faces);
     }
     
@@ -64,13 +66,18 @@ namespace enigma {
     Value WindowStone::getAttr(const std::string &key) const {
         if (key == "secure") {
             return (bool)(objFlags & OBJBIT_SECURE);
-        } else if (key == "scratches") {
+        }
+        if (key == "scratches") {
             std::string result;
             DirectionBits db = (DirectionBits)((objFlags & OBJBIT_SCRATCHDIRS) >> 24);
-            if (db & NORTHBIT) result += "n";
-            if (db & EASTBIT)  result += "e";
-            if (db & SOUTHBIT) result += "s";
-            if (db & WESTBIT)  result += "w";
+            if (db & NORTHBIT)
+                result += "n";
+            if (db & EASTBIT)
+                result += "e";
+            if (db & SOUTHBIT)
+                result += "s";
+            if (db & WESTBIT)
+                result += "w";
             return result;
         }
         return Stone::getAttr(key);
@@ -78,7 +85,7 @@ namespace enigma {
     
     Value WindowStone::message(const Message &m) {
         if (m.message == "inner_pull" ) {
-            return Value(tryInnerPull(to_direction(m.value)));
+            return Value(tryMoveWindowFace(to_direction(m.value)));
         } else if (m.message == "_explosion") {
             GridPos expl = m.value.toGridPos();
             DirectionBits faces = getFaces();
@@ -123,16 +130,16 @@ namespace enigma {
                 return;
             }
             uint32_t scratchDirs = ((objFlags & OBJBIT_SCRATCHDIRS) >> 24);
-            set_model(ecl::strf("st_window_%s%d_%d", objFlags & OBJBIT_SECURE ? "green" : "blue" , 
+            set_model(ecl::strf("st_window_%s%d_%d", objFlags & OBJBIT_SECURE ? "green" : "blue",
                     getFaces() & ~scratchDirs, scratchDirs));                    
         }
     }
 
     void WindowStone::animcb() {
         postFaceChange();
-        if (state == FINALBREAK)
+        if (state == FINALBREAK) {
             KillStone(get_pos());
-        else {
+        } else {
             state = IDLE;
             init_model();
         }
@@ -143,39 +150,35 @@ namespace enigma {
     }
     
     void WindowStone::actor_hit(const StoneContact &sc) {
-        Actor *a = sc.actor;
-            
-        if (state == IDLE) {
-            double impulse = -(a->get_vel() * sc.normal) * get_mass(a);
-            double threshold = 22;
-            if (player::WieldedItemIs (sc.actor, "it_hammer"))
-                threshold -= 7;
-            if (objFlags & (sc.faces << 24))  // face is scratched
-                threshold -= 10;
-            
-            if (impulse > 35 && !(objFlags & OBJBIT_SECURE)) {
-                SendMessage(a, "_shatter");
-            }
+        if (state != IDLE)
+            return;
 
-            else if (!(objFlags & OBJBIT_SECURE) && impulse > threshold) {
-                breakFaces(sc.faces);
+        Actor *actor = sc.actor;
+        double impulse = -(actor->get_vel() * sc.normal) * get_mass(actor);
+        double threshold = 22;
+        if (player::WieldedItemIs(sc.actor, "it_hammer"))
+            threshold -= 7;
+        if (objFlags & (sc.faces << 24)) // face is scratched
+            threshold -= 10;
+
+        if (impulse > 35 && !(objFlags & OBJBIT_SECURE)) {
+            SendMessage(actor, "_shatter");
+        } else if (!(objFlags & OBJBIT_SECURE) && impulse > threshold) {
+            breakFaces(sc.faces);
+        } else if (player::WieldedItemIs(sc.actor, "it_wrench")) {
+            if (sc.faces == WESTBIT && sc.normal[0] < 0) {
+                tryMoveWindowFace(EAST, actor);
+            } else if (sc.faces == EASTBIT && sc.normal[0] > 0) {
+                tryMoveWindowFace(WEST, actor);
+            } else if (sc.faces == SOUTHBIT && sc.normal[1] > 0) {
+                tryMoveWindowFace(NORTH, actor);
+            } else if (sc.faces == NORTHBIT && sc.normal[1] < 0) {
+                tryMoveWindowFace(SOUTH, actor);
             }
-            
-            else if (player::WieldedItemIs (sc.actor, "it_wrench")) {
-                if (sc.faces == WESTBIT && sc.normal[0] < 0){
-                    tryInnerPull(EAST, a);
-                } else if (sc.faces == EASTBIT && sc.normal[0] > 0) {
-                    tryInnerPull(WEST, a);
-                } else if (sc.faces == SOUTHBIT && sc.normal[1] > 0) {
-                    tryInnerPull(NORTH, a);
-                } else if (sc.faces == NORTHBIT && sc.normal[1] < 0) {
-                    tryInnerPull(SOUTH, a);
-                }
-            } else if (player::WieldedItemIs (sc.actor, "it_ring")) {
-                objFlags |= ((sc.faces & getFaces())<< 24);   // scratch face
-                sound_event("crack");
-                init_model();
-            }
+        } else if (player::WieldedItemIs(sc.actor, "it_ring")) {
+            objFlags |= ((sc.faces & getFaces()) << 24); // scratch face
+            sound_event("crack");
+            init_model();
         }
     }
     
@@ -187,24 +190,23 @@ namespace enigma {
         // do not shatter actors
         return true;
     }
-    
+
+    // Thickness of a window face
+    constexpr double faceWidth = 3.0/32.0;
+
     StoneResponse WindowStone::collision_response(const StoneContact &sc) {
-        const double face_width = 3.0/32.0; 
-        
         // blue windows let invisible actors pass
         if (!(objFlags & OBJBIT_SECURE) && sc.actor->is_invisible()) 
             return STONE_PASS;
             
         DirectionBits faces = getFaces();
-
-        if (((sc.contact_point[0] <= get_pos().x + face_width) && faces&WESTBIT) ||
-                ((sc.contact_point[0] >= get_pos().x + 1 - face_width) && faces&EASTBIT) ||
-                ((sc.contact_point[1] <= get_pos().y + face_width) && faces&NORTHBIT) ||
-                ((sc.contact_point[1] >= get_pos().y + 1 - face_width) && faces&SOUTHBIT)) {
+        if (faces & WESTBIT && sc.contactPoint[0] <= get_pos().x + faceWidth
+                || faces & EASTBIT && sc.contactPoint[0] >= get_pos().x + 1 - faceWidth
+                || faces & NORTHBIT && sc.contactPoint[1] <= get_pos().y + faceWidth
+                || faces & SOUTHBIT && sc.contactPoint[1] >= get_pos().y + 1 - faceWidth) {
             return STONE_REBOUND;
-        } else {
-            return STONE_PASS;
         }
+        return STONE_PASS;
     }
     
     void WindowStone::breakFaces(DirectionBits faces) {
@@ -221,98 +223,110 @@ namespace enigma {
             KillItem(get_pos());
     }
     
-    bool WindowStone::tryInnerPull(Direction dir, Actor *initiator) {
-        static double eps = 3.0/32;   // thickness of a window face
-        DirectionBits faces = getFaces();
-        GridPos w_pos(get_pos());
-        GridPos w_pos_neighbor = move(w_pos, dir);
-        
-        if (!has_dir(faces, dir) && has_dir(faces, reverse(dir))){
-            Stone *stone = GetStone(w_pos_neighbor);
-            if (!stone || ((stone->get_traits().id == st_window) &&  
-                    !has_dir(stone->getFaces(), reverse(dir)))) {
-                DirectionBits remainigFaces = (DirectionBits)((faces & ~to_bits(reverse(dir)))
-                        |to_bits(dir));  // move face
-                Object::setAttr("$connections", ALL_DIRECTIONS ^ remainigFaces);     // avoid init of model
-                // transfer scratches
-                if (((objFlags & OBJBIT_SCRATCHDIRS) >> 24) & to_bits(reverse(dir)))
-                    objFlags |= ((to_bits(dir)) << 24);       // mark moved face as scratched
-                objFlags &= ~(to_bits(reverse(dir)) << 24);  // remove scratch mark from old position
-                init_model();
-                
-                // move items
-                Item *it = GetItem(w_pos);
-                Item *it_neighbor = GetItem(w_pos_neighbor);
-                if (it != nullptr && !it->isStatic()) {
-                    if (it_neighbor == nullptr)
-                        SetItem(w_pos_neighbor, YieldItem(w_pos));
-                    else
-                        SetItem(w_pos, MakeItem("it_squashed"));
-                }                
-                // move actors
-                std::vector<Actor*> found_actors;
-                const double range_one_field = 1.415 + Actor::get_max_radius(); // approx. 1 field [ > sqrt(1+1) ]
-                GetActorsInRange(get_pos().center(), range_one_field, found_actors);
-                std::vector<Actor*>::iterator e = found_actors.end();
-                for (std::vector<Actor*>::iterator i = found_actors.begin(); i != e; ++i) {
-                    Actor *a = *i;
-                    if (a != initiator) {
-                        ecl::V2 dest = a->get_pos();
-                        GridPos a_pos(dest);
-                        double r = get_radius(a);
-                        if ((a_pos == w_pos)  // if the actor is in the field
-                                || ((dir == EAST) && (dest[0] - r < w_pos.x + 1) && (a_pos == w_pos_neighbor))
-                                || ((dir == WEST) && (dest[0] + r > w_pos.x) && (a_pos == w_pos_neighbor))
-                                || ((dir == SOUTH) && (dest[1] - r < w_pos.y + 1) && (a_pos == w_pos_neighbor))
-                                || ((dir == NORTH) && (dest[1] + r > w_pos.y) && (a_pos == w_pos_neighbor))) {
-                            // we do not have to worry about the level border as no face can be pushed to the border
-                            if (dir == EAST || dir == WEST) {
-                                dest[0] = (dir == EAST) ? (w_pos.x + 1 + r) : (w_pos.x - r) ;
-                                if (stone && has_dir(stone->getFaces(), NORTH)) {
-                                   dest[1] = ecl::Max(dest[1], w_pos.y + r + eps);
-                                } else {
-                                   Stone *obstacle = GetStone(move(w_pos_neighbor, NORTH));
-                                   if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
-                                           has_dir(obstacle->getFaces(), SOUTH)) || obstacle->is_sticky(a)))
-                                       dest[1] = ecl::Max(dest[1], w_pos.y + r);
-                                }
-                                if (stone && has_dir(stone->getFaces(), SOUTH)) {
-                                   dest[1] = ecl::Min(dest[1], w_pos.y + 1 - r - eps);
-                                } else {
-                                   Stone *obstacle = GetStone(move(w_pos_neighbor, SOUTH));
-                                   if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
-                                           has_dir(obstacle->getFaces(), NORTH)) || obstacle->is_sticky(a)))
-                                       dest[1] = ecl::Min(dest[1], w_pos.y + 1 - r);
-                                }
-                            } else {
-                                dest[1] = (dir == SOUTH) ? (w_pos.y + 1 + r): ((dir == NORTH) ? (w_pos.y - r) : dest[1]);
-                                if (stone && has_dir(stone->getFaces(), WEST)) {
-                                   dest[0] = ecl::Max(dest[0], w_pos.x + r + eps);
-                                } else {
-                                   Stone *obstacle = GetStone(move(w_pos_neighbor, WEST));
-                                   if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
-                                           has_dir(obstacle->getFaces(), EAST)) || obstacle->is_sticky(a)))
-                                       dest[0] = ecl::Max(dest[0], w_pos.x + r);
-                                }
-                                if (stone && has_dir(stone->getFaces(), EAST)) {
-                                   dest[0] = ecl::Min(dest[0], w_pos.x + 1 - r - eps);
-                                } else {
-                                   Stone *obstacle = GetStone(move(w_pos_neighbor, EAST));
-                                   if ((obstacle != nullptr) && (((obstacle->get_traits().id == st_window) &&
-                                           has_dir(obstacle->getFaces(), WEST)) || obstacle->is_sticky(a)))
-                                       dest[0] = ecl::Min(dest[0], w_pos.x + 1 - r);
-                                }
-                            }
-                            WarpActor(a, dest[0], dest[1], true);
-                        }
-                    }
-                }
-                TouchStone(get_pos());  // avoid another actor getting below a moved window face
-                postFaceChange();
-                return true;
-            }
+    bool WindowStone::tryMoveWindowFace(Direction dir, const Actor *initiator) {
+        // Stop if there is no face to move or there is already a face on the opposite side.
+        if (!has_dir(getFaces(), reverse(dir)) || has_dir(getFaces(), dir))
+            return false;
+
+        // Stop if there is a stone on the neighboring field that is not a window
+        // or if the neighboring window would block the moved face.
+        GridPos neighborPos = move(get_pos(), dir);
+        Stone* neighborWindow = GetStone(neighborPos);
+        if (neighborWindow
+                && (neighborWindow->get_traits().id != st_window
+                        || has_dir(neighborWindow->getFaces(), reverse(dir)))) {
+            return false;
         }
-        return false;
+
+        DirectionBits startFaceBit = to_bits(reverse(dir));
+        DirectionBits endFaceBit = to_bits(dir);
+        DirectionBits unchangedFaces = static_cast<DirectionBits>(
+                (getFaces() & ~startFaceBit) | endFaceBit);
+        Object::setAttr("$connections", ALL_DIRECTIONS ^ unchangedFaces); // avoid init of model
+
+        // Transfer scratches
+        if (((objFlags & OBJBIT_SCRATCHDIRS) >> 24) & startFaceBit)
+            objFlags |= (endFaceBit << 24); // mark moved face as scratched
+        objFlags &= ~(startFaceBit << 24);  // remove scratch mark from old position
+        init_model();
+
+        // Move item to neighboring field or squash it there is already an item.
+        if (Item* it = GetItem(get_pos()); it != nullptr && !it->isStatic()) {
+            if (Item* neighborItem = GetItem(neighborPos); neighborItem == nullptr)
+                SetItem(neighborPos, YieldItem(get_pos()));
+            else
+                SetItem(get_pos(), MakeItem("it_squashed"));
+        }
+
+        // Move actors
+        // we do not have to worry about the level border as no face can be pushed into the border
+        std::vector<Actor*> foundActors;
+        const double range_one_field = 1.415
+                + Actor::get_max_radius(); // approx. 1 field [ > sqrt(1+1) ]
+        GetActorsInRange(get_pos().center(), range_one_field, foundActors);
+        for (auto actor : foundActors) {
+            if (actor == initiator)
+                continue;
+            ecl::V2 actorPos = actor->get_pos();
+            double radius = actor->getRadius();
+            GridPos windowPos(get_pos());
+
+            // Actors in the current field are always moved. Actors in the neighboring
+            // field are only moved if they touch the moved face of the window.
+            const bool actorAffected = (GridPos(actorPos) == windowPos)
+                    || (GridPos(actorPos) == neighborPos // or actor is in neighboring field
+                            && (dir == EAST && actorPos[0] - radius < windowPos.x + 1
+                                    || dir == WEST && actorPos[0] + radius > windowPos.x
+                                    || dir == SOUTH && actorPos[1] - radius < windowPos.y + 1
+                                    || dir == NORTH && actorPos[1] + radius > windowPos.y));
+            if (!actorAffected)
+                continue;
+
+            auto hasWindowFace = [](GridPos pos, Direction dir) {
+                Stone* stone = GetStone(pos);
+                return stone != nullptr && stone->get_traits().id == st_window
+                        && has_dir(stone->getFaces(), dir);
+            };
+            auto isBlocked = [actor](GridPos pos, Direction dir) -> bool {
+                Stone* obstacle = GetStone(move(pos, dir));
+                return obstacle != nullptr
+                        && ((obstacle->get_traits().id == st_window
+                                    && has_dir(obstacle->getFaces(), reverse(dir)))
+                                || obstacle->is_sticky(actor));
+            };
+
+            // Compute updated position for actor
+            ecl::V2 dest = actor->get_pos();
+            if (dir == EAST || dir == WEST) {
+                dest[0] = dir == EAST ? windowPos.x + 1 + radius : windowPos.x - radius;
+                if (hasWindowFace(neighborPos, NORTH)) {
+                    dest[1] = ecl::Max(dest[1], windowPos.y + radius + faceWidth);
+                } else if (isBlocked(neighborPos, NORTH)) {
+                    dest[1] = ecl::Max(dest[1], windowPos.y + radius);
+                }
+                if (hasWindowFace(neighborPos, SOUTH)) {
+                    dest[1] = ecl::Min(dest[1], windowPos.y + 1 - radius - faceWidth);
+                } else if (isBlocked(neighborPos, SOUTH)) {
+                    dest[1] = ecl::Min(dest[1], windowPos.y + 1 - radius);
+                }
+            } else {
+                dest[1] = dir == SOUTH ? windowPos.y + 1 + radius : windowPos.y - radius;
+                if (hasWindowFace(neighborPos, WEST)) {
+                    dest[0] = ecl::Max(dest[0], windowPos.x + radius + faceWidth);
+                } else if (isBlocked(neighborPos, WEST)) {
+                    dest[0] = ecl::Max(dest[0], windowPos.x + radius);
+                }
+                if (hasWindowFace(neighborPos, EAST)) {
+                    dest[0] = ecl::Min(dest[0], windowPos.x + 1 - radius - faceWidth);
+                } else if (isBlocked(neighborPos, EAST)) {
+                    dest[0] = ecl::Min(dest[0], windowPos.x + 1 - radius);
+                }
+            }
+            WarpActor(actor, dest[0], dest[1], true);
+        }
+        TouchStone(get_pos()); // avoid another actor getting below a moved window face
+        postFaceChange();
+        return true;
     }
 
     void WindowStone::postFaceChange() {

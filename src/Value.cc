@@ -87,11 +87,11 @@ namespace enigma {
 
     Value::Value(const TokenList& tokenList) : type(TOKENS) {
         std::string descriptor;
-        for (auto & token : tokenList) {
+        for (auto& token : tokenList) {
             switch (token.type) {
                 case STRING:
                 case NAMEDOBJECT:
-                    ASSERT((*it).val.str[0] != 0, XLevelRuntime, "TokenList: illegal empty string value");
+                    ASSERT(token.val.str[0] != 0, XLevelRuntime, "TokenList: illegal empty string value");
                     descriptor.append(token.val.str);
                     break;
                 case OBJECT:

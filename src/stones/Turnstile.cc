@@ -38,10 +38,10 @@ namespace enigma {
         return "st_turnstile";
     }
 
-void TurnstilePivot::setAttr(const std::string& key, const Value &val) {
+    void TurnstilePivot::setAttr(const std::string& key, const Value &val) {
         if (key == "flavor") {
-            ASSERT((val.to_string() == "red" || val.to_string() == "green"), XLevelRuntime,
-                    ("Turnstile unknown flavor: " + val.to_string()).c_str());
+            ASSERT((val.toString() == "red" || val.toString() == "green"), XLevelRuntime,
+                    ("Turnstile unknown flavor: " + val.toString()).c_str());
             Stone::setAttr(key, val);
             if (isDisplayable())
                 init_model();
@@ -378,7 +378,7 @@ void TurnstileArm::setAttr(const std::string& key, const Value &val) {
                     state = NORTH; break;
                 default :
                     ASSERT(false, XLevelRuntime, ("Turnstile set attribute 'connections' with illegal value '"
-                            + val.to_string() + "'").c_str());
+                            + val.toString() + "'").c_str());
             }
         } else
             Stone::setAttr(key, val);

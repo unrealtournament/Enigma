@@ -107,7 +107,7 @@ namespace enigma {
         for (std::vector<Actor*>::iterator i = found_actors.begin(); i != e; ++i) {
             Actor *actor = *i;
             GridPos actor_pos(actor->get_pos());
-            double r = get_radius(actor);
+            double r = actor->getRadius();
     
             if (actor_pos == newPos) { // if the actor is in the dest field
                 actors.push_back(actor);

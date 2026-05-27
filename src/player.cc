@@ -18,16 +18,17 @@
  *
  */
 #include "player.hh"
-#include "Inventory.hh"
-#include "display.hh"
-#include "SoundEffectManager.hh"
-#include "client.hh"
-#include "server.hh"
-#include "world.hh"
-#include "main.hh"
-#include "items/GlassesItem.hh"
 
+#include "client.hh"
+#include "display.hh"
 #include "ecl_util.hh"
+#include "errors.hh"
+#include "Inventory.hh"
+#include "items/GlassesItem.hh"
+#include "main.hh"
+#include "server.hh"
+#include "SoundEffectManager.hh"
+#include "world.hh"
 
 using namespace std;
 using namespace enigma;

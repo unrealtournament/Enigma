@@ -122,9 +122,9 @@ public:
     void animcb() override;
 
     /* ---------- Object interface ---------- */
-    virtual void setAttr(const std::string &key, const Value &val) override;
-    virtual Value getAttr(const std::string &key) const override;
-    virtual Value message(const Message &m) override;
+    void setAttr(const std::string &key, const Value &val) override;
+    Value getAttr(const std::string &key) const override;
+    Value message(const Message &m) override;
 
     /* ---------- Actor interface ---------- */
     virtual const ActorTraits &get_traits() const = 0;
@@ -175,6 +175,7 @@ public:
     const ActorInfo &get_actorinfo() const;
     const ecl::V2 &get_pos() const;
     const ecl::V2 &get_pos_force() const;
+    double getRadius() const { return m_actorinfo.radius; }
 
     const ecl::V2 &get_vel() const { return m_actorinfo.vel; }
 
@@ -221,10 +222,6 @@ private:
 
 inline ActorID get_id(Actor *a) {
     return a->get_traits().id;
-}
-
-inline double get_radius(const Actor *a) {
-    return a->get_actorinfo().radius;
 }
 
 inline double get_mass(const Actor *a) {

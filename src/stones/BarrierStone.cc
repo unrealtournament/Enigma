@@ -41,7 +41,7 @@ namespace enigma {
             std::string flavor = val.toString();
             Item *it = nullptr;
             if (flavor != "all") {
-                it = dynamic_cast<Item *>(GetObjectTemplate(flavor));
+                it = dynamic_cast<Item *>(GetObjectPrototype(flavor));
                 ASSERT(it != nullptr && it->isPortable(), XLevelRuntime,
                     ecl::strf("Barrier stone with illeagal flavor '%s'", flavor.c_str()).c_str());
             }

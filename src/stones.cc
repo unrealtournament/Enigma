@@ -59,8 +59,8 @@ bool maybe_push_stone(const StoneContact &sc) {
     if(sc.actor && (!sc.actor->isMoribund())) {
         Direction dir = GetPushDirection(sc);
         if (dir != enigma::NODIR) {
-            sc.actor->send_impulse(sc.stonepos, dir);
-            return GetStone(sc.stonepos) == nullptr;  // return true only if stone vanished
+            sc.actor->send_impulse(sc.stonePos, dir);
+            return GetStone(sc.stonePos) == nullptr;  // return true only if stone vanished
         }
     }
     return false;

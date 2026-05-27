@@ -47,7 +47,7 @@ namespace enigma {
         };
         
     public:
-        WindowStone(std::string faces);
+        WindowStone(const std::string& faces);
         
         // Object interface
         virtual void setAttr(const std::string &key, const Value &val);
@@ -77,7 +77,7 @@ namespace enigma {
 
     private:
         void breakFaces(DirectionBits faces);
-        bool tryInnerPull(Direction dir, Actor *initiator = nullptr);
+        bool tryMoveWindowFace(Direction dir, const Actor *initiator = nullptr);
         void postFaceChange();
     };
 

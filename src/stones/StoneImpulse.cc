@@ -201,7 +201,7 @@ void StoneImpulse::setAttr(const std::string& key, const Value &val) {
             if ((objFlags & OBJBIT_MOVABLE) && maybe_push_stone(sc))
                 return;                                      // stone did move on impulse
             else if (!isHollow())
-                sc.actor->send_impulse(sc.stonepos, NODIR);  // impulse on the slightest touch
+                sc.actor->send_impulse(sc.stonePos, NODIR);  // impulse on the slightest touch
         }
     }
 
