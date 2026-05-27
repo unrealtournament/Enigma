@@ -31,7 +31,6 @@ CXXFLAGS += -I$(top_srcdir)/lib-src @SDL_CFLAGS@
 enigma_SOURCES = 		\
 	actors.hh 		\
 	actors.cc 		\
-	actors_internal.hh	\
 	AttributeDescriptor.cc	\
 	AttributeDescriptor.hh	\
 	client.cc 		\

@@ -290,7 +290,6 @@ add_executable(enigma
     stones/YieldingStone.hh
     actors.cc
     actors.hh
-    actors_internal.hh
     AttributeDescriptor.cc
     AttributeDescriptor.hh
     client.cc
