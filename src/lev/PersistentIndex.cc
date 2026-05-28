@@ -49,6 +49,15 @@ using namespace std;
 XERCES_CPP_NAMESPACE_USE
 
 namespace enigma::lev {
+
+namespace {
+    // Does 'str' end with 'suffix'?
+    bool hasSuffix(const std::string& str, const std::string& suffix) {
+        return str.size() >= suffix.size()
+                && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+    }
+} // namespace
+
 Variation::Variation(controlType ctrlValue, scoreUnitType unitValue, const std::string& targetValue)
     : ctrl(ctrlValue), unit(unitValue), target(targetValue) {
 }
@@ -153,8 +162,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
                     && dirEntry.name != "soko") {
                 candidates.insert(dirEntry.name);
             } else {
-                std::string::size_type zipPos = dirEntry.name.rfind(".zip");
-                if (zipPos != std::string::npos && zipPos == dirEntry.name.size() - 4) {
+                if (hasSuffix(dirEntry.name, ".zip")) {
                     candidates.insert(dirEntry.name.substr(0, dirEntry.name.size() - 4));
                 }
             }
@@ -167,8 +175,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
                     && dirEntry.name != ".svn") {
                 candidates.insert("soko/" + dirEntry.name);
             } else {
-                std::string::size_type zipPos = dirEntry.name.rfind(".zip");
-                if (zipPos != std::string::npos && zipPos == dirEntry.name.size() - 4) {
+                if (hasSuffix(dirEntry.name, ".zip")) {
                     candidates.insert("soko/" + dirEntry.name.substr(0, dirEntry.name.size() - 4));
                 }
             }
@@ -186,8 +193,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
     for (const string& sysPath : sysPaths) {
         dirIter = DirIter::create(sysPath + "/levels/enigma_cross");
         while (dirIter->get_next(dirEntry)) {
-            if (!dirEntry.is_dir && dirEntry.name.size() > 4
-                    && (dirEntry.name.rfind(".xml") == dirEntry.name.size() - 4)) {
+            if (!dirEntry.is_dir && hasSuffix(dirEntry.name, ".xml")) {
                 checkCandidate("enigma_cross", true, false, false, true, false,
                         INDEX_DEFAULT_PACK_LOCATION, "", dirEntry.name);
             }
@@ -224,8 +230,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
                 && dirEntry.name != "soko") {
             candidates2.insert(dirEntry.name);
         } else {
-            std::string::size_type zipPos = dirEntry.name.rfind(".zip");
-            if (zipPos != std::string::npos && zipPos == dirEntry.name.size() - 4) {
+            if (hasSuffix(dirEntry.name, ".zip")) {
                 candidates2.insert(dirEntry.name.substr(0, dirEntry.name.size() - 4));
             }
         }
@@ -238,8 +243,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
                 && dirEntry.name != ".svn") {
             candidates2.insert("soko/" + dirEntry.name);
         } else {
-            std::string::size_type zipPos = dirEntry.name.rfind(".zip");
-            if (zipPos != std::string::npos && zipPos == dirEntry.name.size() - 4) {
+            if (hasSuffix(dirEntry.name, ".zip")) {
                 candidates2.insert("soko/" + dirEntry.name.substr(0, dirEntry.name.size() - 4));
             }
         }
@@ -259,8 +263,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
     // add system cross-indices updates
     dirIter = DirIter::create(app.userPath + "/levels/enigma_cross");
     while (dirIter->get_next(dirEntry)) {
-        if (!dirEntry.is_dir && dirEntry.name.size() > 4
-                && (dirEntry.name.rfind(".xml") == dirEntry.name.size() - 4)) {
+        if (!dirEntry.is_dir && hasSuffix(dirEntry.name, ".xml")) {
             checkCandidate("enigma_cross", false, false, false, true, false,
                     INDEX_DEFAULT_PACK_LOCATION, "", dirEntry.name);
         }
@@ -269,8 +272,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
     // add user cross-indices
     dirIter = DirIter::create(app.userPath + "/levels/cross");
     while (dirIter->get_next(dirEntry)) {
-        if (!dirEntry.is_dir && dirEntry.name.size() > 4
-                && (dirEntry.name.rfind(".xml") == dirEntry.name.size() - 4)) {
+        if (!dirEntry.is_dir && hasSuffix(dirEntry.name, ".xml")) {
             checkCandidate("cross", false, true, false, false, true, INDEX_DEFAULT_PACK_LOCATION,
                     "", dirEntry.name);
         }
@@ -336,26 +338,24 @@ void PersistentIndex::load(bool loadSystemFS, bool update) {
         DirEntry dirEntry;
         dirIter = DirIter::create(app.userPath + "/levels/" + packPath);
         while (dirIter->get_next(dirEntry)) {
-            if (!dirEntry.is_dir) {
-                if (dirEntry.name.size() > 4
-                        && ((dirEntry.name.rfind(".xml") == dirEntry.name.size() - 4)
-                                || (dirEntry.name.rfind(".lua") == dirEntry.name.size() - 4))) {
-                    Proxy* newProxy = Proxy::autoRegisterLevel(
-                            packPath, dirEntry.name.substr(0, dirEntry.name.size() - 4), 1);
-                    if (newProxy != nullptr) {
-                        // first check that the proxy is not in the index
-                        //  - may occur if the level is stored as .xml and .lua in the folder
-                        if (!containsProxy(newProxy)) {
-                            // it is new, add it
-                            appendProxy(newProxy);
-                        }
-                        // do not delete Proxy if not used - we are not the owner!
-                        // register additional sublevels
-                        for (int i = 2; i <= newProxy->getQuantity(); i++) {
-                            Proxy* newSubProxy = Proxy::autoRegisterLevel(
-                                    packPath, dirEntry.name.substr(0, dirEntry.name.size() - 4), i);
-                            appendProxy(newSubProxy);
-                        }
+            if (dirEntry.is_dir)
+                continue;
+            if (hasSuffix(dirEntry.name, ".xml") || hasSuffix(dirEntry.name, ".lua")) {
+                Proxy* newProxy = Proxy::autoRegisterLevel(
+                        packPath, dirEntry.name.substr(0, dirEntry.name.size() - 4), 1);
+                if (newProxy != nullptr) {
+                    // first check that the proxy is not in the index
+                    //  - may occur if the level is stored as .xml and .lua in the folder
+                    if (!containsProxy(newProxy)) {
+                        // it is new, add it
+                        appendProxy(newProxy);
+                    }
+                    // do not delete Proxy if not used - we are not the owner!
+                    // register additional sublevels
+                    for (int i = 2; i <= newProxy->getQuantity(); i++) {
+                        Proxy* newSubProxy = Proxy::autoRegisterLevel(
+                                packPath, dirEntry.name.substr(0, dirEntry.name.size() - 4), i);
+                        appendProxy(newSubProxy);
                     }
                 }
             }
