@@ -157,7 +157,7 @@ namespace enigma {
     void GridObject::set_anim (const std::string &mname) {
         set_model (mname);
         display::Model *m = get_model();
-        m->set_callback(this);
+        m->setCallback(this);
     }
     
     DirectionBits GridObject::getConnections() const {

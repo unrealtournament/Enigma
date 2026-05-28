@@ -27,7 +27,7 @@ namespace enigma::display {
 
 /* -------------------- Follower -------------------- */
 
-Follower::Follower(DisplayEngine* engine) : borderX(0.5), borderY(0.5), m_engine(engine) {
+Follower::Follower(DisplayEngine* engine) : borderX(0.5), borderY(0.5), engine(engine) {
 }
 
 void Follower::center(const ecl::V2 &point) {
@@ -38,33 +38,32 @@ void Follower::center(const ecl::V2 &point) {
     off[0] = floor((off[0] - borderX) / hoff) * hoff;
     off[1] = floor((off[1] - borderY) / voff) * voff;
 
-    set_offset(off);
+    setOffset(off);
 }
 
 double Follower::get_hoff() const {
-    ScreenArea gamearea = m_engine->get_area();
-    double result = gamearea.w / m_engine->get_tilew() - borderX * 2;
+    ScreenArea gameArea = engine->get_area();
+    double result = gameArea.w / engine->get_tilew() - borderX * 2;
     ASSERT(result > 0, XLevelRuntime,
            "FollowThreshold must be less than half of level width/height and 10/6.5");
     return result;
 }
 
 double Follower::get_voff() const {
-    ScreenArea gameArea = m_engine->get_area();
-    double result = gameArea.h / m_engine->get_tileh() - borderY * 2;
+    ScreenArea gameArea = engine->get_area();
+    double result = gameArea.h / engine->get_tileh() - borderY * 2;
     ASSERT(result > 0, XLevelRuntime,
            "FollowThreshold must be less than half of level width/height and 10/6.5");
     return result;
 }
 
-bool Follower::set_offset(ecl::V2 offset) {
-    DisplayEngine *engine = getEngine();
+bool Follower::setOffset(ecl::V2 offset) {
     offset[0] = std::max(offset[0], 0.0);
     offset[1] = std::max(offset[1], 0.0);
     offset[0] = std::min(offset[0], double(engine->get_width() - get_hoff() - borderX * 2));
     offset[1] = std::min(offset[1], double(engine->get_height() - get_voff() - borderY * 2));
-    if (offset != engine->get_offset()) {
-        engine->set_offset(offset);
+    if (offset != engine->getOffset()) {
+        engine->setOffset(offset);
         return true;
     }
     return false;
@@ -76,9 +75,9 @@ bool Follower::set_offset(ecl::V2 offset) {
 // coordinate origin of the screen accordingly.
 void Follower_Screen::tick(double, const ecl::V2 &point) {
     DisplayEngine *engine = getEngine();
-    ecl::V2 oldoff = engine->get_offset();
+    ecl::V2 oldoff = engine->getOffset();
     Follower::center(point);
-    if (oldoff != engine->get_offset())
+    if (oldoff != engine->getOffset())
         engine->mark_redraw_screen();
 }
 
@@ -91,37 +90,37 @@ Follower_Screen::Follower_Screen(DisplayEngine* engine, double borderX, double b
 
 Follower_Scrolling::Follower_Scrolling(DisplayEngine *engine, bool screenWise, double borderX,
                                        double borderY)
-: Follower(engine), currently_scrolling(false), scrollspeed(0), resttime(0), screenwise(screenWise) {
+: Follower(engine), currentlyScrolling(false), scrollSpeed(0), resttime(0), screenwise(screenWise) {
     setBorder(borderX, borderY);
 }
 
 void Follower_Scrolling::center(const ecl::V2 &point) {
     Follower::center(point);
-    curpos = destpos = getEngine()->get_offset();
+    curpos = destpos = getEngine()->getOffset();
 }
 
 void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
     DisplayEngine *engine = getEngine();
 
-    if (!currently_scrolling) {
-        ScreenArea gamearea = engine->get_area();
-        int tilew = engine->get_tilew();
-        int tileh = engine->get_tileh();
+    if (!currentlyScrolling) {
+        ScreenArea gameArea = engine->get_area();
+        int tileWidth = engine->get_tilew();
+        int tileHeight = engine->get_tileh();
 
-        int sx, sy;
-        engine->world_to_screen(point, &sx, &sy);
+        int screenX, screenY;
+        engine->world_to_screen(point, &screenX, &screenY);
 
-        bool scrollx_p = (sx < gamearea.x + getBorderX() * tilew)
-                || (sx >= gamearea.x + gamearea.w - getBorderX() * tilew);
+        bool scrollX = (screenX < gameArea.x + getBorderX() * tileWidth)
+                || (screenX >= gameArea.x + gameArea.w - getBorderX() * tileWidth);
 
-        bool scrolly_p = (sy < gamearea.y + getBorderY() * tileh)
-                || (sy >= gamearea.y + gamearea.h - getBorderY() * tileh);
+        bool scrollY = (screenY < gameArea.y + getBorderY() * tileHeight)
+                || (screenY >= gameArea.y + gameArea.h - getBorderY() * tileHeight);
 
-        if (scrollx_p || scrolly_p) {
+        if (scrollX || scrollY) {
             ecl::V2 olddest = destpos;
-            ecl::V2 scrollpos = engine->get_offset();
+            ecl::V2 scrollpos = engine->getOffset();
 
-            currently_scrolling = true;
+            currentlyScrolling = true;
 
             // Move 'point' to center of the screen
             curpos = scrollpos;
@@ -132,7 +131,7 @@ void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
                 destpos[0] = floor((point[0] - getBorderX()) / hoff) * hoff;
                 destpos[1] = floor((point[1] - getBorderY()) / voff) * voff;
             } else {
-                destpos = point - ecl::V2(gamearea.w / tilew, gamearea.h / tileh) / 2;
+                destpos = point - ecl::V2(gameArea.w / tileWidth, gameArea.h / tileHeight) / 2;
                 // round to grid - a hack just for 20x13 screen TODO rewrite for Enigma 1.2
                 // x scroll of "alternating" 10 and 9 grids, try to join this grid after warps
                 double xmod = std::fmod(destpos[0], 19);
@@ -146,27 +145,27 @@ void Follower_Scrolling::tick(double dtime, const ecl::V2 &point) {
 
             // Don't scroll off the game area
             destpos[0] = ecl::Clamp<double>(
-                    destpos[0], 0.0, (double)engine->get_width() - gamearea.w / tilew);
+                    destpos[0], 0.0, (double)engine->get_width() - gameArea.w / tileWidth);
             destpos[1] = ecl::Clamp<double>(
-                    destpos[1], 0.0, (double)engine->get_height() - gamearea.h / tileh);
-            if (!scrollx_p)
+                    destpos[1], 0.0, (double)engine->get_height() - gameArea.h / tileHeight);
+            if (!scrollX)
                 destpos[0] = olddest[0];
-            if (!scrolly_p)
+            if (!scrollY)
                 destpos[1] = olddest[1];
         }
     }
 
-    if (currently_scrolling) {
-        scrollspeed = 45.0;
-        resttime = length(destpos - curpos) / scrollspeed;
+    if (currentlyScrolling) {
+        scrollSpeed = 45.0;
+        resttime = length(destpos - curpos) / scrollSpeed;
 
         resttime -= dtime;
         if (resttime <= 0) {
             engine->move_offset(destpos);
-            currently_scrolling = false;
+            currentlyScrolling = false;
         } else {
             dir = normalize(destpos - curpos);
-            curpos += dir * scrollspeed * dtime;
+            curpos += dir * scrollSpeed * dtime;
             engine->move_offset(curpos);
         }
     }
@@ -200,7 +199,7 @@ void Follower_Smooth::tick(double /*time*/, const ecl::V2 &point) {
 
 void Follower_Smooth::center(const ecl::V2 &point) {
     setBorder(0.5, 0.5);
-    set_offset(calcOffset(point));
+    setOffset(calcOffset(point));
 }
 
 }  // namespace display

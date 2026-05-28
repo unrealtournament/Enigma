@@ -43,21 +43,21 @@ public:
 class Model {
 public:
     virtual ~Model() = default;
-    virtual void set_callback(ModelCallback *) {}
+    virtual void setCallback(ModelCallback *) {}
     virtual void reverse() {}
     virtual void restart() {}
 
     [[nodiscard]] virtual bool hasFinished() const { return false; }
     virtual void tick(double /*dtime*/) {}
-    virtual bool has_changed(ecl::Rect & /*changed_region*/) { return false; }
+    virtual bool hasChanged(ecl::Rect & /*changed_region*/) { return false; }
 
     virtual void draw(ecl::GC & /*gc*/, int /*x*/, int /*y*/) {}
-    virtual void draw_shadow(ecl::GC & /*gc*/, int /*x*/, int /*y*/) {}
+    virtual void drawShadow(ecl::GC & /*gc*/, int /*x*/, int /*y*/) {}
 
     [[nodiscard]] virtual Model *get_shadow() const { return nullptr; }
 
     virtual void expose(ModelLayer * /*ml*/, int /*videox*/, int /*videoy*/) {}
-    virtual void remove(ModelLayer * /*ml*/) {}
+    virtual void removeFromLayer(ModelLayer * /*ml*/) {}
 
     virtual std::unique_ptr<Model> clone() = 0;
     
@@ -72,7 +72,7 @@ void ShutdownModels();
 std::unique_ptr<Model> MakeModel(const std::string &name);
 
 int DefineImage(const char *name, const char *fname, int xoff, int yoff, int padding);
-int DefineSubImage(const char *name, const char *fname, int xoff, int yoff, ecl::Rect r);
+int DefineSubImage(const char *name, const char *fname, int xOff, int yOff, ecl::Rect subRect);
 void DefineRandModel(const char *name, int n, char **names);
 void DefineShadedModel(const char *name, const char *model, const char *shade);
 void DefineOverlayImage(const char *name, int n, char **images);

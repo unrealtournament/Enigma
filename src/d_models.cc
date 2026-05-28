@@ -17,14 +17,14 @@
  */
 #include "d_models.hh"
 
-#include "lua.hh"
 #include "d_engine.hh"
 #include "ecl_cache.hh"
 #include "ecl_video.hh"
-#include "video.hh"
+#include "gui/ErrorMenu.hh"
+#include "lua.hh"
 #include "main.hh"
 #include "nls.hh"
-#include "gui/ErrorMenu.hh"
+#include "video.hh"
 
 #include <cstdio>
 #include <iostream>
@@ -249,13 +249,12 @@ void DefineImageModel(const char *name, ecl::Surface *s) {
     DefineModel(name, new ImageModel(std::unique_ptr<ecl::Surface>(s), 0, 0));
 }
 
-int DefineSubImage(const char *name, const char *fname, int xoff, int yoff,
-                            ecl::Rect subrect) {
-    ecl::Surface *sfc = surfaceCache.get(fname);
-    if (!sfc)
+int DefineSubImage(const char* name, const char* fname, int xOff, int yOff, ecl::Rect subRect) {
+    ecl::Surface *surface = surfaceCache.get(fname);
+    if (!surface)
         return 1;
 
-    DefineModel(name, new ImageModel(sfc, subrect, xoff, yoff));
+    DefineModel(name, new ImageModel(surface, subRect, xOff, yOff));
     return 0;
 }
 
@@ -274,12 +273,12 @@ void DefineShadedModel(const char *name, const char *model, const char *shadow) 
    `images' is the name of the background image, the following images are
    drawn on top of it. */
 void DefineOverlayImage(const char *name, int n, char **images) {
-    std::unique_ptr<ecl::Surface> sfc = Duplicate(surfaceCache.get(images[0]));
-    if (sfc) {
-        ecl::GC gc(sfc.get());
+    std::unique_ptr<ecl::Surface> surface = Duplicate(surfaceCache.get(images[0]));
+    if (surface) {
+        ecl::GC gc(surface.get());
         for (int i = 1; i < n; i++)
             blit(gc, 0, 0, surfaceCacheAlpha.get(images[i]));
-        DefineModel(name, new ImageModel(std::move(sfc), 0, 0));
+        DefineModel(name, new ImageModel(std::move(surface), 0, 0));
     }
 }
 
@@ -297,7 +296,7 @@ void AddFrame(const char *name, const char *model, double time) {
     if (currentAnimationName != name)
         fprintf(stderr, "AddFrame: Cannot add frames to completed animations.");
     else
-        currentAnimation->add_frame(MakeModel(model), time / 1000.0);
+        currentAnimation->addFrame(MakeModel(model), time / 1000.0);
 }
 
 void DefineAlias(const char *name, const char *othername) {
@@ -364,13 +363,13 @@ void ShadowModel::expose(ModelLayer *ml, int vx, int vy) {
     model->expose(ml, vx, vy);
     shadow->expose(ml, vx, vy);
 }
-void ShadowModel::remove(ModelLayer *ml) {
-    shadow->remove(ml);
-    model->remove(ml);
+void ShadowModel::removeFromLayer(ModelLayer *ml) {
+    shadow->removeFromLayer(ml);
+    model->removeFromLayer(ml);
 }
 
-void ShadowModel::set_callback(ModelCallback *cb) {
-    model->set_callback(cb);
+void ShadowModel::setCallback(ModelCallback *cb) {
+    model->setCallback(cb);
 }
 
 void ShadowModel::reverse() {
@@ -387,7 +386,7 @@ void ShadowModel::draw(ecl::GC &gc, int x, int y) {
     model->draw(gc, x, y);
 }
 
-void ShadowModel::draw_shadow(ecl::GC &gc, int x, int y) {
+void ShadowModel::drawShadow(ecl::GC &gc, int x, int y) {
     shadow->draw(gc, x, y);
 }
 
@@ -406,9 +405,9 @@ ecl::Rect ShadowModel::boundingBox() {
 /* -------------------- RandomModel -------------------- */
 
 std::unique_ptr<Model> RandomModel::clone() {
-    if (!modelnames.empty()) {
-        int r = IntegerRand(0, modelnames.size() - 1, false);
-        return MakeModel(modelnames[r]);
+    if (!modelNames.empty()) {
+        int index = IntegerRand(0, modelNames.size() - 1, false);
+        return MakeModel(modelNames[index]);
     } else {
         fprintf(stderr, "display_2d.cc: empty RandomModel\n");
         return nullptr;
@@ -427,44 +426,44 @@ Anim2d::Anim2d(bool looping) : rep(std::make_shared<AnimRep>(looping)) {
 }
 
 Anim2d::Anim2d(const std::shared_ptr<AnimRep> &rep, const ecl::Rect &bbox) : rep(rep), bbox(bbox) {
-    frametime = 0;
+    frameTime = 0;
 }
 
-void Anim2d::set_callback(ModelCallback *cb) {
+void Anim2d::setCallback(ModelCallback *cb) {
     callback = cb;
 }
 
 void Anim2d::reverse() {
-    reversep = !reversep;
+    reversed = !reversed;
 }
 
 void Anim2d::restart() {
-    finishedp = false;
-    frametime = 0;
+    finished = false;
+    frameTime = 0;
     curframe = 0;
-    changedp = true;
+    changed = true;
 }
 
-void Anim2d::add_frame(std::unique_ptr<Model> m, double duration) {
-    ecl::Rect frameBbox = m->boundingBox();
-    rep->frames.push_back(std::make_unique<AnimFrame>(std::move(m), duration));
+void Anim2d::addFrame(std::unique_ptr<Model> model, double duration) {
+    ecl::Rect frameBbox = model->boundingBox();
+    rep->frames.push_back(std::make_unique<AnimFrame>(std::move(model), duration));
 
     // Cache the bounding box of all frames to ensure that it is constant.
     bbox = ecl::boundingbox(frameBbox, bbox);
 }
 
 void Anim2d::draw(ecl::GC &gc, int x, int y) {
-    if (!finishedp) {
-        AnimFrame *f = rep->frames[curframe].get();
-        f->model->draw(gc, x, y);
-        changedp = false;
+    if (!finished) {
+        AnimFrame *frame = rep->frames[curframe].get();
+        frame->model->draw(gc, x, y);
+        changed = false;
     }
 }
 
-void Anim2d::draw_shadow(ecl::GC &gc, int x, int y) {
-    if (!finishedp) {
-        AnimFrame *f = rep->frames[curframe].get();
-        f->model->draw_shadow(gc, x, y);
+void Anim2d::drawShadow(ecl::GC &gc, int x, int y) {
+    if (!finished) {
+        AnimFrame *frame = rep->frames[curframe].get();
+        frame->model->drawShadow(gc, x, y);
     }
 }
 
@@ -472,29 +471,28 @@ std::unique_ptr<Model> Anim2d::clone() {
     return std::make_unique<Anim2d>(rep, bbox);
 }
 
-void Anim2d::expose(ModelLayer *ml, int vx, int vy) {
-    ml->activate(this);
-    videox = vx;
-    videoy = vy;
+void Anim2d::expose(ModelLayer *layer, int vx, int vy) {
+    layer->activate(this);
+    screenX = vx;
+    screenY = vy;
 }
 
-void Anim2d::remove(ModelLayer *ml) {
-    ml->deactivate(this);
+void Anim2d::removeFromLayer(ModelLayer *layer) {
+    layer->deactivate(this);
 }
 
-bool Anim2d::has_changed(ecl::Rect &r) {
-    bool retval = changedp;
-    if (changedp) {
-        r = boundingBox();
-        r.x += videox;
-        r.y += videoy;
+bool Anim2d::hasChanged(ecl::Rect &changedRegion) {
+    if (changed) {
+        changedRegion = bbox;
+        changedRegion.x += screenX;
+        changedRegion.y += screenY;
     }
-    return retval;
+    return changed;
 }
 
-void Anim2d::move(int newx, int newy) {
-    videox = newx;
-    videoy = newy;
+void Anim2d::move(int newX, int newY) {
+    screenX = newX;
+    screenY = newY;
 }
 
 ecl::Rect Anim2d::boundingBox() {
@@ -503,29 +501,29 @@ ecl::Rect Anim2d::boundingBox() {
 
 void Anim2d::tick(double dtime) {
     assert(curframe < rep->frames.size());
-    frametime += dtime;
-    double framedur = rep->frames[curframe]->duration;
+    frameTime += dtime;
+    double frameDuration = rep->frames[curframe]->duration;
 
-    if (frametime >= framedur) {
-        frametime -= framedur;
-        changedp = true;
+    if (frameTime >= frameDuration) {
+        frameTime -= frameDuration;
+        changed = true;
 
-        if (reversep) {
+        if (reversed) {
             if (curframe >= 1)
                 curframe--;
             else if (rep->looping)
                 curframe = rep->frames.size() - 1;
             else
-                finishedp = true;
+                finished = true;
         } else {
             if (curframe + 1 < rep->frames.size())
                 curframe++;
             else if (rep->looping)
                 curframe = 0;
             else
-                finishedp = true;
+                finished = true;
         }
-        if (finishedp && callback != nullptr)
+        if (finished && callback != nullptr)
             callback->animcb();
     }
 }

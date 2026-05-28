@@ -40,21 +40,21 @@ public:
     double getBorderX() const { return borderX; }
     double getBorderY() const { return borderY; }
 
-    void setBorder(double borderX, double borderY) {
-        borderX = borderX;
-        borderY = borderY;
+    void setBorder(double borderX_, double borderY_) {
+        borderX = borderX_;
+        borderY = borderY_;
     }
 
 protected:
-    DisplayEngine *getEngine() const { return m_engine; }
-    bool set_offset(ecl::V2 offset);
+    DisplayEngine *getEngine() const { return engine; }
+    bool setOffset(ecl::V2 offset);
     double get_hoff() const;
     double get_voff() const;
 
 private:
     double borderX;
     double borderY;
-    DisplayEngine *m_engine;
+    DisplayEngine *engine;
 };
 
 // Follows a sprite by flipping to the next screen as soon as the sprite
@@ -69,16 +69,16 @@ public:
 // soon as the sprite reaches the border of the current screen.
 class Follower_Scrolling : public Follower {
 public:
-    Follower_Scrolling(DisplayEngine *engine, bool screenWise, double borderX = 0.5,
-                       double borderY = 0.5);
+    Follower_Scrolling(
+            DisplayEngine* engine, bool screenWise, double borderX = 0.5, double borderY = 0.5);
     void tick(double dtime, const ecl::V2 &point) override;
     void center(const ecl::V2 &point) override;
 
 private:
-    bool currently_scrolling;
+    bool currentlyScrolling;
     ecl::V2 curpos, destpos;
     ecl::V2 dir;
-    double scrollspeed;
+    double scrollSpeed;
     double resttime;
     bool screenwise;
 };

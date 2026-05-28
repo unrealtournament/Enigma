@@ -37,7 +37,7 @@ struct Image {
     explicit Image(std::unique_ptr<ecl::Surface> sfc);
     Image(ecl::Surface *sfc, ecl::Rect r);
     Image(const Image& i) = delete;
-    Image& operator= (const Image& i) = delete;
+    Image& operator=(const Image& i) = delete;
 };
 
 void draw_image(Image *image, ecl::GC &gc, int x, int y);
@@ -70,13 +70,13 @@ public:
 
     // Model interface
     void expose(ModelLayer *ml, int vx, int vy) override;
-    void remove(ModelLayer *ml) override;
+    void removeFromLayer(ModelLayer *ml) override;
 
-    void set_callback(ModelCallback *cb) override;
+    void setCallback(ModelCallback *cb) override;
     void reverse() override;
     void restart() override;
     void draw(ecl::GC &gc, int x, int y) override;
-    void draw_shadow(ecl::GC &gc, int x, int y) override;
+    void drawShadow(ecl::GC &gc, int x, int y) override;
     Model *get_shadow() const override;
     std::unique_ptr<Model> clone() override;
 
@@ -99,8 +99,8 @@ public:
     : background(std::move(bg)), foreground(std::move(fg)) {}
 
     // Animation interface
-    void set_callback(ModelCallback *cb) override {
-        foreground->set_callback(cb);
+    void setCallback(ModelCallback *cb) override {
+        foreground->setCallback(cb);
     }
     void reverse() override {
         foreground->reverse();
@@ -112,15 +112,15 @@ public:
     void expose(ModelLayer *ml, int vx, int vy) override {
         foreground->expose(ml, vx, vy);
     }
-    void remove(ModelLayer *ml) override {
-        foreground->remove(ml);
+    void removeFromLayer(ModelLayer *ml) override {
+        foreground->removeFromLayer(ml);
     }
     void draw(ecl::GC &gc, int x, int y) override {
         background->draw(gc, x, y);
         foreground->draw(gc, x, y);
     }
-    void draw_shadow(ecl::GC &gc, int x, int y) override {
-        background->draw_shadow(gc, x, y);
+    void drawShadow(ecl::GC &gc, int x, int y) override {
+        background->drawShadow(gc, x, y);
     }
     std::unique_ptr<Model> clone() override {
         return std::make_unique<CompositeModel>(background->clone(), foreground->clone());
@@ -133,10 +133,10 @@ public:
 
 /* Creates new models randomly from a set of template models. */
 class RandomModel : public Model {
-    std::vector<std::string> modelnames;
+    std::vector<std::string> modelNames;
 
 public:
-    void add_model(const std::string &name) { modelnames.push_back(name); }
+    void add_model(const std::string &name) { modelNames.push_back(name); }
     std::unique_ptr<Model> clone() override;
 };
 
@@ -157,7 +157,7 @@ struct AnimFrame {
     double duration;
 
     AnimFrame(std::unique_ptr<Model> model, double duration)
-    : model(std::move(model)), duration(duration) {}
+        : model(std::move(model)), duration(duration) {}
 };
 
 struct AnimRep {
@@ -172,38 +172,38 @@ public:
     explicit Anim2d(bool looping);
     Anim2d(const std::shared_ptr<AnimRep> &rep, const ecl::Rect &bbox);
 
-    void set_callback(ModelCallback *cb) override;
+    void setCallback(ModelCallback *cb) override;
 
-    void add_frame(std::unique_ptr<Model> m, double duration);
+    void addFrame(std::unique_ptr<Model> model, double duration);
 
     /* ---------- Model interface ---------- */
     void draw(ecl::GC &gc, int x, int y) override;
-    void draw_shadow(ecl::GC &gc, int x, int y) override;
+    void drawShadow(ecl::GC &gc, int x, int y) override;
     std::unique_ptr<Model> clone() override;
     void reverse() override;
     void restart() override;
 
-    void expose(ModelLayer *ml, int vx, int vy) override;
-    void remove(ModelLayer *ml) override;
+    void expose(ModelLayer *layer, int vx, int vy) override;
+    void removeFromLayer(ModelLayer *layer) override;
 
     void tick(double dtime) override;
-    bool has_changed(ecl::Rect &changed_region) override;
-    bool hasFinished() const override { return finishedp; }
+    bool hasChanged(ecl::Rect &changedRegion) override;
+    bool hasFinished() const override { return finished; }
 
-    void move(int newx, int newy);
+    void move(int newX, int newY);
 
     ecl::Rect boundingBox() override;
 
 private:
     // ---------- Variables ----------
     std::shared_ptr<AnimRep> rep;
-    unsigned curframe = 0;  // Current frame number
-    double frametime = 0;   // Elapsed time since frame was activated
-    bool finishedp = false;     // Animation has finished
-    bool changedp = false;      // Model state has changed since last redraw
-    bool reversep = false;      // Play the animation in reverse direction
+    unsigned curframe = 0; // Current frame number
+    double frameTime = 0;  // Elapsed time since frame was activated
+    bool finished = false; // Animation has finished
+    bool changed = false;  // Model state has changed since last redraw
+    bool reversed = false; // Play the animation in reverse direction
 
-    int videox = 0, videoy = 0;   // Video coordinates of sprite
+    int screenX = 0, screenY = 0;   // Video coordinates of sprite
     ecl::Rect bbox;  // largest bounding box of all frames
     ModelCallback *callback = nullptr;
 };
