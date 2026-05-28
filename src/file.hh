@@ -55,12 +55,12 @@ namespace enigma
 
     class DirIter {
     public:
-        static DirIter * instance(const std::string &path);
-        virtual ~DirIter ();
+        static std::unique_ptr<DirIter> create(const std::string &path);
+        virtual ~DirIter () = default;
         virtual bool open(const std::string &path) = 0;
         virtual bool get_next (DirEntry &entry) = 0;
     protected:
-        DirIter();
+        DirIter() = default;
     };
 
     enum FindImageReturnCode {
@@ -166,11 +166,11 @@ namespace enigma
     
     bool InitCurl();
     void ShutdownCurl();
-    void Downloadfile(std::string url, ByteVec &dst);
+    void Downloadfile(const std::string& url, ByteVec &dst);
     
     /*! Load a complete file/input stream `is' into `dst'.  */
     std::istream &Readfile (std::istream &is, ByteVec &dst, int blocksize=512);
-    bool Copyfile(std::string fromPath, std::string toPath);
+    bool Copyfile(const std::string& fromPath, const std::string& toPath);
     
     // banned code to file_zip.cc due to macro clashes
     bool findInZip(std::string zipPath, std::string zippedFilename1,

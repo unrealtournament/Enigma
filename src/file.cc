@@ -19,191 +19,147 @@
  */
 #include "file.hh"
 
-#include "errors.hh"
-#include "enigma.hh"
-#include "video.hh"
-#include "main.hh"
-
-#include "ecl_system.hh"
-
 #include "config.h"
+#include "ecl_system.hh"
+#include "errors.hh"
+#include "main.hh"
+#include "video.hh"
 
 #include <sys/types.h>
 #ifdef HAVE_DIRENT_H
-#include <dirent.h>
+    #include <dirent.h>
 #endif
-#include <algorithm>
-#include <cstring>
-#include <ios>
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <curl/curl.h>
+#include <fstream>
+#include <ios>
+#include <sstream>
 
-using namespace enigma;
 using namespace ecl;
-using namespace std;
 
-DirIter::DirIter() {}
-DirIter::~DirIter() {}
-
-namespace
-{
+namespace enigma {
+namespace {
 
 /* -------------------- DirIter (POSIX) -------------------- */
-
 #ifdef HAVE_DIRENT_H
 
-    class DirIterOS : DirIter {
-    public:
-        DirIterOS (const std::string &path) : m_dir (nullptr), m_entry (nullptr) {
-            open (path);
-            dir_path = path;
-        }
-        virtual ~DirIterOS () {
-            if (m_dir != nullptr)
-                closedir (m_dir);
-        }
+class DirIterOS final : public DirIter {
+public:
+    explicit DirIterOS(const std::string& path) : m_dir(nullptr), m_entry(nullptr) {
+        open(path);
+        dir_path = path;
+    }
+    ~DirIterOS() override {
+        if (m_dir != nullptr)
+            closedir(m_dir);
+    }
 
-        virtual bool open (const std::string &path) {
-            m_dir = opendir (path.c_str());
-            return m_dir != 0;
-        }
-        virtual bool get_next (DirEntry &entry) {
-            if (m_dir == 0) return false;
-            m_entry = readdir(m_dir);
-            if (m_entry != nullptr) {
-                entry.name = m_entry->d_name;
-//                entry.is_dir = false;
-                entry.is_dir = ecl::FolderExists(dir_path + "/" + entry.name);
-                return true;
-            }
+    bool open(const std::string& path) override {
+        m_dir = opendir(path.c_str());
+        return m_dir != 0;
+    }
+    bool get_next(DirEntry& entry) override {
+        if (m_dir == nullptr)
             return false;
+        m_entry = readdir(m_dir);
+        if (m_entry != nullptr) {
+            entry.name = m_entry->d_name;
+            entry.is_dir = ecl::FolderExists(dir_path + "/" + entry.name);
+            return true;
         }
-    private:
-        std::string    dir_path;
-        DIR           *m_dir;
-        struct dirent *m_entry;
-    };
+        return false;
+    }
 
+private:
+    std::string dir_path;
+    DIR* m_dir;
+    struct dirent* m_entry;
+};
 
 /* -------------------- DirIter (Win32) -------------------- */
 
-#elif defined (_MSC_VER)
+#elif defined(_MSC_VER)
 
-#include <windows.h>
+    #include <windows.h>
 
-    class DirIterOS : DirIter {
-    public:
-        DirIterOS (const std::string &path) 
-        : m_handle (INVALID_HANDLE_VALUE)
-        {
-            open (path);
-        }
-        ~DirIterOS () {
-            close();
-        }
+class DirIterOS : public DirIter {
+public:
+    DirIterOS(const std::string& path) : m_handle(INVALID_HANDLE_VALUE) { open(path); }
+    ~DirIterOS() { close(); }
 
-        bool open (const std::string &path) {
-            std::string glob (path);
-            glob += "\\*.*";
-            m_handle = FindFirstFile (glob.c_str(), &m_dir);
-            return m_handle != INVALID_HANDLE_VALUE;
+    bool open(const std::string& path) {
+        std::string glob(path);
+        glob += "\\*.*";
+        m_handle = FindFirstFile(glob.c_str(), &m_dir);
+        return m_handle != INVALID_HANDLE_VALUE;
+    }
+    bool get_next(DirEntry& entry) {
+        if (m_handle != INVALID_HANDLE_VALUE) {
+            entry.name = m_dir.cFileName;
+            //                entry.is_dir = false;
+            entry.is_dir = m_dir.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+            if (!FindNextFile(m_handle, &m_dir))
+                close();
+            return true;
         }
-        bool get_next (DirEntry &entry) {
-            if (m_handle != INVALID_HANDLE_VALUE) {
-                entry.name = m_dir.cFileName;
-//                entry.is_dir = false;
-                entry.is_dir = m_dir.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-                if (!FindNextFile (m_handle, &m_dir)) 
-                    close();
-                return true;
-            }
-            return false;
-        }
-    private:
-        void close () {
-            if (m_handle != INVALID_HANDLE_VALUE) {
-                FindClose (m_handle);
-                m_handle = INVALID_HANDLE_VALUE;
-            }
-        }
+        return false;
+    }
 
-        // Variables.
-        WIN32_FIND_DATA m_dir;
-        HANDLE          m_handle;
-    };
+private:
+    void close() {
+        if (m_handle != INVALID_HANDLE_VALUE) {
+            FindClose(m_handle);
+            m_handle = INVALID_HANDLE_VALUE;
+        }
+    }
+
+    // Variables.
+    WIN32_FIND_DATA m_dir;
+    HANDLE m_handle;
+};
 
 #endif
 
+} // namespace
+
+std::unique_ptr<DirIter> DirIter::create(const std::string& path) {
+    return std::make_unique<DirIterOS>(path);
 }
-
-DirIter * DirIter::instance(const std::string &path) {  
-    return reinterpret_cast<DirIter *>(new DirIterOS(path));
-}
-
-
-/* -------------------- FileHandle_Dir -------------------- */
-// 
-// FileHandle_Dir::FileHandle_Dir (const std::string &name)
-// : m_name (name)
-// {
-// }
-// 
-// bool FileHandle_Dir::exists() const
-// {
-//     return true;
-// }
-// 
-// void FileHandle_Dir::read (ByteVec &buffer)
-// {
-//     std::ifstream ifs(m_name.c_str());
-//     enigma::readfile (ifs, buffer);
-// }
-// 
-
 
 /* -------------------- GameFS implementation -------------------- */
 
-GameFS::GameFS() 
-: entries ()
-{
+GameFS::GameFS() : entries() {
 }
 
-void GameFS::append_dir (const string &path)
-{
-    std::string full_path = ecl::ExpandPath (path);
-    entries.push_back (FSEntry (FS_DIRECTORY, full_path));
+void GameFS::append_dir(const std::string& path) {
+    std::string full_path = ecl::ExpandPath(path);
+    entries.push_back(FSEntry(FS_DIRECTORY, full_path));
 }
 
-void GameFS::prepend_dir (const string &path)
-{
-    std::string full_path = ecl::ExpandPath (path);
-    entries.insert (entries.begin(), FSEntry (FS_DIRECTORY, full_path));
+void GameFS::prepend_dir(const std::string& path) {
+    std::string full_path = ecl::ExpandPath(path);
+    entries.insert(entries.begin(), FSEntry(FS_DIRECTORY, full_path));
 }
 
-void GameFS::prepend_zip (const std::string &filename)
-{
-    std::string path = ecl::ExpandPath (filename);
-    entries.insert (entries.begin(), FSEntry (FS_ZIPFILE, path));
+void GameFS::prepend_zip(const std::string& filename) {
+    std::string path = ecl::ExpandPath(filename);
+    entries.insert(entries.begin(), FSEntry(FS_ZIPFILE, path));
 }
 
-void GameFS::setDataPath (const string &p) 
-{
+void GameFS::setDataPath(const std::string& p) {
     clear();
 
     std::vector<std::string> datapaths;
-    split_copy (p, *ecl::PathsSeparator, back_inserter(datapaths));
-    for (unsigned i=0; i<datapaths.size(); ++i)
-        append_dir (datapaths[i]);
+    split_copy(p, *ecl::PathsSeparator, back_inserter(datapaths));
+    for (unsigned i = 0; i < datapaths.size(); ++i)
+        append_dir(datapaths[i]);
 }
 
 std::string GameFS::getDataPath() {
     std::string path;
-    
-    for (unsigned i=0, size=entries.size(); i < size; ++i) {
-        const FSEntry &e = entries[i];
-        if (i>0)
+
+    for (unsigned i = 0, size = entries.size(); i < size; ++i) {
+        const FSEntry& e = entries[i];
+        if (i > 0)
             path += ecl::PathsSeparator;
         path += e.location;
     }
@@ -212,147 +168,130 @@ std::string GameFS::getDataPath() {
 
 std::vector<std::string> GameFS::getPaths() {
     std::vector<std::string> paths;
-    for (unsigned i=0, size=entries.size(); i < size; ++i) {
-        const FSEntry &e = entries[i];
+    for (unsigned i = 0, size = entries.size(); i < size; ++i) {
+        const FSEntry& e = entries[i];
         paths.push_back(e.location);
     }
     return paths;
 }
 
-bool GameFS::findFile (const string &filename, string &dest) const 
-{
-    for (unsigned i=0; i<entries.size(); ++i) {
-        const FSEntry &e = entries[i];
+bool GameFS::findFile(const std::string& filename, std::string& dest) const {
+    for (unsigned i = 0; i < entries.size(); ++i) {
+        const FSEntry& e = entries[i];
 
         switch (e.type) {
-        case FS_DIRECTORY:
-            {
-                string complete_name = e.location + ecl::PathSeparator + filename;
-                if (ecl::FileExists(complete_name))
-                {
+            case FS_DIRECTORY: {
+                std::string complete_name = e.location + ecl::PathSeparator + filename;
+                if (ecl::FileExists(complete_name)) {
                     dest = complete_name;
                     return true;
                 }
             } break;
 
-        case FS_ZIPFILE:
-            {
+            case FS_ZIPFILE: {
             } break;
         }
     }
     return false;
 }
 
-bool GameFS::findFile(const string &filename, string &dest,
-                      std::stringstream &inflatedContent) const {
+bool GameFS::findFile(
+        const std::string& filename, std::string& dest, std::stringstream& inflatedContent) const {
     std::string::size_type slpos = filename.rfind('/');
     std::string zipName;
     std::string zippedFilename1, zippedFilename2;
     bool searchZip = false;
     std::string complete_name;
-    
+
     if (slpos != std::string::npos) {
         // file may be zipped - for "levels/Sokoban/mic_60.xml" we will look for
         // "mic_60.xml" and "Sokoban/mic_60.xml" at "levels/Sokoban.zip"
         searchZip = true;
         zipName = filename.substr(0, slpos) + ".zip";
         zippedFilename1 = filename.substr(slpos + 1);
-        std::string::size_type slpos2 = filename.rfind('/', slpos-1);
+        std::string::size_type slpos2 = filename.rfind('/', slpos - 1);
         zippedFilename2 = filename.substr(slpos2 + 1);
     }
-    for (unsigned i=0; i<entries.size(); ++i) {
-        const FSEntry &e = entries[i];
+    for (unsigned i = 0; i < entries.size(); ++i) {
+        const FSEntry& e = entries[i];
 
         switch (e.type) {
-        case FS_DIRECTORY: {
+            case FS_DIRECTORY: {
                 complete_name = e.location + ecl::PathSeparator + filename;
                 if (ecl::FileExists(complete_name)) {
                     dest = complete_name;
                     return true;
-                } else if (searchZip){
+                } else if (searchZip) {
                     complete_name = e.location + ecl::PathSeparator + zipName;
                     std::string inflatedString;
-                    if (ecl::FileExists(complete_name) &&
-                            findInZip(complete_name, zippedFilename1, 
-                            zippedFilename2, dest, inflatedString)) {
+                    if (ecl::FileExists(complete_name)
+                            && findInZip(complete_name, zippedFilename1, zippedFilename2, dest,
+                                    inflatedString)) {
                         inflatedContent = std::stringstream(inflatedString);
                         return true;
                     }
                 }
             } break;
 
-        case FS_ZIPFILE: {
+            case FS_ZIPFILE: {
             } break;
         }
     }
     return false;
 }
 
-// enigma::FileHandle *GameFS::findFile (const FileName &n)
-// {
-//     string fname;
-//     if (findFile (n, fname)) {
-//         return new FileHandle_Dir (fname);
-//     }
-//     return 0;
-// }
-
-std::string GameFS::findFile(const string &filename)
-{
-    string found_file;
+std::string GameFS::findFile(const std::string& filename) {
+    std::string found_file;
     if (!findFile(filename, found_file)) {
-        enigma::Log << "File not found: " << filename << endl;
+        Log << "File not found: " << filename << std::endl;
         return filename;
     }
     return found_file;
 }
 
-std::list <string>
-GameFS::findSubfolderFiles(const string &folder, const string &filename) const
-{
-    std::list <string> matches;
+std::list<std::string> GameFS::findSubfolderFiles(
+        const std::string& folder, const std::string& filename) const {
+    std::list<std::string> matches;
 
-    for (unsigned i=0; i<entries.size(); ++i) {
-        const FSEntry &e = entries[i];
+    for (unsigned i = 0; i < entries.size(); ++i) {
+        const FSEntry& e = entries[i];
 
         switch (e.type) {
-        case FS_DIRECTORY: {
-            string complete_name = e.location + ecl::PathSeparator + folder;
-            if (ecl::FolderExists(complete_name)) {
-                DirIterOS iter (complete_name);
-                DirEntry entry;
-                while (iter.get_next (entry)) {
-                    if (entry.name != "." && entry.name != "..") {
-                        string tmp_name = complete_name + ecl::PathSeparator
-                            + entry.name + ecl::PathSeparator + filename;
-                        if (ecl::FileExists (tmp_name))
-                            matches.push_back (tmp_name);
+            case FS_DIRECTORY: {
+                std::string complete_name = e.location + ecl::PathSeparator + folder;
+                if (ecl::FolderExists(complete_name)) {
+                    DirIterOS iter(complete_name);
+                    DirEntry entry;
+                    while (iter.get_next(entry)) {
+                        if (entry.name != "." && entry.name != "..") {
+                            std::string tmp_name = complete_name + ecl::PathSeparator + entry.name
+                                    + ecl::PathSeparator + filename;
+                            if (ecl::FileExists(tmp_name))
+                                matches.push_back(tmp_name);
+                        }
                     }
                 }
+                break;
             }
-            break;
-        }
-        case FS_ZIPFILE:
-            break;
+            case FS_ZIPFILE:
+                break;
         }
     }
     return matches;
 }
 
-
 /* First search in tileset specific directory, then in gfx??, then
    in gfx32 or gfx48, finally in "gfx/". Return a code encoding
-   necessary scaling of the result. */
-FindImageReturnCode GameFS::findImageFile (const string &basename, string &filename)
-{
-    const VideoTileset *vts = video_engine->GetTileset();
-    string fname = string(vts->gfxdir) + basename;
+   the necessary scaling of the result. */
+FindImageReturnCode GameFS::findImageFile(const std::string& basename, std::string& filename) {
+    const VideoTileset* vts = video_engine->GetTileset();
+    std::string fname = std::string(vts->gfxdir) + basename;
     if (findFile(fname, filename))
         return IMAGE_FOUND;
     // The image is not where we expected it to be. Follow the fallback-chain.
     while (vts->fallback != VTS_NONE) {
         vts = VideoTilesetById(vts->fallback);
-        fname = string(vts->gfxdir) + basename;
+        fname = std::string(vts->gfxdir) + basename;
         if (findFile(fname, filename)) {
             // Is scaling necessary?
             int origtilesize = video_engine->GetTileset()->tilesize;
@@ -368,39 +307,18 @@ FindImageReturnCode GameFS::findImageFile (const string &basename, string &filen
         }
     }
     // Finally, try the gfx-directory.
-    fname = string ("gfx/") + basename;
+    fname = std::string("gfx/") + basename;
     return findFile(fname, filename) ? IMAGE_FOUND : IMAGE_NOT_FOUND;
-
-
-    /*const VideoTilesetId fallback_vts = VideoTilesetFromId(vts->fallback);
-    if 
-    if (!findFile(fname, filename)) {
-        // temporary workaround for incomplete 64 bit images
-        if (vts->tt == VTS_64) {
-            fname = string("gfx32/") + basename;
-            if (findFile(fname, filename))
-                return true;
-        } else if (vts->tt == VTS_16) {
-            fname = string("gfx32/") + basename;
-            if (findFile(fname, filename))
-                return true;
-        }
-        fname = string ("gfx/") + basename;
-        return findFile(fname, filename);
-    }
-    return findFile(fname, filename);*/
 }
 
 /* -------------------- Helper functions -------------------- */
 
-std::istream &
-enigma::Readfile (std::istream &is, ByteVec &dest, int blocksize)
-{
+std::istream& Readfile(std::istream& is, ByteVec& dest, int blocksize) {
     size_t len = dest.size();
-    int nread=0;
+    int nread = 0;
     do {
         dest.resize(dest.size() + blocksize);
-        is.read (&dest[len], blocksize);
+        is.read(&dest[len], blocksize);
         nread = is.gcount();
         len += nread;
     } while (nread == blocksize);
@@ -408,48 +326,50 @@ enigma::Readfile (std::istream &is, ByteVec &dest, int blocksize)
     return is;
 }
 
-bool enigma::Copyfile(std::string fromPath, std::string toPath) {
+bool Copyfile(const std::string& fromPath, const std::string& toPath) {
     ByteVec content;
-    ifstream ifs(fromPath.c_str(), ios::binary | ios::in);
-    Readfile (ifs, content);
-    ofstream ofs(toPath.c_str(), ios::binary | ios::out);
+    std::ifstream ifs(fromPath.c_str(), std::ios::binary | std::ios::in);
+    Readfile(ifs, content);
+    std::ofstream ofs(toPath.c_str(), std::ios::binary | std::ios::out);
     ofs.write(&content[0], content.size());
     ofs.close();
     return !ofs.fail();
 }
 
-    CURL *easycurl;
-    
-    bool enigma::InitCurl() {
-        if (curl_global_init(CURL_GLOBAL_ALL) != 0)
-            return false;
-        
-        easycurl = curl_easy_init();
-        return easycurl != nullptr;
-    }
-    
-    void enigma::ShutdownCurl() {
-        curl_easy_cleanup(easycurl);
-        curl_global_cleanup();
-    }
-    
-    size_t curl_writefunction(void *src, size_t size, size_t nmemb, void *dataptr) {
-        ByteVec *dest = (ByteVec *)dataptr;
-        size_t oldlen = dest->size();
-        dest->resize(oldlen + size * nmemb);
-        std::memcpy(&(*dest)[oldlen], src, size * nmemb);
-//        Log << "curl write " << size * nmemb << " new size " << dest->size() << "\n";
-        return size * nmemb;
-    }
-    
-    void enigma::Downloadfile(std::string url, ByteVec &dst) {
-        ASSERT(!Robinson, XLevelLoading,  ("Robinson rejects load of '" + url + "'").c_str());
-        ASSERT(curl_easy_setopt(easycurl, CURLOPT_URL, url.c_str()) == CURLE_OK, XLevelLoading, 
-                ("Curl url error on '" + url + "'").c_str());
-        ASSERT(curl_easy_setopt(easycurl, CURLOPT_WRITEFUNCTION, curl_writefunction) == CURLE_OK, XLevelLoading, 
-                ("Curl funtion error on '" + url + "'").c_str());
-        ASSERT(curl_easy_setopt(easycurl, CURLOPT_WRITEDATA, &dst) == CURLE_OK, XLevelLoading, 
-                ("Curl data set error on '" + url + "'").c_str());
-        ASSERT(curl_easy_perform(easycurl) == CURLE_OK, XLevelLoading,
-                ("Curl download error on '" + url + "'").c_str());
-    }
+CURL* easycurl;
+
+bool InitCurl() {
+    if (curl_global_init(CURL_GLOBAL_ALL) != 0)
+        return false;
+
+    easycurl = curl_easy_init();
+    return easycurl != nullptr;
+}
+
+void ShutdownCurl() {
+    curl_easy_cleanup(easycurl);
+    curl_global_cleanup();
+}
+
+size_t curl_writefunction(void* src, size_t size, size_t nmemb, void* dataptr) {
+    ByteVec* dest = (ByteVec*)dataptr;
+    size_t oldlen = dest->size();
+    dest->resize(oldlen + size * nmemb);
+    std::memcpy(&(*dest)[oldlen], src, size * nmemb);
+    //        Log << "curl write " << size * nmemb << " new size " << dest->size() << "\n";
+    return size * nmemb;
+}
+
+void Downloadfile(const std::string& url, ByteVec& dst) {
+    ASSERT(!Robinson, XLevelLoading, ("Robinson rejects load of '" + url + "'").c_str());
+    ASSERT(curl_easy_setopt(easycurl, CURLOPT_URL, url.c_str()) == CURLE_OK, XLevelLoading,
+            ("Curl url error on '" + url + "'").c_str());
+    ASSERT(curl_easy_setopt(easycurl, CURLOPT_WRITEFUNCTION, curl_writefunction) == CURLE_OK,
+            XLevelLoading, ("Curl funtion error on '" + url + "'").c_str());
+    ASSERT(curl_easy_setopt(easycurl, CURLOPT_WRITEDATA, &dst) == CURLE_OK, XLevelLoading,
+            ("Curl data set error on '" + url + "'").c_str());
+    ASSERT(curl_easy_perform(easycurl) == CURLE_OK, XLevelLoading,
+            ("Curl download error on '" + url + "'").c_str());
+}
+
+} // namespace enigma

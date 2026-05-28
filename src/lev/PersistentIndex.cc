@@ -138,7 +138,7 @@ void PersistentIndex::checkCandidate(const std::string& thePackPath, bool system
 }
 
 void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
-    DirIter* dirIter;
+    std::unique_ptr<DirIter> dirIter;
     DirEntry dirEntry;
 
     // SystemPath: register dirs and zips with xml-indices
@@ -146,7 +146,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
     std::set<std::string> candidates;
     std::set<std::string> candidates2;
     for (const string& sysPath : sysPaths) {
-        dirIter = DirIter::instance(sysPath + "/levels");
+        dirIter = DirIter::create(sysPath + "/levels");
         while (dirIter->get_next(dirEntry)) {
             if (dirEntry.is_dir && dirEntry.name != "." && dirEntry.name != ".."
                     && dirEntry.name != ".svn" && dirEntry.name != "enigma_cross"
@@ -159,10 +159,9 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
                 }
             }
         }
-        delete dirIter;
-        // delete [] ( reinterpret_cast<DirIter *>( dirIter ) ); // ??
+
         // check for sokoball levelpacks
-        dirIter = DirIter::instance(sysPath + "/levels/soko");
+        dirIter = DirIter::create(sysPath + "/levels/soko");
         while (dirIter->get_next(dirEntry)) {
             if (dirEntry.is_dir && dirEntry.name != "." && dirEntry.name != ".."
                     && dirEntry.name != ".svn") {
@@ -174,7 +173,6 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
                 }
             }
         }
-        delete dirIter;
     }
 
     for (const std::string& candidate : candidates) {
@@ -186,7 +184,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
 
     // add system cross-indices
     for (const string& sysPath : sysPaths) {
-        dirIter = DirIter::instance(sysPath + "/levels/enigma_cross");
+        dirIter = DirIter::create(sysPath + "/levels/enigma_cross");
         while (dirIter->get_next(dirEntry)) {
             if (!dirEntry.is_dir && dirEntry.name.size() > 4
                     && (dirEntry.name.rfind(".xml") == dirEntry.name.size() - 4)) {
@@ -194,7 +192,6 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
                         INDEX_DEFAULT_PACK_LOCATION, "", dirEntry.name);
             }
         }
-        delete dirIter;
     }
 
     if (onlySystemIndices)
@@ -219,7 +216,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
     }
 
     // UserPath: register dirs and zips with xml-indices excl auto
-    dirIter = DirIter::instance(app.userPath + "/levels");
+    dirIter = DirIter::create(app.userPath + "/levels");
     while (dirIter->get_next(dirEntry)) {
         if (dirEntry.is_dir && dirEntry.name != "." && dirEntry.name != ".."
                 && dirEntry.name != ".svn" && dirEntry.name != "auto" && dirEntry.name != "cross"
@@ -233,9 +230,9 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
             }
         }
     }
-    delete dirIter;
+
     // User Path: register sokoballs
-    dirIter = DirIter::instance(app.userPath + "/levels/soko");
+    dirIter = DirIter::create(app.userPath + "/levels/soko");
     while (dirIter->get_next(dirEntry)) {
         if (dirEntry.is_dir && dirEntry.name != "." && dirEntry.name != ".."
                 && dirEntry.name != ".svn") {
@@ -247,7 +244,6 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
             }
         }
     }
-    delete dirIter;
 
     candidates2.insert("");
 #ifdef __MINGW32__
@@ -261,7 +257,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
     }
 
     // add system cross-indices updates
-    dirIter = DirIter::instance(app.userPath + "/levels/enigma_cross");
+    dirIter = DirIter::create(app.userPath + "/levels/enigma_cross");
     while (dirIter->get_next(dirEntry)) {
         if (!dirEntry.is_dir && dirEntry.name.size() > 4
                 && (dirEntry.name.rfind(".xml") == dirEntry.name.size() - 4)) {
@@ -269,10 +265,9 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
                     INDEX_DEFAULT_PACK_LOCATION, "", dirEntry.name);
         }
     }
-    delete dirIter;
 
     // add user cross-indices
-    dirIter = DirIter::instance(app.userPath + "/levels/cross");
+    dirIter = DirIter::create(app.userPath + "/levels/cross");
     while (dirIter->get_next(dirEntry)) {
         if (!dirEntry.is_dir && dirEntry.name.size() > 4
                 && (dirEntry.name.rfind(".xml") == dirEntry.name.size() - 4)) {
@@ -280,7 +275,6 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
                     "", dirEntry.name);
         }
     }
-    delete dirIter;
 
     for (unsigned i = 0; i < indexCandidates.size(); i++) {
         Index::registerIndex(indexCandidates[i].get());
@@ -338,9 +332,9 @@ void PersistentIndex::load(bool loadSystemFS, bool update) {
         return;
 
     if (isAuto) {
-        DirIter* dirIter;
+        std::unique_ptr<DirIter> dirIter;
         DirEntry dirEntry;
-        dirIter = DirIter::instance(app.userPath + "/levels/" + packPath);
+        dirIter = DirIter::create(app.userPath + "/levels/" + packPath);
         while (dirIter->get_next(dirEntry)) {
             if (!dirEntry.is_dir) {
                 if (dirEntry.name.size() > 4
@@ -366,7 +360,7 @@ void PersistentIndex::load(bool loadSystemFS, bool update) {
                 }
             }
         }
-        delete dirIter;
+
         std::sort(proxies.begin(), proxies.end(), autoIndexProxyCompare);
         return;
     }

@@ -44,19 +44,17 @@ int nls::GetCurrentLocaleNr() {
 
 std::vector<std::string> TinyGetTextFileSystem::open_directory(const std::string& pathname) {
     std::vector<std::string> result;
-    enigma::DirIter * dirIter = enigma::DirIter::instance(pathname);
+    std::unique_ptr<enigma::DirIter> dirIter = enigma::DirIter::create(pathname);
     enigma::DirEntry dirEntry;
-    while (dirIter->get_next(dirEntry))
+    while (dirIter->get_next(dirEntry)) {
         if (!dirEntry.is_dir)
             result.push_back(dirEntry.name);
-    delete dirIter;
+    }
     return result;
 }
 
 std::unique_ptr<std::istream> TinyGetTextFileSystem::open_file(const std::string& filename) {
-    std::basic_ifstream<char> ifs(filename, ios::binary | ios::in);
-    unique_ptr<std::basic_ifstream<char>> isptr = make_unique<std::basic_ifstream<char>>(move(ifs));
-    return isptr;
+    return make_unique<std::ifstream>(filename, ios::binary | ios::in);
 }
 
 void nls::tinygettext_log_callback(const std::string& str) {
