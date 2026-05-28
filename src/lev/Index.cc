@@ -330,7 +330,7 @@ Index* Index::getCurrentIndex() {
         else {
             std::vector<std::string> emptyList;
             registerIndex(
-                    new lev::VolatileIndex("Empty Index", "", INDEX_DEFAULT_GROUP, emptyList));
+                    new VolatileIndex("Empty Index", "", INDEX_DEFAULT_GROUP, emptyList));
             setCurrentIndex("Empty Index");
         }
     }
@@ -621,16 +621,12 @@ Proxy* Index::getProxy(int pos) const {
 }
 
 bool Index::containsProxy(const Proxy* aProxy) const {
-    for (int i = 0; i < proxies.size(); i++) {
-        if (proxies[i] == aProxy)
-            return true;
-    }
-    return false;
+    return std::find(proxies.begin(), proxies.end(), aProxy) != proxies.end();
 }
 
 bool Index::hasNormLevelPath(const std::string& path) const {
-    for (int i = 0; i < proxies.size(); i++) {
-        if (proxies[i]->getNormFilePath() == path)
+    for (Proxy* proxy : proxies) {
+        if (proxy->getNormFilePath() == path)
             return true;
     }
     return false;
@@ -654,8 +650,8 @@ bool Index::advanceLevel(LevelAdvanceMode advMode) {
     bool found = false;
     const int max = size();
     int newPos = currentPosition;
-    lev::ScoreManager* scm = lev::ScoreManager::instance();
-    lev::RatingManager* ratingMgr = lev::RatingManager::instance();
+    ScoreManager* scm = ScoreManager::instance();
+    RatingManager* ratingMgr = RatingManager::instance();
     int difficulty = app.state->getInt("Difficulty");
 
     while (newPos < max - 1 && !found) {
@@ -711,11 +707,11 @@ void Index::sort(SCSortMethod s) {
             break;
         }
         case SC_SORT_DIF: {
-            std::sort(proxies.begin(), proxies.end(), lev::RatingManager::compareByDifficulty);
+            std::sort(proxies.begin(), proxies.end(), RatingManager::compareByDifficulty);
             break;
         }
         case SC_SORT_AVR: {
-            std::sort(proxies.begin(), proxies.end(), lev::RatingManager::compareByAverageRating);
+            std::sort(proxies.begin(), proxies.end(), RatingManager::compareByAverageRating);
             break;
         }
         default:
@@ -725,9 +721,9 @@ void Index::sort(SCSortMethod s) {
 
 void Index::updateFromProxies() const {
     Proxy::releaseCache(); // enforce a reload from file
-    for (int i = 0, l = proxies.size(); i < l; i++) {
+    for (Proxy* proxy : proxies) {
         try {
-            proxies[i]->loadMetadata(true);
+            proxy->loadMetadata(true);
         } catch (XLevelLoading&) {
             // silently ignore errors
         }

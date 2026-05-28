@@ -147,24 +147,21 @@ void PersistentIndex::checkCandidate(const std::string& thePackPath, bool system
 }
 
 void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
-    std::unique_ptr<DirIter> dirIter;
     DirEntry dirEntry;
 
-    // SystemPath: register dirs and zips with xml-indices
+    // SystemPath: register directories and ZIP files with xml-indices
     std::vector<std::string> sysPaths = app.systemFS->getPaths();
     std::set<std::string> candidates;
-    std::set<std::string> candidates2;
     for (const string& sysPath : sysPaths) {
-        dirIter = DirIter::create(sysPath + "/levels");
+        std::unique_ptr<DirIter> dirIter = DirIter::create(sysPath + "/levels");
         while (dirIter->get_next(dirEntry)) {
             if (dirEntry.is_dir && dirEntry.name != "." && dirEntry.name != ".."
                     && dirEntry.name != ".svn" && dirEntry.name != "enigma_cross"
                     && dirEntry.name != "soko") {
                 candidates.insert(dirEntry.name);
             } else {
-                if (hasSuffix(dirEntry.name, ".zip")) {
+                if (hasSuffix(dirEntry.name, ".zip"))
                     candidates.insert(dirEntry.name.substr(0, dirEntry.name.size() - 4));
-                }
             }
         }
 
@@ -191,7 +188,7 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
 
     // add system cross-indices
     for (const string& sysPath : sysPaths) {
-        dirIter = DirIter::create(sysPath + "/levels/enigma_cross");
+        std::unique_ptr<DirIter> dirIter = DirIter::create(sysPath + "/levels/enigma_cross");
         while (dirIter->get_next(dirEntry)) {
             if (!dirEntry.is_dir && hasSuffix(dirEntry.name, ".xml")) {
                 checkCandidate("enigma_cross", true, false, false, true, false,
@@ -209,20 +206,22 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
             INDEX_AUTO_PACK_LOCATION, INDEX_AUTO_PACK_NAME, INDEX_STD_FILENAME,
             INDEX_AUTO_PACK_DESCRIPTION);
     autoIndex->isEditable = false;
-    Index::registerIndex(autoIndex);
+    registerIndex(autoIndex);
 
     // register team auto not yet registered new files
     PersistentIndex* teamautoIndex = new PersistentIndex(
             "team_test_new_api", false, true, true, 75000, "test_new_api");
     if (teamautoIndex->size() > 0) {
         teamautoIndex->isEditable = false;
-        Index::registerIndex(teamautoIndex);
+        registerIndex(teamautoIndex);
     } else {
         delete teamautoIndex;
     }
 
-    // UserPath: register dirs and zips with xml-indices excl auto
-    dirIter = DirIter::create(app.userPath + "/levels");
+    // UserPath: register directories and ZIP files with XML-indices, but
+    // excluding the auto folder.
+    std::set<std::string> candidates2;
+    std::unique_ptr<DirIter> dirIter = DirIter::create(app.userPath + "/levels");
     while (dirIter->get_next(dirEntry)) {
         if (dirEntry.is_dir && dirEntry.name != "." && dirEntry.name != ".."
                 && dirEntry.name != ".svn" && dirEntry.name != "auto" && dirEntry.name != "cross"
@@ -279,17 +278,17 @@ void PersistentIndex::registerPersistentIndices(bool onlySystemIndices) {
     }
 
     for (unsigned i = 0; i < indexCandidates.size(); i++) {
-        Index::registerIndex(indexCandidates[i].get());
+        registerIndex(indexCandidates[i].get());
     }
 
     // check if history is available - else generate a new index
-    Index* foundHistory = Index::findIndex("History");
+    Index* foundHistory = findIndex("History");
     if (foundHistory != nullptr) {
         historyIndex = dynamic_cast<PersistentIndex*>(foundHistory);
     } else {
         historyIndex = new PersistentIndex("cross", false, true, false, INDEX_HISTORY_PACK_LOCATION,
                 INDEX_HISTORY_PACK_NAME, "history.xml", INDEX_HISTORY_PACK_DESCRIPTION);
-        Index::registerIndex(historyIndex);
+        registerIndex(historyIndex);
     }
     historyIndex->isEditable = false;
 }
