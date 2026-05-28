@@ -20,10 +20,12 @@
 #define ECL_ARGP_HH
 
 #include "ecl_util.hh"
-#include <list>
+
 #include <algorithm>
+#include <list>
 
 namespace ecl {
+
 class ArgParser : public ecl::Nocopy {
 public:
     // Constructors.
@@ -111,6 +113,7 @@ private:
         return beg;
     }
 };
-}
+
+} // namespace ecl
 
 #endif

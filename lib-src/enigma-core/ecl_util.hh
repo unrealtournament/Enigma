@@ -34,25 +34,24 @@
 namespace ecl {
 
 // Base class for classes that may not be copied, neither via copy constructor
-// or assignment operator.
+// nor assignment operator.
 class Nocopy {
 public:
-    Nocopy() {}
+    Nocopy() = default;
 
-private:
     // Not implemented to cause compiler error message on usage.
-    Nocopy(const Nocopy &);
-    Nocopy &operator=(const Nocopy &);
+    Nocopy(const Nocopy &) = delete;
+    Nocopy &operator=(const Nocopy &) = delete;
 };
 
 template <class For>
-inline void delete_sequence(For begin, For end) {
+void delete_sequence(For begin, For end) {
     while (begin != end)
         delete *begin++;
 }
 
 template <class For>
-inline void delete_map(For begin, For end) {
+void delete_map(For begin, For end) {
     while (begin != end) {
         delete begin->second;
         ++begin;
@@ -60,17 +59,17 @@ inline void delete_map(For begin, For end) {
 }
 
 template <class T>
-inline const T &Max(const T &a, const T &b) {
+const T &Max(const T &a, const T &b) {
     return (a > b) ? a : b;
 }
 
 template <class T>
-inline const T &Min(const T &a, const T &b) {
+const T &Min(const T &a, const T &b) {
     return (a < b) ? a : b;
 }
 
 template <class T>
-inline const T &Clamp(const T &a, const T &min, const T &max) {
+const T &Clamp(const T &a, const T &min, const T &max) {
     if (a < min)
         return min;
     else if (a > max)
@@ -80,7 +79,7 @@ inline const T &Clamp(const T &a, const T &min, const T &max) {
 }
 
 template <class T>
-inline const bool isOrdered(const T &a, const T &b, const T &c) {
+bool isOrdered(const T& a, const T& b, const T& c) {
     return (a <= b) && (b <= c);
 }
 
@@ -137,23 +136,23 @@ Str trim(const Str &str) {
 //
 
 template <class E, class I>
-inline void set_flags(E &val, I flags) {
+void set_flags(E &val, I flags) {
     val = static_cast<E>(val | flags);
 }
 
 template <class E, class I>
-inline void clear_flags(E &val, I flags) {
+void clear_flags(E &val, I flags) {
     val = static_cast<E>(val & ~flags);
 }
 
 template <class E, class I>
-inline void toggle_flags(E &val, I flags) {
+void toggle_flags(E &val, I flags) {
     val = static_cast<E>(val ^ flags);
 }
 
 template <class E, class I>
-inline bool has_flags(E val, I flags) {
-    return (static_cast<int>(val & flags) == static_cast<int>(flags));
+bool has_flags(E val, I flags) {
+    return static_cast<int>(val & flags) == static_cast<int>(flags);
 }
 
 //
@@ -198,7 +197,7 @@ bool string_match(const char *str, const char *templ);
  * @param templ   template with wildcards
  * @return        true if string matches template, false otherwise
  */
-bool string_match(std::string str, std::string templ);
+bool string_match(const std::string& str, const std::string& templ);
 
 /**
  * Take an unsigned long (32 bit) integer x and convert it into a string of 4 unsigned chars.
@@ -207,10 +206,10 @@ std::string uint32_to_string(uint32_t x);
 
 /**
  * Take a std::string of length 4 or more. Interpret the first four chars as bytes and convert
- * them into an unsigned long (32 bit) integer. If there are less than four chars, the higher
+ * them into an unsigned long (32-bit) integer. If there are less than four chars, the higher
  * value bytes will be interpreted as null.
  */
-uint32_t string_to_uint32(std::string s);
+uint32_t string_to_uint32(const std::string& s);
 uint32_t chars_to_uint32(unsigned char c0, unsigned char c1, unsigned char c2, unsigned char c3);
 
 }  // namespace ecl

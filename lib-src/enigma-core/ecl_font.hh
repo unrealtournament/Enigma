@@ -34,33 +34,33 @@ public:
     virtual int get_lineskip() = 0;
     virtual int get_height() = 0;
 
-    virtual int get_width(char c) = 0;  // depreceated ! not utf-8 compatible!
-    virtual int get_width(std::string text, Font *altFont = nullptr) = 0;
+    virtual int get_width(char c) = 0;  // deprecated ! not utf-8 compatible!
+    virtual int get_width(const std::string& text, Font *altFont = nullptr) = 0;
 
-    virtual std::unique_ptr<Surface> render(std::string text, Font *altFont = nullptr,
-                                            int maxwidth = -1) = 0;
-    virtual void render(const GC &gc, int x, int y, std::string text, Font *altFont = nullptr,
-                        int maxwidth = -1) = 0;
+    virtual std::unique_ptr<Surface> render(
+            const std::string& text, Font* altFont = nullptr, int maxWidth = -1) = 0;
+    virtual void render(const GC& gc, int x, int y, const std::string& text,
+            Font* altFont = nullptr, int maxWidth = -1) = 0;
 };
 
 /* Remove white-spaces left and right of the string, and replace all
    occurences by one or more consecutive white-spaces inside the string
    by spaces. This has to mirror XSL's normalizeSpaces! */
-std::string normalizeSpaces(std::string theString);
+std::string normalizeSpaces(const std::string& text);
 
-std::string::size_type breakString(Font *font, const std::string &theString,
-                                   const std::string &breakChars, int targetWidth);
+std::string::size_type breakString(
+        Font* font, const std::string& theString, const std::string& breakChars, int targetWidth);
 
-std::vector<std::string> breakToLines(Font *font, const std::string &theString,
-                                      const std::string &breakChars, int targetWidth);
+std::vector<std::string> breakToLines(
+        Font* font, const std::string& theString, const std::string& breakChars, int targetWidth);
 
-/** Load a bitmap font with image FILENAME and font metric
-  DESCRNAME. */
+/// Load a bitmap font with image 'filename' and font metric
+/// 'descrname'. */
 std::unique_ptr<Font> LoadBitmapFont(const char *filename, const char *descrname);
 
-/** Load a TrueType font from FILENAME with size PTSIZE. */
-std::unique_ptr<Font> LoadTTF(const char *filename, int ptsize, int r = 0xff, int g = 0xff,
-                              int b = 0xff);
+/// Load a TrueType font from 'filename' at size 'ptsize'.
+std::unique_ptr<Font> LoadTTF(
+        const char* filename, int ptSize, int r = 0xff, int g = 0xff, int b = 0xff);
 
 }  // namespace ecl
 

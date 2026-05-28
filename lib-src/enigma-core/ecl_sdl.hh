@@ -31,10 +31,10 @@ public:
     virtual ~EventHandler() {}
 
     // Dispatch an event to the suitable virtual function. Returns true if
-    // event was handled.
+    // the event was handled.
     bool dispatch_event(SDL_Event &e);
 
-    // The following function can be overriden to receive particular events.
+    // The following function can be overridden to receive particular events.
     // They should return true if the event was handled.
     virtual bool on_mousemotion(SDL_Event & /*e*/) { return false; }
     virtual bool on_mousebutton(SDL_Event & /*e*/) { return false; }

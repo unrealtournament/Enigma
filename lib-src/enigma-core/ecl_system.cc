@@ -18,15 +18,17 @@
  *
  */
 #include "ecl_system.hh"
+
 #include "ecl_util.hh"
 
-#include <cstdlib>
-#include <iostream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <locale.h>
-#include <unistd.h>
 #include <cassert>
+#include <cstdlib>
+#include <filesystem>
+#include <iostream>
+#include <locale.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #ifdef __MINGW32__
 #include <windows.h>
@@ -37,22 +39,21 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
-using namespace ecl;
-using std::string;
+namespace ecl {
 
 #ifdef __MINGW32__
-const char *ecl::PathSeparator = "\\";  // for path assembly
-const char *ecl::PathsSeparator = ";";  // for listing paths in a string
+const char *PathSeparator = "\\";  // for path assembly
+const char *PathsSeparator = ";";  // for listing paths in a string
 #else
-const char *ecl::PathSeparator = "/";   // for path assembly
-const char *ecl::PathsSeparator = ":";  // for listing paths in a string
+const char *PathSeparator = "/";   // for path assembly
+const char *PathsSeparator = ":";  // for listing paths in a string
 #endif
-const char *ecl::PathSeparators = "/\\";  // for path splits
+const char *PathSeparators = "/\\";  // for path splits
 
-std::string ecl::ExpandPath(const string &pth) {
+std::string ExpandPath(const std::string &pth) {
     std::string path = pth;
-    std::string::size_type p = path.find("~");
-    if (p != string::npos) {
+    std::string::size_type p = path.find('~');
+    if (p != std::string::npos) {
         std::string home;
         if (char *h = getenv("HOME"))
             home = h;
@@ -61,23 +62,23 @@ std::string ecl::ExpandPath(const string &pth) {
     return path;
 }
 
-std::string ecl::BeautifyPath(const std::string path) {
-    std::string foreignSeparators = ecl::PathSeparators;
-    foreignSeparators.erase(foreignSeparators.find(ecl::PathSeparator));
+std::string BeautifyPath(const std::string& path) {
+    std::string foreignSeparators = PathSeparators;
+    foreignSeparators.erase(foreignSeparators.find(PathSeparator));
     std::string result = path;
     for (std::string::size_type pos = result.find_first_of(foreignSeparators);
-         pos != std::string::npos; pos = result.find_first_of(foreignSeparators)) {
-        result.replace(pos, 1, ecl::PathSeparator);
+            pos != std::string::npos; pos = result.find_first_of(foreignSeparators)) {
+        result.replace(pos, 1, PathSeparator);
     }
     return result;
 }
 
-bool ecl::FileExists(const std::string &fname) {
+bool FileExists(const std::string &fname) {
     struct stat s;
     return (stat(fname.c_str(), &s) == 0 && S_ISREG(s.st_mode));
 }
 
-time_t ecl::FileModTime(const std::string &fname) {
+time_t FileModTime(const std::string &fname) {
     struct stat s;
     if (stat(fname.c_str(), &s) == 0) {
         return s.st_mtime;
@@ -86,14 +87,14 @@ time_t ecl::FileModTime(const std::string &fname) {
     return 0;  // beginning of time
 }
 
-bool ecl::FolderExists(const std::string &fname) {
+bool FolderExists(const std::string &fname) {
     struct stat s;
     return (stat(fname.c_str(), &s) == 0 && S_ISDIR(s.st_mode));
 }
 
-bool ecl::FolderCreate(const std::string &fname) {
-    string parent_folder;
-    string sub_folder;
+bool FolderCreate(const std::string &fname) {
+    std::string parent_folder;
+    std::string sub_folder;
     bool ok = true;
 
     assert(!FolderExists(fname));
@@ -105,20 +106,20 @@ bool ecl::FolderCreate(const std::string &fname) {
     }
 
     if (ok) {
-#ifdef __MINGW32__
+        #ifdef __MINGW32__
         ok = mkdir(fname.c_str()) == 0;
-#else
+        #else
         ok = mkdir(fname.c_str(), 0777) == 0;
-#endif
+        #endif
     }
     return ok;
 }
 
-bool ecl::BrowseUrl(const std::string url) {
+bool BrowseUrl(const std::string& url) {
     bool result = true;
-#ifdef __MINGW32__
+    #ifdef __MINGW32__
     result == ((INT_PTR)ShellExecute(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL) >= 32);
-#elif MACOSX
+    #elif MACOSX
     CFStringRef cfurlStr = CFStringCreateWithCString(NULL, url.c_str(), kCFStringEncodingASCII);
 
     // Create a URL object:
@@ -130,17 +131,17 @@ bool ecl::BrowseUrl(const std::string url) {
     // Release the created resources:
     CFRelease(cfurl);
     CFRelease(cfurlStr);
-#else
+    #else
     result = (system(("xdg-open " + url + " &").c_str()) == 0);
-#endif
+    #endif
     return result;
 }
 
-bool ecl::ExploreFolder(const std::string path) {
+bool ExploreFolder(const std::string& path) {
     bool result = true;
-#ifdef __MINGW32__
+    #ifdef __MINGW32__
     result == ((INT_PTR)ShellExecute(NULL, "explore", path.c_str(), NULL, NULL, SW_SHOWNORMAL) >= 32);
-#elif MACOSX
+    #elif MACOSX
     CFStringRef cfurlStr = CFStringCreateWithCString(kCFAllocatorDefault, path.c_str(), kCFStringEncodingUTF8);
 
     // Create a file URL object:
@@ -152,19 +153,19 @@ bool ecl::ExploreFolder(const std::string path) {
     // Release the created resources:
     CFRelease(cfurlStr);
     CFRelease(cfurl);
-#else
+    #else
     result = (system(("xdg-open " + path + " &").c_str()) == 0);
-#endif
+    #endif
     return result;
 }
 
 #ifdef __MINGW32__
 // should be ecl_system_windows.cc ?
-std::string ecl::ApplicationDataPath() {
+std::string ApplicationDataPath() {
     typedef HRESULT(WINAPI * SHGETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPTSTR);
-#define CSIDL_FLAG_CREATE 0x8000
-#define CSIDL_APPDATA 0x1A
-#define SHGFP_TYPE_CURRENT 0
+    #define CSIDL_FLAG_CREATE 0x8000
+    #define CSIDL_APPDATA 0x1A
+    #define SHGFP_TYPE_CURRENT 0
 
     HINSTANCE shfolder_dll;
     SHGETFOLDERPATH SHGetFolderPath;
@@ -184,7 +185,7 @@ std::string ecl::ApplicationDataPath() {
                 if (S_OK == SHGetFolderPath(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL,
                                             SHGFP_TYPE_CURRENT, szPath)) {
                     result = szPath;
-                }
+                                            }
             }
             FreeLibrary(shfolder_dll);
         }
@@ -192,34 +193,33 @@ std::string ecl::ApplicationDataPath() {
     return result;
 }
 
-void ecl::ToLowerCase(std::string &filename) {
-    for (int i = 0; i < filename.length(); i++) {
-        char c = filename[i];
-        if (c >= 'A' && c <= 'Z')
-            filename.replace(i, 1, 1, c - 'A' + 'a');
-    }
+std::string ToLowerCase(const std::string &filename) {
+    std::string result;
+    for (char c : filename)
+        result.push_back(static_cast<char>(std::tolower(c)));
+    return result;
 }
 
-std::set<std::string> ecl::UniqueFilenameSet(std::set<std::string> inSet) {
-    std::set<std::string>::iterator it = inSet.begin();
-    std::set<std::string> outSet;
+
+std::set<std::string> UniqueFilenameSet(const std::set<std::string>& inSet) {
+    std::set<std::string> result;
     std::set<std::string> lowerSet;
-    for (; it != inSet.end(); it++) {
-        std::string name = *it;
-        ecl::ToLowerCase(name);
-        if (lowerSet.find(name) == lowerSet.end()) {
-            outSet.insert(*it);
-            lowerSet.insert(name);
-        }
+    for (const std::string& fileName : inSet) {
+        std::string lowerCaseName = ToLowerCase(fileName);
+        auto [it, success] = lowerSet.insert(lowerCaseName);
+        if (success)
+            result.insert(fileName);
     }
-    return outSet;
+    return result;
 }
-
 #endif
 
-std::string ecl::GetLanguageCode(const std::string &ln) {
+
+std::string GetLanguageCode(const std::string &ln) {
     if (ln == "C" || ln == "POSIX" || ln.size() < 2)
         return "en";
 
     return ln.substr(0, 2);
 }
+
+} // namespace ecl

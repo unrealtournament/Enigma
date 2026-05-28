@@ -30,84 +30,83 @@
 #include <memory>
 #include <cstdio>
 
-using namespace ecl;
-
+namespace ecl {
 /* -------------------- Graphics primitives -------------------- */
 
-void ecl::frame(const GC &gc, int x, int y, int w, int h) {
+void frame(const GC &gc, int x, int y, int w, int h) {
     hline(gc, x, y, w);
     hline(gc, x, y + h - 1, w);
     vline(gc, x, y, h);
     vline(gc, x + w - 1, y, h);
 }
 
-void ecl::line(const GC &gc, int x1, int y1, int x2, int y2) {
+void line(const GC &gc, int x1, int y1, int x2, int y2) {
     gc.drawable->line(gc, x1, y1, x2, y2);
 }
 
 /* -------------------- Clipping helper routines -------------------- */
 namespace {
 
-inline bool NOCLIP(const GS &gs) {
-    return gs.flags & GS_NOCLIP;
-}
+    inline bool NOCLIP(const GS &gs) {
+        return gs.flags & GS_NOCLIP;
+    }
 
-bool clip_hline(const GS &gs, int &x, int &y, int &w) {
-    const Rect &cliprect = gs.cliprect;
+    bool clip_hline(const GS &gs, int &x, int y, int &w) {
+        const Rect &cliprect = gs.clipRect;
 
-    if (y < cliprect.y || y >= cliprect.y + cliprect.h)
+        if (y < cliprect.y || y >= cliprect.y + cliprect.h)
+            return false;
+
+        int d = x - cliprect.x;
+        if (d < 0) {
+            w += d;
+            x = cliprect.x;
+        }
+        d = (cliprect.x + cliprect.w) - (x + w);
+        if (d < 0)
+            w += d;
+        return w > 0;
+    }
+
+    bool clip_vline(const GS &gs, int x, int &y, int &h) {
+        const Rect &cliprect = gs.clipRect;
+
+        if (x < cliprect.x || x >= cliprect.x + cliprect.w)
+            return false;
+
+        int d = y - cliprect.y;
+        if (d < 0) {
+            h += d;
+            y = cliprect.y;
+        }
+        d = cliprect.y + cliprect.h - (y + h);
+        if (d < 0)
+            h += d;
+        return h > 0;
+    }
+
+    bool clip_blit(Rect cliprect, int &x, int &y, Rect &r) {
+        cliprect.x += r.x - x;
+        cliprect.y += r.y - y;
+        cliprect.intersect(r);
+
+        if (cliprect.w > 0 && cliprect.h > 0) {
+            x += cliprect.x - r.x;
+            y += cliprect.y - r.y;
+            r = cliprect;
+            return true;
+        }
         return false;
-
-    int d = x - cliprect.x;
-    if (d < 0) {
-        w += d;
-        x = cliprect.x;
     }
-    d = (cliprect.x + cliprect.w) - (x + w);
-    if (d < 0)
-        w += d;
-    return w > 0;
-}
 
-bool clip_vline(const GS &gs, int &x, int &y, int &h) {
-    const Rect &cliprect = gs.cliprect;
-
-    if (x < cliprect.x || x >= cliprect.x + cliprect.w)
-        return false;
-
-    int d = y - cliprect.y;
-    if (d < 0) {
-        h += d;
-        y = cliprect.y;
+    bool clip_rect(const GS &gs, Rect &r) {
+        r.intersect(gs.clipRect);
+        return r.w > 0 && r.h > 0;
     }
-    d = cliprect.y + cliprect.h - (y + h);
-    if (d < 0)
-        h += d;
-    return h > 0;
-}
 
-bool clip_blit(Rect cliprect, int &x, int &y, Rect &r) {
-    cliprect.x += r.x - x;
-    cliprect.y += r.y - y;
-    cliprect.intersect(r);
-
-    if (cliprect.w > 0 && cliprect.h > 0) {
-        x += cliprect.x - r.x;
-        y += cliprect.y - r.y;
-        r = cliprect;
-        return true;
+    inline bool clip_pixel(const GS &gs, int x, int y) {
+        return gs.clipRect.contains(x, y);
     }
-    return false;
-}
-
-bool clip_rect(const GS &gs, Rect &r) {
-    r.intersect(gs.cliprect);
-    return r.w > 0 && r.h > 0;
-}
-
-inline bool clip_pixel(const GS &gs, int x, int y) {
-    return gs.cliprect.contains(x, y);
-}
 
 }  // namespace
 
@@ -116,130 +115,132 @@ inline bool clip_pixel(const GS &gs, int x, int y) {
 /* `Xlib.h' also defines a type named `Drawable' so we have to specify
    the namespace explicitly and cannot simply use a using-declaration. */
 
-void ecl::Drawable::set_pixels(const GS &gs, int n, const int *x, const int *y) {
+void Drawable::set_pixels(const GS &gs, int n, const int *x, const int *y) {
     const int *xp = x, *yp = y;
     for (int i = n; i; --i)
         set_pixel(gs, *xp++, *yp++);
 }
 
-void ecl::Drawable::hline(const GS &gs, int x, int y, int w) {
+void Drawable::hline(const GS &gs, int x, int y, int w) {
     for (int i = w; i; --i)
         set_pixel(gs, x++, y);
 }
 
-void ecl::Drawable::vline(const GS &gs, int x, int y, int h) {
+void Drawable::vline(const GS &gs, int x, int y, int h) {
     for (int i = h; i; --i)
         set_pixel(gs, x, y++);
 }
 
-void ecl::Drawable::box(const GS &gs, int x, int y, int w, int h) {
+void Drawable::box(const GS &gs, int x, int y, int w, int h) {
     for (int i = h; i; --i)
         hline(gs, x, y--, w);
 }
 
-void ecl::Drawable::line(const GS &, int /*x1*/, int /*y1*/, int /*x2*/, int /*y2*/) {
+void Drawable::line(const GS &, int /*x1*/, int /*y1*/, int /*x2*/, int /*y2*/) {
 }
 
 namespace {
 
-/* ---------- Generic Surface implementation ---------- */
-template <class PIXELT>
-class TSurface : virtual public Surface {
-public:
-    TSurface(SDL_Surface *s = 0, bool _has_alpha = true) : Surface(s, _has_alpha) {}
+    /* ---------- Generic Surface implementation ---------- */
+    template <class PIXELT>
+    class TSurface : virtual public Surface {
+    public:
+        explicit TSurface(SDL_Surface* s = nullptr, bool _has_alpha = true)
+            : Surface(s, _has_alpha) {}
 
-    PIXELT *pixel_pointer(int x, int y) {
-        return static_cast<PIXELT *>(Surface::pixel_pointer(x, y));
-    }
-
-    /* ---------- Drawable interface ---------- */
-
-    PackedColor get_pixel(int x, int y) { return *pixel_pointer(x, y); }
-
-    void set_pixel(const GS &gs, int x, int y) {
-        if (NOCLIP(gs) || clip_pixel(gs, x, y)) {
-            *pixel_pointer(x, y) = gs.pcolor;
+        PIXELT *pixel_pointer(int x, int y) {
+            return static_cast<PIXELT *>(Surface::pixel_pointer(x, y));
         }
-    }
 
-    void set_pixels(const GS &gs, int n, const int *xlist, const int *ylist, Uint32 color) {
-        const int *xp = xlist, *yp = ylist;
-        if (NOCLIP(gs)) {
-            for (int i = n; i > 0; --i) {
-                int x = *xp++, y = *yp++;
+        /* ---------- Drawable interface ---------- */
+
+        PackedColor get_pixel(int x, int y) override { return *pixel_pointer(x, y); }
+
+        void set_pixel(const GS &gs, int x, int y) override {
+            if (NOCLIP(gs) || clip_pixel(gs, x, y)) {
                 *pixel_pointer(x, y) = gs.pcolor;
             }
-        } else {
-            for (int i = n; i > 0; --i) {
-                int x = *xp++, y = *yp++;
-                if (clip_pixel(gs, x, y))
+        }
+
+        void set_pixels(const GS &gs, int n, const int *xlist, const int *ylist, Uint32 color) {
+            const int *xp = xlist, *yp = ylist;
+            if (NOCLIP(gs)) {
+                for (int i = n; i > 0; --i) {
+                    int x = *xp++, y = *yp++;
                     *pixel_pointer(x, y) = gs.pcolor;
+                }
+            } else {
+                for (int i = n; i > 0; --i) {
+                    int x = *xp++, y = *yp++;
+                    if (clip_pixel(gs, x, y))
+                        *pixel_pointer(x, y) = gs.pcolor;
+                }
             }
         }
-    }
 
-    void hline(const GS &gs, int x, int y, int w) {
-        if (NOCLIP(gs) || clip_hline(gs, x, y, w)) {
-            PIXELT *dst = pixel_pointer(x, y);
-            for (; w > 0; --w)
-                *dst++ = gs.pcolor;
-        }
-    }
-
-    void vline(const GS &gs, int x, int y, int h) {
-        if (NOCLIP(gs) || clip_vline(gs, x, y, h)) {
-            PIXELT *dst = pixel_pointer(x, y);
-            int offset = pitch() / bypp();
-            for (; h > 0; --h) {
-                *dst = gs.pcolor;
-                dst += offset;
+        void hline(const GS &gs, int x, int y, int w) override {
+            if (NOCLIP(gs) || clip_hline(gs, x, y, w)) {
+                PIXELT *dst = pixel_pointer(x, y);
+                for (; w > 0; --w)
+                    *dst++ = gs.pcolor;
             }
         }
-    }
-};
 
-typedef TSurface<Uint8> Surface8;
-typedef TSurface<Uint16> Surface16;
-typedef TSurface<Uint32> Surface32;
+        void vline(const GS &gs, int x, int y, int h) override {
+            if (NOCLIP(gs) || clip_vline(gs, x, y, h)) {
+                PIXELT *dst = pixel_pointer(x, y);
+                int offset = pitch() / bypp();
+                for (; h > 0; --h) {
+                    *dst = gs.pcolor;
+                    dst += offset;
+                }
+            }
+        }
+    };
 
-/* ---------- Surface24 ---------- */
+    typedef TSurface<Uint8> Surface8;
+    typedef TSurface<Uint16> Surface16;
+    typedef TSurface<Uint32> Surface32;
 
-class Surface24 : virtual public Surface {
-public:
-    Surface24(SDL_Surface *s = 0, bool _has_alpha = true) : Surface(s, _has_alpha) {}
+    /* ---------- Surface24 ---------- */
 
-    void set_pixel(const GS &gs, int x, int y) {
-        if (NOCLIP(gs) || clip_pixel(gs, x, y)) {
+    class Surface24 : virtual public Surface {
+    public:
+        explicit Surface24(SDL_Surface* s = nullptr, bool _has_alpha = true)
+            : Surface(s, _has_alpha) {}
+
+        void set_pixel(const GS &gs, int x, int y) override {
+            if (NOCLIP(gs) || clip_pixel(gs, x, y)) {
+                Uint8 *p = static_cast<Uint8 *>(pixel_pointer(x, y));
+                SDL_GetRGB(gs.pcolor, m_surface->format, p, p + 1, p + 2);
+            }
+        }
+
+        Uint32 get_pixel(int x, int y) override {
             Uint8 *p = static_cast<Uint8 *>(pixel_pointer(x, y));
-            SDL_GetRGB(gs.pcolor, m_surface->format, p, p + 1, p + 2);
+            return SDL_MapRGB(m_surface->format, p[0], p[1], p[2]);
         }
-    }
-
-    Uint32 get_pixel(int x, int y) {
-        Uint8 *p = static_cast<Uint8 *>(pixel_pointer(x, y));
-        return SDL_MapRGB(m_surface->format, p[0], p[1], p[2]);
-    }
-};
+    };
 
 }  // namespace
 
 /* -------------------- Surface -------------------- */
 
 Surface::Surface(SDL_Surface *surface, bool _has_alpha) {
-    static std::string lastErrorMessage = "";
+    static std::string lastErrorMessage;
     // If you change the pixel format, remember to replace Surface32
     // for another SurfaceXY in Surface::make_surface.
-    has_alpha = _has_alpha;
-    if (has_alpha) {
+    hasAlpha = _has_alpha;
+    if (hasAlpha) {
         pixel_format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
     } else {
         pixel_format = SDL_AllocFormat(SDL_PIXELFORMAT_RGB888);
     }
-    if(!surface)
+    if (!surface)
         throw XGeneric("Error: Tried to convert null surface.");
     m_surface = SDL_ConvertSurface(surface, pixel_format, 0);
     SDL_FreeSurface(surface);
-    if(!m_surface) {
+    if (!m_surface) {
         if (lastErrorMessage.empty()) {
             // Try to throw an error via SDL, i.e. graphical output.
             // However, it might come back! To prevent us from entering
@@ -287,7 +288,7 @@ void Surface::box(const GS &gs, int x, int y, int w, int h) {
 
 void Surface::line(const GS &gs, int x1, int y1, int x2, int y2) {
     SDL_Rect s;
-    sdl::copy_rect(s, gs.cliprect);
+    sdl::copy_rect(s, gs.clipRect);
     SDL_SetClipRect(m_surface, &s);
 
     Uint8 r, g, b, a;
@@ -298,12 +299,12 @@ void Surface::line(const GS &gs, int x1, int y1, int x2, int y2) {
     else
         lineRGBA(m_surface, x1, y1, x2, y2, r, g, b, a);
 
-    SDL_SetClipRect(m_surface, 0);
+    SDL_SetClipRect(m_surface, nullptr);
 }
 
 void Surface::blit(const GS &gs, int x, int y, const Surface *s, const Rect &r_) {
     Rect r(r_);
-    if (NOCLIP(gs) || clip_blit(gs.cliprect, x, y, r)) {
+    if (NOCLIP(gs) || clip_blit(gs.clipRect, x, y, r)) {
         SDL_Rect r1;
         SDL_Rect r2;
         sdl::copy_rect(r1, r);
@@ -313,9 +314,9 @@ void Surface::blit(const GS &gs, int x, int y, const Surface *s, const Rect &r_)
     }
 }
 
-void Surface::blit(const GS &gs, int x, int y, const Surface *src) {
-    if (src != 0) {
-        blit(gs, x, y, src, src->size());
+void Surface::blit(const GS &gs, int x, int y, const Surface *surface) {
+    if (surface != nullptr) {
+        blit(gs, x, y, surface, surface->size());
     }
 }
 
@@ -326,7 +327,7 @@ void Surface::set_color_key(int r, int g, int b) {
 }
 
 void Surface::set_alpha(int a) {
-    if (has_alpha)
+    if (hasAlpha)
         SDL_SetSurfaceAlphaMod(get_surface(), a);
     else
         fprintf(stderr, "Trying to set alpha channel on a surface without alpha channel.\n");
@@ -342,8 +343,8 @@ std::unique_ptr<Surface> Surface::zoom(int w, int h) {
     return s_new;
 }
 
-std::unique_ptr<Surface> Surface::make_surface(SDL_Surface *sdls, bool _has_alpha) {
-    if(!sdls) {
+std::unique_ptr<Surface> Surface::make_surface(SDL_Surface *sdlSurface, bool _has_alpha) {
+    if (!sdlSurface) {
         fprintf(stderr, "Could not create SDL surface, error message: %s\n", SDL_GetError());
         assert(false);
     }
@@ -351,7 +352,7 @@ std::unique_ptr<Surface> Surface::make_surface(SDL_Surface *sdls, bool _has_alph
     // Note: We may use _has_alpha to choose a different bit depth. I tested
     // Surface32 vs. Surface24 and found that Surface32 is about 0.3% faster
     // on my system. -- AL
-    return std::make_unique<Surface32>(sdls, _has_alpha);
+    return std::make_unique<Surface32>(sdlSurface, _has_alpha);
 }
 
 
@@ -360,55 +361,54 @@ std::unique_ptr<Surface> Surface::make_surface(SDL_Surface *sdls, bool _has_alph
 /* `Xlib.h' also defines a type named `Screen' so we have to specify
    the namespace explicitly and cannot simply use a using-declaration. */
 
-ecl::Screen *ecl::Screen::m_instance = 0;
+Screen *Screen::m_instance = nullptr;
 
-ecl::Screen *ecl::Screen::get_instance() {
+Screen *Screen::get_instance() {
     return m_instance;
 }
 
-ecl::Screen::Screen(SDL_Window *window, int surface_w, int surface_h)
-: m_window(window),
-  m_surface(Surface::make_surface(
-      SDL_CreateRGBSurface(0, surface_w, surface_h, 32, 0xff0000, 0xff00, 0xff, 0xff000000),
-      NO_ALPHA)),
-  m_sdlsurface(m_surface->get_surface()),
-  update_all_p(false) {
+Screen::Screen(SDL_Window* window, int surface_w, int surface_h)
+    : m_window(window),
+      m_surface(Surface::make_surface(
+              SDL_CreateRGBSurface(0, surface_w, surface_h, 32, 0xff0000, 0xff00, 0xff, 0xff000000),
+              NO_ALPHA)),
+      m_sdlsurface(m_surface->get_surface()), updateAll(false) {
     assert(m_window);
     assert(m_surface);
-    assert(m_instance == 0);
+    assert(m_instance == nullptr);
     m_instance = this;
-    m_scaler = new ecl::Scaler(m_surface->get_surface(), nullptr, SDL_GetWindowSurface(m_window));
+    m_scaler = new Scaler(m_surface->get_surface(), nullptr, SDL_GetWindowSurface(m_window));
 }
 
-ecl::Screen::~Screen() {
-    m_instance = 0;
+Screen::~Screen() {
+    m_instance = nullptr;
 }
 
-void ecl::Screen::update_all() {
-    update_all_p = true;
+void Screen::update_all() {
+    updateAll = true;
 }
 
-void ecl::Screen::update_rect(const Rect &r) {
-    if (m_dirtyrects.size() < 200)
-        m_dirtyrects.push_back(r);
+void Screen::update_rect(const Rect &r) {
+    if (dirtyRects.size() < 200)
+        dirtyRects.push_back(r);
     else
         update_all();
 }
 
-void ecl::Screen::flush_updates() {
-    if (update_all_p) {
+void Screen::flush_updates() {
+    if (updateAll) {
         m_scaler->blit_scaled(m_sdlsurface, nullptr, SDL_GetWindowSurface(m_window), nullptr);
         SDL_UpdateWindowSurface(m_window);
-        update_all_p = false;
-    } else if (!m_dirtyrects.empty()) {
-        m_dirtyrects.intersect(size());
-        std::vector<SDL_Rect> rects(m_dirtyrects.size());
-        RectList::iterator j = m_dirtyrects.begin();
+        updateAll = false;
+    } else if (!dirtyRects.empty()) {
+        dirtyRects.intersect(size());
+        std::vector<SDL_Rect> rects(dirtyRects.size());
+        auto j = dirtyRects.begin();
         SDL_Surface* window = SDL_GetWindowSurface(m_window);
         for (unsigned i = 0; i < rects.size(); ++i, ++j)
         {
-            SDL_Rect srcrect;
-            sdl::copy_rect(srcrect, *j);
+            SDL_Rect srcRect;
+            sdl::copy_rect(srcRect, *j);
             int nx = (int)((double) (j->x * window_size().w) / size().w - 0.5);
             int ny = (int)((double) (j->y * window_size().h) / size().h - 0.5);
             int nw = (int)((double) (j->w * window_size().w) / size().w + 3.0);
@@ -417,40 +417,40 @@ void ecl::Screen::flush_updates() {
             ny = Clamp(ny, 0, window->h);
             nw = Clamp(nw, 0, window->w - nx);
             nh = Clamp(nh, 0, window->h - ny);
-            ecl::Rect scaledRect = Rect(nx, ny, nw, nh);
+            Rect scaledRect = Rect(nx, ny, nw, nh);
             sdl::copy_rect(rects[i], scaledRect);
-            m_scaler->blit_scaled(m_sdlsurface, &srcrect, window, &rects[i]);
+            m_scaler->blit_scaled(m_sdlsurface, &srcRect, window, &rects[i]);
         }
         SDL_UpdateWindowSurfaceRects(m_window, &rects[0], rects.size());
     }
-    m_dirtyrects.clear();
+    dirtyRects.clear();
 }
 
-void ecl::Screen::reinitScaler() {
-    m_scaler->precalculate(m_surface->get_surface(), NULL, SDL_GetWindowSurface(m_window));
+void Screen::reinitScaler() {
+    m_scaler->precalculate(m_surface->get_surface(), nullptr, SDL_GetWindowSurface(m_window));
 }
 
-Rect ecl::Screen::size() const {
+Rect Screen::size() const {
     return Rect(0, 0, width(), height());
 }
 
-int ecl::Screen::width() const {
+int Screen::width() const {
     return m_sdlsurface->w;
 }
 
-int ecl::Screen::height() const {
+int Screen::height() const {
     return m_sdlsurface->h;
 }
 
-Rect ecl::Screen::window_size() const {
+Rect Screen::window_size() const {
     return Rect(0, 0, window_width(), window_height());
 }
 
-int ecl::Screen::window_width() const {
+int Screen::window_width() const {
     return SDL_GetWindowSurface(m_window)->w;
 }
 
-int ecl::Screen::window_height() const {
+int Screen::window_height() const {
     return SDL_GetWindowSurface(m_window)->h;
 }
 
@@ -476,8 +476,8 @@ void Scaler::precalculate(SDL_Surface* src, SDL_Rect* srccrop, SDL_Surface* dst)
     // Free prior allocations.
     free(sax);
     free(say);
-    sax = NULL;
-    say = NULL;
+    sax = nullptr;
+    say = nullptr;
 
     // Change mode if src/dst are not 32bit depth.
     if ((src->format->BytesPerPixel != 4) || (dst->format->BytesPerPixel != 4)) {
@@ -486,22 +486,20 @@ void Scaler::precalculate(SDL_Surface* src, SDL_Rect* srccrop, SDL_Surface* dst)
     }
 
     // Allocate memory for row/column increments
-    if ((sax = (int *) malloc((dst->w + 1) * sizeof(Uint32))) == NULL) {
+    if ((sax = (int *) malloc((dst->w + 1) * sizeof(Uint32))) == nullptr) {
         fprintf(stderr, "ecl_video::BlitScaled: Could not allocate memory for row/column increments.\n");
-        sax = NULL;
+        sax = nullptr;
         return;
     }
-    if ((say = (int *) malloc((dst->h + 1) * sizeof(Uint32))) == NULL) {
+    if ((say = (int *) malloc((dst->h + 1) * sizeof(Uint32))) == nullptr) {
         fprintf(stderr, "ecl_video::BlitScaled: Could not allocate memory for row/column increments.\n");
         free(sax);
-        sax = NULL;
-        say = NULL;
+        sax = nullptr;
+        say = nullptr;
         return;
     }
 
-    int x, y, sx, sy, ssx, ssy, csx, csy;
     int cropx, cropy, cropw, croph;
-    int *csax, *csay;
 
     if (srccrop) {
         cropx = Clamp(srccrop->x, 0, src->w);
@@ -520,17 +518,17 @@ void Scaler::precalculate(SDL_Surface* src, SDL_Rect* srccrop, SDL_Surface* dst)
     spixelh = (croph - 1);
     spixelgap = src->pitch/4;
     dgap = dst->pitch - dst->w * 4;
-    sx = (int) (65536.0 * (float) spixelw / (float) (dst->w - 1));
-    sy = (int) (65536.0 * (float) spixelh / (float) (dst->h - 1));
+    int sx = (int)(65536.0 * (float)spixelw / (float)(dst->w - 1));
+    int sy = (int)(65536.0 * (float)spixelh / (float)(dst->h - 1));
 
     // Maximum scaled source size
-    ssx = (cropw << 16) - 1;
-    ssy = (croph << 16) - 1;
+    int ssx = (cropw << 16) - 1;
+    int ssy = (croph << 16) - 1;
 
     // Precalculate horizontal row increments
-    csx = cropx;
-    csax = sax;
-    for (x = 0; x <= dst->w; x++) {
+    int csx = cropx;
+    int* csax = sax;
+    for (int x = 0; x <= dst->w; x++) {
         *csax = csx;
         csax++;
         csx += sx;
@@ -540,9 +538,9 @@ void Scaler::precalculate(SDL_Surface* src, SDL_Rect* srccrop, SDL_Surface* dst)
     }
 
     // Precalculate vertical row increments
-    csy = cropy * spixelgap;
-    csay = say;
-    for (y = 0; y <= dst->h; y++) {
+    int csy = cropy * spixelgap;
+    int* csay = say;
+    for (int y = 0; y <= dst->h; y++) {
         *csay = csy;
         csay++;
         csy += sy;
@@ -552,9 +550,10 @@ void Scaler::precalculate(SDL_Surface* src, SDL_Rect* srccrop, SDL_Surface* dst)
     }
 }
 
-void Scaler::blit_scaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect) {
+void Scaler::blit_scaled(
+        SDL_Surface* src, const SDL_Rect* srcRect, SDL_Surface* dst, SDL_Rect* dstRect) {
     if (mode == SC_SDL) {
-        SDL_BlitScaled(src, srcrect, dst, dstrect);
+        SDL_BlitScaled(src, srcRect, dst, dstRect);
         return;
     }
 
@@ -567,21 +566,20 @@ void Scaler::blit_scaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, 
         Uint8 a;
     } tColorRGBA;
 
-    int dstrx, dstry, dstrw, dstrh, x, y, ex, ey, cx, cy, t1, t2;
-    int *csax, *csay, *salast;
-    int sstep, sstepx, sstepy;
-    tColorRGBA *c00, *c01, *c10, *c11, *sp, *csp, *dp;
+    int dstrx, dstry, dstrw, dstrh;
+    int* salast;
+    int sstep;
 
-    if ((sax == NULL) || (say == NULL)) {
+    if ((sax == nullptr) || (say == nullptr)) {
         fprintf(stderr, "ecl_video::BlitScaled: Precalculations missing. (Error allocating memory?)\n");
         return;
     }
 
-    if (dstrect) {
-        dstrx = Clamp(dstrect->x, 0, dst->w);
-        dstry = Clamp(dstrect->y, 0, dst->h);
-        dstrw = Clamp(dstrect->w, 0, dst->w - dstrx);
-        dstrh = Clamp(dstrect->h, 0, dst->h - dstry);
+    if (dstRect) {
+        dstrx = Clamp(dstRect->x, 0, dst->w);
+        dstry = Clamp(dstRect->y, 0, dst->h);
+        dstrw = Clamp(dstRect->w, 0, dst->w - dstrx);
+        dstrh = Clamp(dstRect->h, 0, dst->h - dstry);
     } else {
         dstrx = 0;
         dstry = 0;
@@ -589,43 +587,43 @@ void Scaler::blit_scaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, 
         dstrh = dst->h;
     }
 
-    sp = (tColorRGBA *) src->pixels;
-    dp = (tColorRGBA *) dst->pixels;
+    tColorRGBA* sp = (tColorRGBA*)src->pixels;
+    tColorRGBA* dp = (tColorRGBA*)dst->pixels;
 
     // Advance source pointer y to the beginning of the first line to copy
-    csay = say + dstry;
+    int* csay = say + dstry;
     sp += ((*csay >> 16) - (*say >> 16)) * spixelgap;
     // Advance destination pointer to the beginning of the first line to copy
     dp = (tColorRGBA *) ((Uint8 *) (dp + dst->w * dstry) + dgap * dstry);
-    for (y = dstry; y < dstry + dstrh; y++) {
-        csp = sp;
+    for (int y = dstry; y < dstry + dstrh; y++) {
+        tColorRGBA* csp = sp;
         // Advance source pointer x
-        csax = sax + dstrx;
+        int* csax = sax + dstrx;
         sp += (*csax >> 16) - (*sax >> 16);
         // Advance destination pointer to first position-to-copy in this row
         dp += dstrx;
-        for (x = dstrx; x < dstrx + dstrw; x++) {
-            // Setup color source pointers
-            ex = (*csax & 0xffff);
-            ey = (*csay & 0xffff);
-            cx = (*csax >> 16);
-            cy = (*csay >> 16);
-            sstepx = cx < spixelw;
-            sstepy = cy < spixelh;
-            c00 = sp;
-            c01 = sp;
-            c10 = sp;
+        for (int x = dstrx; x < dstrx + dstrw; x++) {
+            // Set up color source pointers
+            int ex = (*csax & 0xffff);
+            int ey = (*csay & 0xffff);
+            int cx = (*csax >> 16);
+            int cy = (*csay >> 16);
+            int sstepx = cx < spixelw;
+            int sstepy = cy < spixelh;
+            tColorRGBA* c00 = sp;
+            tColorRGBA* c01 = sp;
+            tColorRGBA* c10 = sp;
             if (sstepy)
                 c10 += spixelgap;
-            c11 = c10;
+            tColorRGBA* c11 = c10;
             if (sstepx) {
                 c01++;
                 c11++;
             }
 
             // Draw and interpolate colors
-            t1 = ((((c01->r - c00->r) * ex) >> 16) + c00->r) & 0xff;
-            t2 = ((((c11->r - c10->r) * ex) >> 16) + c10->r) & 0xff;
+            int t1 = ((((c01->r - c00->r) * ex) >> 16) + c00->r) & 0xff;
+            int t2 = ((((c11->r - c10->r) * ex) >> 16) + c10->r) & 0xff;
             dp->r = (((t2 - t1) * ey) >> 16) + t1;
             t1 = ((((c01->g - c00->g) * ex) >> 16) + c00->g) & 0xff;
             t2 = ((((c11->g - c10->g) * ex) >> 16) + c10->g) & 0xff;
@@ -665,18 +663,18 @@ void Scaler::blit_scaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, 
 
 /* -------------------- Functions -------------------- */
 
-std::unique_ptr<Surface> ecl::Duplicate(const Surface *s) {
+std::unique_ptr<Surface> Duplicate(const Surface *s) {
     assert(s);
     SDL_Surface *sdls = s->get_surface();
     SDL_Surface *copy = SDL_ConvertSurface(sdls, sdls->format, sdls->flags);
     return std::unique_ptr<Surface>(Surface::make_surface(copy));
 }
 
-void ecl::SavePNG(const ecl::Surface *s, const std::string &filename) {
+void SavePNG(const Surface *s, const std::string &filename) {
     IMG_SavePNG(s->get_surface(), filename.c_str());
 }
 
-void ecl::TintRect(Surface *s, Rect rect, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void TintRect(Surface *s, Rect rect, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
     std::unique_ptr<Surface> copy(Grab(s, rect));
     if (copy.get()) {
         copy->set_alpha(a);
@@ -688,15 +686,15 @@ void ecl::TintRect(Surface *s, Rect rect, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
     }
 }
 
-static SDL_Surface *CropSurface(SDL_Surface *surface, SDL_Rect rect, SDL_PixelFormat *format,
-                                Uint32 flags) {
-    assert(format->palette == NULL);
+static SDL_Surface* CropSurface(
+        SDL_Surface* surface, SDL_Rect rect, const SDL_PixelFormat* format, Uint32 flags) {
+    assert(format->palette == nullptr);
 
     SDL_Surface *cropped =
         SDL_CreateRGBSurface(flags, rect.w, rect.h, format->BitsPerPixel, format->Rmask,
                              format->Gmask, format->Bmask, format->Amask);
-    if (cropped == NULL)
-        return NULL;
+    if (cropped == nullptr)
+        return nullptr;
 
     SDL_Rect bounds;
     bounds.x = 0;
@@ -708,7 +706,7 @@ static SDL_Surface *CropSurface(SDL_Surface *surface, SDL_Rect rect, SDL_PixelFo
     return cropped;
 }
 
-std::unique_ptr<Surface> ecl::Grab(const Surface *s, Rect &r) {
+std::unique_ptr<Surface> Grab(const Surface *s, Rect &r) {
     if (s == nullptr)
         return nullptr;
 
@@ -726,32 +724,34 @@ std::unique_ptr<Surface> ecl::Grab(const Surface *s, Rect &r) {
 // LoadImage is already defined as a macro in some Windows header file
 #undef LoadImage
 
-std::unique_ptr<Surface> ecl::LoadImage(const char *filename) {
+std::unique_ptr<Surface> LoadImage(const char *filename) {
     return Surface::make_surface(IMG_Load(filename));
 }
 
-std::unique_ptr<Surface> ecl::LoadImage(SDL_RWops *src, int freesrc) {
+std::unique_ptr<Surface> LoadImage(SDL_RWops *src, int freesrc) {
     return Surface::make_surface(IMG_Load_RW(src, freesrc));
 }
 
-std::unique_ptr<Surface> ecl::MakeSurface(int w, int h) {
+std::unique_ptr<Surface> MakeSurface(int w, int h) {
     SDL_Surface *surface =
         SDL_CreateRGBSurface(0, w, h, 32, 0xff0000, 0xff00, 0xff, 0xff000000);
-    if (surface == 0)
-        return 0;
+    if (surface == nullptr)
+        return nullptr;
     return Surface::make_surface(surface);
 }
 
-std::unique_ptr<Surface> ecl::MakeSurface(void *data, int w, int h, int bipp, int pitch,
+std::unique_ptr<Surface> MakeSurface(void *data, int w, int h, int bipp, int pitch,
                                           const RGBA_Mask &mask) {
     SDL_Surface *surface =
         SDL_CreateRGBSurfaceFrom(data, w, h, bipp, pitch, mask.r, mask.g, mask.b, mask.a);
-    if (surface == 0)
-        return 0;
+    if (surface == nullptr)
+        return nullptr;
     return Surface::make_surface(surface);
 }
 
-void ecl::BlitScaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect, ScalerMode mode) {
+void BlitScaled(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect, ScalerMode mode) {
     Scaler scaler(src, srcrect, dst, mode);
     scaler.blit_scaled(src, srcrect, dst, dstrect);
 }
+
+} // namespace ecl

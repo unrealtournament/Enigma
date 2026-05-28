@@ -23,16 +23,15 @@
 #include <cstdio>
 #include <cassert>
 
-using namespace std;
 using namespace ecl;
 
-string ecl::concat_paths(const string& path, const string& filename) {
+std::string ecl::concat_paths(const std::string& path, const std::string& filename) {
     // concatenate path and filename (or relative subpath)
     return path.substr(0, path.find_last_not_of(PathSeparator) + 1) + PathSeparator +
            filename.substr(filename.find_first_not_of(PathSeparator));
 }
 
-bool ecl::split_path(const string& path, string* dir_part, string* filename_part) {
+bool ecl::split_path(const std::string& path, std::string* dir_part, std::string* filename_part) {
     size_t lslash = path.find_last_of(PathSeparators);
     if (
 #ifdef __MINGW32__
@@ -47,7 +46,7 @@ bool ecl::split_path(const string& path, string* dir_part, string* filename_part
     if (lslash == path.length() - 1)  // trailing slash
         return split_path(path.substr(0, lslash), dir_part, filename_part);
 
-    if (lslash == string::npos)
+    if (lslash == std::string::npos)
         return false;
 
     size_t lnslash = path.find_last_not_of(PathSeparators, lslash);
@@ -65,7 +64,6 @@ std::string ecl::strf(const char* format, ...) {
     static char* buffer = new char[buf_size];
 
     va_list argPtr;
-    size_t length;
 
     while (true) {
         if (!buffer) {
@@ -74,7 +72,7 @@ std::string ecl::strf(const char* format, ...) {
         }
 
         va_start(argPtr, format);
-        length = vsnprintf(buffer, buf_size, format, argPtr);
+        size_t length = vsnprintf(buffer, buf_size, format, argPtr);
         va_end(argPtr);
 
         if (length < buf_size - 1)
@@ -94,9 +92,9 @@ std::string ecl::timeformat(int duration) {
     int minutes = (duration - 3600 * hours) / 60;
     int seconds = duration % 60;
     if (hours > 0)
-        return ecl::strf("%d:%02d'%02d\"", hours, minutes, seconds);
+        return strf("%d:%02d'%02d\"", hours, minutes, seconds);
     else
-        return ecl::strf("%d'%02d\"", minutes, seconds);
+        return strf("%d'%02d\"", minutes, seconds);
 }
 
 // string_match accepts simple wildcards
@@ -121,7 +119,7 @@ bool ecl::string_match(const char* str, const char* templ) {
             if (!t)
                 return true;  // '*' at EOS
 
-            while (1) {
+            while (true) {
                 if (!s)
                     break;
                 if (s == t) {
@@ -135,12 +133,12 @@ bool ecl::string_match(const char* str, const char* templ) {
     return false;
 }
 
-bool ecl::string_match(std::string str, std::string templ) {
+bool ecl::string_match(const std::string& str, const std::string& templ) {
     return string_match(str.c_str(), templ.c_str());
 }
 
 std::string ecl::uint32_to_string(uint32_t x) {
-    std::string result("");
+    std::string result;
     result += (unsigned char)((x)       & 0x000000FF);
     result += (unsigned char)((x >>  8) & 0x000000FF);
     result += (unsigned char)((x >> 16) & 0x000000FF);
@@ -148,15 +146,19 @@ std::string ecl::uint32_to_string(uint32_t x) {
     return result;
 }
 
-uint32_t ecl::string_to_uint32(std::string s) {
+uint32_t ecl::string_to_uint32(const std::string& s) {
     uint32_t result = 0;
-    if(s.length() == 0) return result;
+    if (s.empty())
+        return result;
     result += (uint32_t)(uint8_t)(s[0]);
-    if(s.length() == 1) return result;
+    if (s.length() == 1)
+        return result;
     result += (uint32_t)(uint8_t)(s[1]) * 0x00000100;
-    if(s.length() == 2) return result;
+    if (s.length() == 2)
+        return result;
     result += (uint32_t)(uint8_t)(s[2]) * 0x00010000;
-    if(s.length() == 3) return result;
+    if (s.length() == 3)
+        return result;
     result += (uint32_t)(uint8_t)(s[3]) * 0x01000000;
     return result;
 }
