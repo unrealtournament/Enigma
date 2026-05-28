@@ -18,43 +18,41 @@
  */
 
 #include "lev/ScoreManager.hh"
-#include "enigma.hh"
-#include "errors.hh"
+
 #include "DOMErrorReporter.hh"
 #include "DOMSchemaResolver.hh"
+#include "ecl_system.hh"
+#include "ecl_util.hh"
+#include "enigma.hh"
+#include "errors.hh"
+#include "file.hh"
+#include "gui/ErrorMenu.hh"
 #include "LocalToXML.hh"
+#include "main.hh"
+#include "nls.hh"
+#include "options.hh"
 #include "Utf8ToXML.hh"
 #include "utilXML.hh"
 #include "XMLtoLocal.hh"
 #include "XMLtoUtf8.hh"
-#include "ecl_util.hh"
-#include "ecl_system.hh"
-#include "gui/ErrorMenu.hh"
-#include "nls.hh"
-#include "file.hh"
 
-#include "main.hh"
-#include "options.hh"
-
-#include <cmath>
-#include <ctime>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <xercesc/dom/DOM.hpp>
+#include <xercesc/framework/MemBufInputSource.hpp>
+#include <xercesc/framework/Wrapper4InputSource.hpp>
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xercesc/util/XercesVersion.hpp>
 #include <xercesc/util/XMLDouble.hpp>
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/util/XMLUniDefs.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
-#include <xercesc/util/XercesVersion.hpp>
-#include <xercesc/framework/MemBufInputSource.hpp>
-#include <xercesc/framework/Wrapper4InputSource.hpp>
 #include <zlib.h>
 
-
 using namespace std;
-using namespace enigma;
-XERCES_CPP_NAMESPACE_USE 
+XERCES_CPP_NAMESPACE_USE
+
+namespace enigma::lev {
 
 namespace {
     class ScoreDomSerFilter : public DOMLSSerializerFilter {
@@ -78,9 +76,8 @@ namespace {
         }
         return DOMNodeFilter::FILTER_ACCEPT;
     }
-}
+} // namespace
 
-namespace enigma { namespace lev {
     ScoreManager *ScoreManager::theSingleton = 0;
     unsigned ScoreManager::ctab[256];
     unsigned ScoreManager::pol = 0x1021;
@@ -286,8 +283,6 @@ namespace enigma { namespace lev {
             throw XFrontend("Cannot load application score file: " + scorePath +
                     "\nError: " + errMessage);
         }
-        
-        
     }
 
     ScoreManager::~ScoreManager() {
@@ -313,7 +308,7 @@ namespace enigma { namespace lev {
         hasValidUserId = true;
     }
     
-    std::string ScoreManager::sec(std::string target) {
+    std::string ScoreManager::sec(const std::string& target) {
         int len = target.size();
         unsigned r = 0;
         const char *p = target.c_str();
@@ -1239,4 +1234,4 @@ namespace enigma { namespace lev {
         }
         return result;
     }
-}} // namespace enigma::lev
+} // namespace enigma::lev

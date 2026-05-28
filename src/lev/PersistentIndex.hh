@@ -21,27 +21,26 @@
 
 #include "lev/Index.hh"
 
-#include <string>
 #include <istream>
 #include <memory>
+#include <string>
 #include <xercesc/dom/DOMDocument.hpp>
-
 
 #define INDEX_STD_FILENAME  "index.xml"
 
-namespace enigma { namespace lev {    
+namespace enigma::lev {
     
     struct Variation {
         // Constructor
         Variation(controlType ctrlValue = force, scoreUnitType unitValue = duration,
-            std::string targetValue = "time");
+                const std::string& targetValue = "time");
         
         controlType     ctrl;
         scoreUnitType   unit;
         std::string     target;
         std::map<std::string, std::string> extensions;
         
-        bool operator == (const Variation& otherVar);
+        bool operator == (const Variation& otherVar) const;
     };
 
 
@@ -62,21 +61,21 @@ namespace enigma { namespace lev {
          * 
          * thePackPath " " for a new not yet defined path
          */
-        PersistentIndex(std::string thePackPath, bool systemOnly, bool userOwned = true, bool isAuto = false,
+        PersistentIndex(const std::string& thePackPath, bool systemOnly, bool userOwned = true, bool isAuto = false,
                 double defaultLocation = INDEX_DEFAULT_PACK_LOCATION,
-                std::string anIndexName = "",
-                std::string theIndexFilename = INDEX_STD_FILENAME, 
-                std::string aDescription = "",
-                std::string aGroupName = INDEX_DEFAULT_GROUP);
+                const std::string& anIndexName = "",
+                const std::string& theIndexFilename = INDEX_STD_FILENAME,
+                const std::string& aDescription = "",
+                const std::string& aGroupName = INDEX_DEFAULT_GROUP);
         /**
          * Legacy 0.92 constructor - called once to convert the index to XML.
          * When the index has been stored as XML this constructor will not be
          * called again.
          */
-        PersistentIndex(std::stringstream &legacyIndex, std::string thePackPath, bool isZip = false,
-                std::string anIndexName = "",
+        PersistentIndex(std::stringstream &legacyIndex, const std::string& thePackPath, bool isZip = false,
+                const std::string& anIndexName = "",
                 std::string theIndexFilename = INDEX_STD_FILENAME,
-                std::string aDescription = "");
+                const std::string& aDescription = "");
         ~PersistentIndex();
         
         /**
@@ -87,25 +86,25 @@ namespace enigma { namespace lev {
         std::string getPackPath();
         bool setName(std::string newName, bool isSokoball);
         std::string getOwner();
-        void setOwner(std::string newOwner);
-        int getRelease();
+        void setOwner(const std::string& newOwner);
+        int getRelease() const;
         void setRelease(int newRelease);
-        int getRevision();
+        int getRevision() const;
         void setRevision(int newRevision);
-        double getCompatibility();
+        double getCompatibility() const;
         void setCompatibility(double newCompatibility);
-        bool isUserEditable();
-        bool isUpdatable();
-        bool isCross();
+        bool isUserEditable() const;
+        bool isUpdatable() const;
+        bool isCross() const;
         void markNewAsCross();
         virtual void clear();
         virtual void appendProxy(Proxy * newLevel, controlType varCtrl = force,
                 scoreUnitType varUnit = duration, std::string varTarget = "time",
                 std::map<std::string, std::string> varExtensions = nullExtensions);
         void insertProxy(int pos, Proxy * newLevel, bool allowDuplicates = true,
-                controlType varCtrl = force, scoreUnitType varUnit = duration, 
-                std::string varTarget = "time",
-                std::map<std::string, std::string> varExtensions = nullExtensions);
+                controlType varCtrl = force, scoreUnitType varUnit = duration,
+                const std::string& varTarget = "time",
+                const std::map<std::string, std::string>& varExtensions = nullExtensions);
         Variation getVariation(int pos);
         void erase(int pos);
         void exchange(int pos1, int pos2);
@@ -134,11 +133,13 @@ namespace enigma { namespace lev {
         xercesc::DOMElement *levelsElem;
         
 //        static void checkCandidate(PersistentIndex * candidate);
-        static void checkCandidate(std::string thePackPath, bool systemOnly, bool userOwned = true, 
-                bool isAuto = false, bool isSystemCross = false, bool isUserCross = false, 
-                double defaultLocation = INDEX_DEFAULT_PACK_LOCATION, std::string anIndexName = "",
-                std::string theIndexFilename = INDEX_STD_FILENAME, std::string aDescription = "",
-                std::string aGroupName = INDEX_DEFAULT_GROUP);
+        static void checkCandidate(const std::string& thePackPath, bool systemOnly,
+                bool userOwned = true, bool isAuto = false, bool isSystemCross = false,
+                bool isUserCross = false, double defaultLocation = INDEX_DEFAULT_PACK_LOCATION,
+                const std::string& anIndexName = "",
+                std::string theIndexFilename = INDEX_STD_FILENAME,
+                const std::string& aDescription = "",
+                const std::string& aGroupName = INDEX_DEFAULT_GROUP);
         // legacy 0.92
         void parsePar(const std::string& par, int& par_value, std::string& par_text);
     };
@@ -146,5 +147,5 @@ namespace enigma { namespace lev {
     void AddLevelPack (const char *init_file, const char *name);
     void AddZippedLevelPack (const char *zipfile);
 
-}} // namespace enigma::lev
+} // namespace enigma::lev
 #endif

@@ -19,17 +19,17 @@
 #ifndef SCOREMGR_HH_INCLUDED
 #define SCOREMGR_HH_INCLUDED
 
-#include "PropertyManager.hh"
+#include "lev/Index.hh"
 #include "lev/Proxy.hh"
 #include "lev/RatingManager.hh"
-#include "lev/Index.hh"
 #include "main.hh"
+#include "PropertyManager.hh"
 
-#include <string>
 #include <map>
+#include <string>
 #include <xercesc/dom/DOMElement.hpp>
 
-namespace enigma { namespace lev {
+namespace enigma::lev {
     // Constants
     enum { 
         SCORE_MAX1 = 99*60+59,
@@ -129,24 +129,24 @@ namespace enigma { namespace lev {
         static unsigned ctab[256];
         static unsigned pol;
         RatingManager *ratingMgr;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *levelsElem;
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMNodeList * levelList;
-        std::map<std::string, XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *> allLevelScores; // all scoreversions for each level
-        std::map<std::string, XERCES_CPP_NAMESPACE_QUALIFIER DOMElement *> curLevelScores; // most current scoreversion for each level
+        xercesc::DOMElement *levelsElem;
+        xercesc::DOMNodeList * levelList;
+        std::map<std::string, xercesc::DOMElement *> allLevelScores; // all scoreversions for each level
+        std::map<std::string, xercesc::DOMElement *> curLevelScores; // most current scoreversion for each level
         std::string userId;
         bool hasValidUserId;
         bool didUpgrade;
         bool isModified;
         
         void finishUserId(unsigned id3);
-        std::string sec(std::string target);
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement * getLevel(lev::Proxy *levelProxy);
-        XERCES_CPP_NAMESPACE_QUALIFIER DOMElement * getCreateLevel(lev::Proxy *levelProxy);
+        std::string sec(const std::string& target);
+        xercesc::DOMElement * getLevel(lev::Proxy *levelProxy);
+        xercesc::DOMElement * getCreateLevel(lev::Proxy *levelProxy);
         
         unsigned idFromLegacyScore();
         std::string upgradeSum();
         bool upgradeLegacy();
     };
-}} // namespace enigma::lev
+} // namespace enigma::lev
 
 #endif

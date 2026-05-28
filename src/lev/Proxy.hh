@@ -28,7 +28,7 @@
 #include <vector>
 #include <xercesc/dom/DOMDocument.hpp>
 
-namespace enigma { namespace lev {
+namespace enigma::lev {
     enum controlType {force, balance, key, other};
     enum scoreUnitType {duration, number};
     enum scoreTargetType {time, pushes, moves, callback};
@@ -213,6 +213,6 @@ namespace enigma { namespace lev {
         bool updateReleaseVersion();
         int scoreText2Int(std::string text);
     };
-}} // namespace enigma::lev
+} // namespace enigma::lev
 #endif
 
