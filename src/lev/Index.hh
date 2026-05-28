@@ -15,7 +15,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
- 
+
 #ifndef LEV_INDEX_HH_INCLUDED
 #define LEV_INDEX_HH_INCLUDED
 
@@ -31,162 +31,156 @@
 #define INDEX_ALL_PACKS "All Packs"
 #define INDEX_TUTORIALS_GROUP "Tutorials"
 
-#define INDEX_STARTUP_PACK_NAME   "Startup Levels"
-#define INDEX_AUTO_PACK_NAME      "Auto Folder"
-#define INDEX_HISTORY_PACK_NAME   "History"
-#define INDEX_SEARCH_PACK_NAME    "Search Result"
+#define INDEX_STARTUP_PACK_NAME "Startup Levels"
+#define INDEX_AUTO_PACK_NAME "Auto Folder"
+#define INDEX_HISTORY_PACK_NAME "History"
+#define INDEX_SEARCH_PACK_NAME "Search Result"
 #define INDEX_CLIPBOARD_PACK_NAME "Clipboard"
 
-#define INDEX_STARTUP_PACK_DESCRIPTION   "Levels Enigma has been invoked with."
-#define INDEX_AUTO_PACK_DESCRIPTION      "Levels in user's own level folder."
-#define INDEX_HISTORY_PACK_DESCRIPTION   "Recently played levels."
-#define INDEX_SEARCH_PACK_DESCRIPTION    ""
+#define INDEX_STARTUP_PACK_DESCRIPTION "Levels Enigma has been invoked with."
+#define INDEX_AUTO_PACK_DESCRIPTION "Levels in user's own level folder."
+#define INDEX_HISTORY_PACK_DESCRIPTION "Recently played levels."
+#define INDEX_SEARCH_PACK_DESCRIPTION ""
 #define INDEX_CLIPBOARD_PACK_DESCRIPTION ""
 
-#define INDEX_STARTUP_PACK_LOCATION   5100
-#define INDEX_AUTO_PACK_LOCATION      5200
-#define INDEX_HISTORY_PACK_LOCATION   5300 
-#define INDEX_SEARCH_PACK_LOCATION    5400
+#define INDEX_STARTUP_PACK_LOCATION 5100
+#define INDEX_AUTO_PACK_LOCATION 5200
+#define INDEX_HISTORY_PACK_LOCATION 5300
+#define INDEX_SEARCH_PACK_LOCATION 5400
 #define INDEX_CLIPBOARD_PACK_LOCATION 5500
 
-#define INDEX_USER_PACK_LOCATION     50000
-#define INDEX_DEFAULT_PACK_LOCATION  69000
+#define INDEX_USER_PACK_LOCATION 50000
+#define INDEX_DEFAULT_PACK_LOCATION 69000
 
 #define INDEX_GROUP_COLUMN_UNKNOWN -1000
 
-
-
 namespace enigma::lev {
-    enum LevelAdvanceMode {
-        ADVANCE_NEXT_MODE,       // honor NextLevelMode
-        ADVANCE_STRICTLY,        // move to the next level in index
-        ADVANCE_UNSOLVED         // move to next not yet solved level
-    };
+enum LevelAdvanceMode {
+    ADVANCE_NEXT_MODE, // honor NextLevelMode
+    ADVANCE_STRICTLY,  // move to the next level in index
+    ADVANCE_UNSOLVED   // move to next not yet solved level
+};
 
-    enum NextLevelMode {
-        NEXT_LEVEL_STRICTLY,    // move to the next level in index
-        NEXT_LEVEL_UNSOLVED,    // move to next not yet solved level
-        NEXT_LEVEL_NOT_BEST,    // move to next level where player is not best score holder
-        NEXT_LEVEL_OVER_PAR     // move to next level with a score over PAR 
-    };
-    
+enum NextLevelMode {
+    NEXT_LEVEL_STRICTLY, // move to the next level in index
+    NEXT_LEVEL_UNSOLVED, // move to next not yet solved level
+    NEXT_LEVEL_NOT_BEST, // move to next level where player is not best score holder
+    NEXT_LEVEL_OVER_PAR  // move to next level with a score over PAR
+};
+
+class Index {
+public:
+    static void initGroups();
+    static void shutdown();
+    static void registerIndex(Index* anIndex);
+    static Index* findIndex(const std::string& anIndexName);
+    static Index* getCurrentIndex();
+    static bool setCurrentIndex(const std::string& anIndexName);
+    static Index* nextGroupIndex();
+    static Index* previousGroupIndex();
+    static Proxy* getCurrentProxy();
+    static std::string getCurrentGroup();
+    static void setCurrentGroup(const std::string& groupName);
+    static std::vector<std::string> getGroupNames();
+    static std::vector<Index*>* getGroup(const std::string& groupName);
+    static std::string getGroupSelectedIndex(const std::string& groupName);
+    static int getGroupSelectedColumn(const std::string& groupName);
+    static void setGroupSelectedIndex(const std::string& groupName, const std::string& indexName);
+    static void setGroupSelectedColumn(const std::string& groupName, int column);
+    static void deleteGroup(const std::string& groupName);
+    static void moveGroup(const std::string& groupName, int newPos);
+    static void renameGroup(const std::string& oldName, const std::string& newName);
+    static void insertGroup(const std::string& groupName, int newPos);
+    static void deleteEmptyGroups();
+    static double getNextUserLocation();
+
     /**
-     * 
+     * Convention: method names *Level() can take int pos or Proxy as arg.
      */
-    class Index  {
-    public:
-        static void initGroups();
-        static void shutdown();
-        static void registerIndex(Index *anIndex);
-        static Index * findIndex(const std::string& anIndexName);
-        static Index * getCurrentIndex();
-        static bool setCurrentIndex(const std::string& anIndexName);
-        static Index * nextGroupIndex();
-        static Index * previousGroupIndex();
-        static Proxy * getCurrentProxy();
-        static std::string getCurrentGroup();
-        static void setCurrentGroup(const std::string& groupName);
-        static std::vector<std::string> getGroupNames();
-        static std::vector<Index *> * getGroup(const std::string& groupName);
-        static std::string getGroupSelectedIndex(const std::string& groupName);
-        static int getGroupSelectedColumn(const std::string& groupName);
-        static void setGroupSelectedIndex(const std::string& groupName, const std::string& indexName);
-        static void setGroupSelectedColumn(const std::string& groupName, int column);
-        static void deleteGroup(const std::string& groupName);
-        static void moveGroup(const std::string& groupName, int newPos);
-        static void renameGroup(const std::string& oldName, const std::string& newName);
-        static void insertGroup(const std::string& groupName, int newPos);
-        static void deleteEmptyGroups();
-        static double getNextUserLocation();
-        
-        /**
-         * Convention: method names *Level() can take int pos or Proxy as arg.
-         */
-        Index(const std::string& anIndexName = "Unnamed Pack", const std::string& aDescription = "",
-                const std::string& aGroupName = INDEX_DEFAULT_GROUP,
-                double defaultLocation = INDEX_DEFAULT_PACK_LOCATION);
-        virtual ~Index();
-        
-        std::string getName();
-        std::string getGroupName();
-        std::string getDefaultGroupName();
-        std::string getDescription();
-        double getLocation() const;
-        double getDefaultLocation() const;
-        void setDefaultLocation(double defLocation);
-        void moveToGroup(std::string groupName);
-        void locateBehind(const std::string& indexName);
-        void renameIndex(const std::string& newName);
-        virtual bool isSource(Proxy * aProxy);
+    Index(const std::string& anIndexName = "Unnamed Pack", const std::string& aDescription = "",
+            const std::string& aGroupName = INDEX_DEFAULT_GROUP,
+            double defaultLocation = INDEX_DEFAULT_PACK_LOCATION);
+    virtual ~Index();
 
-        int getCurrentPosition() const; // 0 .. size-1
-        int getCurrentLevel() const; // 1 .. size
-        Proxy * getCurrent() const;
-        void setCurrentPosition(int newPos);
-        int getScreenFirstPosition() const;
-        void setScreenFirstPosition(int iFirstPos);
-        virtual bool mayPlayLevel(int levelNumber);
-        Proxy * getProxy(int pos) const;
-        bool containsProxy(const Proxy * aProxy) const;
-        bool hasNormLevelPath(const std::string& path) const;
-        virtual bool advanceLevel(LevelAdvanceMode advMode);
-                
-        /*! Return number of levels */
-        virtual int size() const;
-        virtual void appendProxy(Proxy * newLevel, controlType varCtrl = force,
-                scoreUnitType varUnit = duration, std::string varTarget = "time",
-                std::map<std::string, std::string> varExtensions = nullExtensions);
-        virtual void clear();
-        virtual void sort(SCSortMethod s);
-        void updateFromProxies() const;
-        virtual void updateFromFolder() = 0;
+    std::string getName();
+    std::string getGroupName();
+    std::string getDefaultGroupName();
+    std::string getDescription();
+    double getLocation() const;
+    double getDefaultLocation() const;
+    void setDefaultLocation(double defLocation);
+    void moveToGroup(std::string groupName);
+    void locateBehind(const std::string& indexName);
+    void renameIndex(const std::string& newName);
+    virtual bool isSource(Proxy* aProxy);
 
-        // ---------- LevelPack legacy methods ---to be renamed ------- */
-        /*! Return the default SoundSet (see options::SoundSet for meaning) */
-        virtual std::string get_default_SoundSet() const;
+    int getCurrentPosition() const; // 0 .. size-1
+    int getCurrentLevel() const;    // 1 .. size
+    Proxy* getCurrent() const;
+    void setCurrentPosition(int newPos);
+    int getScreenFirstPosition() const;
+    void setScreenFirstPosition(int iFirstPos);
+    virtual bool mayPlayLevel(int levelNumber);
+    Proxy* getProxy(int pos) const;
+    bool containsProxy(const Proxy* aProxy) const;
+    bool hasNormLevelPath(const std::string& path) const;
+    virtual bool advanceLevel(LevelAdvanceMode advMode);
 
-        /*! Returns true if it's a twoplayer levelpack, but has no
-          it-yinyang (needed to add it-yinyang to inventory if
-          oxyd-linkgame is played as single-player) */
-        virtual bool needs_twoplayers() const;
+    /*! Return number of levels */
+    virtual int size() const;
+    virtual void appendProxy(Proxy* newLevel, controlType varCtrl = force,
+            scoreUnitType varUnit = duration, std::string varTarget = "time",
+            std::map<std::string, std::string> varExtensions = nullExtensions);
+    virtual void clear();
+    virtual void sort(SCSortMethod s);
+    void updateFromProxies() const;
+    virtual void updateFromFolder() = 0;
 
+    // ---------- LevelPack legacy methods ---to be renamed ------- */
+    /*! Return the default SoundSet (see options::SoundSet for meaning) */
+    virtual std::string get_default_SoundSet() const;
 
-    protected:
-        std::string indexName;
-        std::string indexDescription;
-        std::string indexGroup;
-        double indexLocation;
-        std::string defaultGroup;
-        double indexDefaultLocation;
-        int currentPosition; // 0,...
-        int screenFirstPosition; // LevelWidget ifirst
-        std::vector<Proxy *> proxies;
-        static std::map<std::string, std::string> nullExtensions;
-    
-    private:
-        /**
-         * A map of index names to the indices themselves.
-         */
-        static std::map<std::string, Index *> indices;
-        
-        /**
-         * A map of index group names to vectors of indices. The vectors
-         * are sorted by the user sequence preference in the index group menu.
-         * Every index is listed in the group the user asigned it to.
-         */
-        static std::map<std::string, std::vector<Index *> *> indexGroups;
-        
-        /**
-         * Current active index. This index is selected in the Levelpack menu,
-         * shown and used in the submenus and stored in the user preferences.
-         * It's default is the "Tutorial" index.
-         */
-        static Index * currentIndex;
-        static std::string currentGroup;
-        
-        static void addIndexToGroup(Index *anIndex, std::vector<Index *> * aGroup);
-        static void removeIndexFromGroup(const Index *anIndex, const std::string& groupName);
-    };
+    /*! Returns true if it's a twoplayer levelpack, but has no
+      it-yinyang (needed to add it-yinyang to inventory if
+      oxyd-linkgame is played as single-player) */
+    virtual bool needs_twoplayers() const;
+
+protected:
+    std::string indexName;
+    std::string indexDescription;
+    std::string indexGroup;
+    double indexLocation;
+    std::string defaultGroup;
+    double indexDefaultLocation;
+    int currentPosition;     // 0,...
+    int screenFirstPosition; // LevelWidget ifirst
+    std::vector<Proxy*> proxies;
+    static std::map<std::string, std::string> nullExtensions;
+
+private:
+    /**
+     * A map of index names to the indices themselves.
+     */
+    static std::map<std::string, Index*> indices;
+
+    /**
+     * A map of index group names to vectors of indices. The vectors
+     * are sorted by the user sequence preference in the index group menu.
+     * Every index is listed in the group the user asigned it to.
+     */
+    static std::map<std::string, std::vector<Index*>*> indexGroups;
+
+    /**
+     * Current active index. This index is selected in the Levelpack menu,
+     * shown and used in the submenus and stored in the user preferences.
+     * It's default is the "Tutorial" index.
+     */
+    static Index* currentIndex;
+    static std::string currentGroup;
+
+    static void addIndexToGroup(Index* anIndex, std::vector<Index*>* aGroup);
+    static void removeIndexFromGroup(const Index* anIndex, const std::string& groupName);
+};
 
 } // namespace enigma::lev
 
