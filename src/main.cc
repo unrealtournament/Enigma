@@ -424,7 +424,7 @@ void Application::init(int argc, char **argv)
     // ----- Initialize sound subsystem
     sound::Init(!ap.nomusic, !ap.nosound);
     lua::CheckedDoFile (L, app.systemFS, "sound-defaults.lua");
-    lua::DoSubfolderfile (L, "soundsets", "soundset.lua");
+    lua::DoSubfolderFile (L, "soundsets", "soundset.lua");
 
     // ----- Initialize TCP network layer
     if (!InitCurl()) {
@@ -446,9 +446,9 @@ void Application::init(int argc, char **argv)
     oxyd::Init(!isMakePreviews);  // Load oxyd data files - must be first to create correct proxies
     lev::PersistentIndex::registerPersistentIndices(ap.makepreview);
     if (!isMakePreviews) {
-        lua::Dofile(L, "levels/index.lua");
-        lua::DoSubfolderfile(L, "levels", "index.lua");
-        lua::Dofile(L, "levels/index_user.lua");
+        lua::DoFile(L, "levels/index.lua");
+        lua::DoSubfolderFile(L, "levels", "index.lua");
+        lua::DoFile(L, "levels/index_user.lua");
         if (!ap.levelnames.empty()) {
             lev::Index::registerIndex(new lev::VolatileIndex(INDEX_STARTUP_PACK_NAME,
                     INDEX_STARTUP_PACK_DESCRIPTION, INDEX_EVERY_GROUP, ap.levelnames,

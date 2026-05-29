@@ -755,7 +755,7 @@ void LevelPack_Oxyd::load_oxyd_level(size_t index) {
     std::string patchname = patchfile_name(get_gametype(), index, m_twoplayers);
     std::string patchfile;
     if (app.resourceFS->findFile(patchname, patchfile)) {
-        if (lua::Dofile(lua::LevelState(), patchname) != 0) {
+        if (lua::DoFile(lua::LevelState(), patchname) != 0) {
             std::string err = std::string("While executing '") + patchname + "':\n"
                     + lua::LastError(lua::LevelState());
             throw XLevelLoading(err);

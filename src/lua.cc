@@ -18,23 +18,24 @@
  *
  */
 #include "lua.hh"
-#include "errors.hh"
-#include "main.hh"
-#include "world.hh"
+
 #include "config.h"
-#include "video.hh"
-#include "server.hh"
-#include "SoundEffectManager.hh"
-#include "options.hh"
-#include "player.hh"
+#include "errors.hh"
 #include "Inventory.hh"
 #include "ItemHolder.hh"
-#include "WorldProxy.hh"
-#include "lev/Index.hh"
 #include "lev/Proxy.hh"
+#include "main.hh"
+#include "nls.hh"
+#include "player.hh"
+#include "server.hh"
+#include "SoundEffectManager.hh"
 #include "stones/OxydStone.hh"
+#include "video.hh"
+#include "world.hh"
+#include "WorldProxy.hh"
+
+#include <cassert>
 #include <list>
-#include <cmath>
 
 #ifndef CXXLUA
 extern "C" {
@@ -50,10 +51,6 @@ extern "C" {
 #include "lua-display.hh"
 #include "lua-enigma.hh"
 #include "lua-ecl.hh"
-
-#include <cassert>
-
-#include "nls.hh"
 
 // Lua Registry keys of metatables for user objects
 #define LUA_ID_OBJECT    "_ENIGMAOBJECT"
@@ -82,76 +79,71 @@ using enigma::Object;
 using enigma::GridObject;
 using enigma::WorldProxy;
 
-namespace enigma { namespace lua {
-     
-    lua_State *level_state = 0;  // level-local state
-    lua_State *global_state = 0; // global Lua state
+namespace enigma::lua {
 
-    static int tilesReadAccess(lua_State *L, bool direct);
-    static bool customResolution = false;
+lua_State* level_state = nullptr;  // level-local state
+lua_State* global_state = nullptr; // global Lua state
 
-    lua::Error _lua_err_code (int i)
-    {
-        switch (i) {
-            case 0: return NO_LUAERROR;
-            case LUA_ERRRUN: return ERRRUN;
-            case LUA_ERRFILE: return ERRFILE;
-            case LUA_ERRSYNTAX: return ERRSYNTAX;
-            case LUA_ERRMEM: return ERRMEM;
-            case LUA_ERRERR: return ERRERR;
-        }
-        assert (!"Should never get there!");
+static int tilesReadAccess(lua_State* L, bool direct);
+static bool customResolution = false;
+
+lua::Error _lua_err_code(int i) {
+    switch (i) {
+        case 0:
+            return NO_LUAERROR;
+        case LUA_ERRRUN:
+            return ERRRUN;
+        case LUA_ERRFILE:
+            return ERRFILE;
+        case LUA_ERRSYNTAX:
+            return ERRSYNTAX;
+        case LUA_ERRMEM:
+            return ERRMEM;
+        case LUA_ERRERR:
+            return ERRERR;
     }
+    assert(!"Should never get there!");
+}
 
-    void throwLuaError(lua_State * L, const char * message) {
-        std::string backtrace = message;
-        backtrace += "\nBacktrace:\n";
-        lua_Debug dbgInfo;
-        int frame = 0;
-        while (lua_getstack(L, frame, &dbgInfo)) {
-            lua_getinfo(L, "Sl", &dbgInfo);
-            if (dbgInfo.source[0] == '@')
-                // lua code loaded from file
-                backtrace += ecl::strf("#%d %s: %d\n", frame, dbgInfo.source,
-                                dbgInfo.currentline);
-            else if (dbgInfo.source[0] == '-' && dbgInfo.source[1] == '-' &&
-                dbgInfo.source[2] == '@') {
-                // lua code loaded from string
-                std::string code = dbgInfo.source;
-                std::string::size_type slashPosFilenameEnd = code.find('\n');
-                std::string::size_type slashPosLineStart = 0;
-                std::string::size_type slashPosLineEnd = slashPosFilenameEnd;
-                for (int i = 1; i < dbgInfo.currentline; i++) {
-                    slashPosLineStart = slashPosLineEnd;
-                    slashPosLineEnd = code.find('\n', slashPosLineStart + 1);
-                }
-                backtrace += ecl::strf("#%d %s: %d\n  (%s)\n", frame, 
-                        code.substr(2, slashPosFilenameEnd - 2).c_str(),
-                        dbgInfo.currentline - 1,
-                        code.substr(slashPosLineStart + 1, slashPosLineEnd - 
-                                slashPosLineStart - 1).c_str());
+void throwLuaError(lua_State* L, const char* message) {
+    std::string backtrace = message;
+    backtrace += "\nBacktrace:\n";
+    lua_Debug dbgInfo;
+    int frame = 0;
+    while (lua_getstack(L, frame, &dbgInfo)) {
+        lua_getinfo(L, "Sl", &dbgInfo);
+        if (dbgInfo.source[0] == '@')
+            // Lua code loaded from file
+            backtrace += ecl::strf("#%d %s: %d\n", frame, dbgInfo.source, dbgInfo.currentline);
+        else if (dbgInfo.source[0] == '-' && dbgInfo.source[1] == '-' && dbgInfo.source[2] == '@') {
+            // Lua code loaded from string
+            std::string code = dbgInfo.source;
+            std::string::size_type slashPosFilenameEnd = code.find('\n');
+            std::string::size_type slashPosLineStart = 0;
+            std::string::size_type slashPosLineEnd = slashPosFilenameEnd;
+            for (int i = 1; i < dbgInfo.currentline; i++) {
+                slashPosLineStart = slashPosLineEnd;
+                slashPosLineEnd = code.find('\n', slashPosLineStart + 1);
             }
-            frame++;
+            backtrace += ecl::strf("#%d %s: %d\n  (%s)\n", frame,
+                    code.substr(2, slashPosFilenameEnd - 2).c_str(), dbgInfo.currentline - 1,
+                    code.substr(slashPosLineStart + 1, slashPosLineEnd - slashPosLineStart - 1)
+                            .c_str());
         }
-        luaL_error(L, backtrace.c_str());
-        
+        frame++;
     }
+    luaL_error(L, backtrace.c_str());
+}
 
 
 /* -------------------- Helper routines -------------------- */
 
-using enigma::Value;
-
-void SetTableVar (lua_State *L,
-                       const char *tablename, 
-                       const char *name, 
-                       double value)
-{
-    lua_getglobal (L, tablename);
-    lua_pushstring (L, name);
-    lua_pushnumber (L, value);
-    lua_rawset (L, -3);
-    lua_pop (L, 1);
+void SetTableVar(lua_State* L, const char* tablename, const char* name, double value) {
+    lua_getglobal(L, tablename);
+    lua_pushstring(L, name);
+    lua_pushnumber(L, value);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
 }
 
 static bool checkMetadata (lua_State *L, int idx, const char *name) {
@@ -240,13 +232,12 @@ static Object *to_object(lua_State *L, int idx) {
 }
 
 static void pushobject(lua_State *L, Object *obj) {
-    int *udata;
     /* Lua does not allow NULL pointers in userdata variables, so
-       convert them manually to `nil' values. */
+       convert them manually to 'nil' values. */
     if (obj == nullptr && server::EnigmaCompatibility < 1.10) {
         lua_pushnil(L);   // nil as not existing object
     } else {
-        udata=(int *)lua_newuserdata(L,sizeof(int));
+        int* udata = (int*)lua_newuserdata(L, sizeof(int));
         if (obj != nullptr)
             *udata = obj->getId();
         else
@@ -274,8 +265,7 @@ static std::list<Object *> toObjectList(lua_State *L, int idx) {
 
 static int pushNewGroup(lua_State *L, std::list<Object *> objects) {
     // NULL objects and duplicates entries in the list will be eliminated
-    int *udata;
-    udata=(int *)lua_newuserdata(L,sizeof(int));   // group user object
+    int* udata = (int*)lua_newuserdata(L, sizeof(int));   // group user object
     *udata = 1;
     
     lua_newtable(L);  // individual metatable copy
@@ -291,7 +281,7 @@ static int pushNewGroup(lua_State *L, std::list<Object *> objects) {
     lua_pop(L, 1);  // remove metatable template
 
     std::set<Object *> unique;
-    std::list<Object *>::iterator it = objects.begin();
+    auto it = objects.begin();
     for (int i = 1; it != objects.end(); ++it) {
         if (*it) {  // existing object not NULL
             if (unique.find(*it) == unique.end()) {
@@ -326,8 +316,7 @@ static ecl::V2 toPosition(lua_State *L, int idx) {
 
 static int pushNewPosition(lua_State *L) {
     // x at -2, y at -1
-    int *udata;
-    udata=(int *)lua_newuserdata(L,sizeof(int));   // position user object
+    int* udata = (int*)lua_newuserdata(L, sizeof(int));   // position user object
     *udata = 1;
     
     lua_newtable(L);  // individual metatable copy
@@ -362,10 +351,9 @@ static int pushNewPosition(lua_State *L, ecl::V2 pos) {
     return 1;
 }
 
-static int pushNewPolist(lua_State *L, PositionList positions) {
+static int pushNewPolist(lua_State *L, const PositionList& positions) {
     // NULL objects and duplicates entries in the list will be eliminated
-    int *udata;
-    udata = (int *)lua_newuserdata(L, sizeof(int));   // group user object
+    int* udata = (int*)lua_newuserdata(L, sizeof(int));   // group user object
     *udata = 1;
     
     lua_newtable(L);  // individual metatable copy
@@ -381,9 +369,8 @@ static int pushNewPolist(lua_State *L, PositionList positions) {
     lua_pop(L, 1);  // remove metatable template
 
     int i = 1;
-    for (PositionList::iterator it = positions.begin(); it != positions.end(); ++it) {
+    for (auto &v : positions) {
         // polist[i] = position
-        Value v = *it;
         if (v) {  // existing object not NULL
             ecl::V2 p = v.toVec();
             lua_pushnumber(L, p[0]);
@@ -636,17 +623,17 @@ en_set_floor(lua_State *L)
 {
     int x = round_down<int>(lua_tonumber(L, 1));
     int y = round_down<int>(lua_tonumber(L, 2));
-    Floor *fl=0;
+    Floor* floor = nullptr;
 
-    if (lua_isnil(L, 3))
-        fl = 0;
-    else {
-         fl = dynamic_cast<Floor *>(to_object(L, 3));
-         if (!fl) {
+    if (lua_isnil(L, 3)) {
+        floor = nullptr;
+    } else {
+         floor = dynamic_cast<Floor *>(to_object(L, 3));
+         if (!floor) {
              throwLuaError(L, "object argument 3 must be a floor or nil");
          }
     }
-    SetFloor(GridPos(x,y), fl);
+    SetFloor(GridPos(x,y), floor);
     return 0;
 }
 
@@ -655,11 +642,10 @@ en_set_item(lua_State *L)
 {
     int x = round_down<int>(lua_tonumber(L, 1));
     int y = round_down<int>(lua_tonumber(L, 2));
-    Item *it = dynamic_cast<Item*>(to_object(L, 3));
-    if( ! it) {
+    Item *item = dynamic_cast<Item*>(to_object(L, 3));
+    if (!item)
         throwLuaError(L, "object is no valid item");
-    }
-    SetItem(GridPos(x,y), it);
+    SetItem(GridPos(x,y), item);
     return 0;
 }
 
@@ -668,10 +654,10 @@ en_set_stone(lua_State *L)
 {
     int x = round_down<int>(lua_tonumber(L, 1));
     int y = round_down<int>(lua_tonumber(L, 2));
-    Stone *st = dynamic_cast<Stone*>(to_object(L, 3));
-    if( ! st)
+    Stone *stone = dynamic_cast<Stone*>(to_object(L, 3));
+    if (!stone)
         throwLuaError(L, "object is no valid stone");
-    SetStone(GridPos(x,y), st);
+    SetStone(GridPos(x,y), stone);
     return 0;
 }
 
@@ -696,11 +682,11 @@ en_set_actor(lua_State *L)
 {
     double x = lua_tonumber(L,1);
     double y = lua_tonumber(L,2);
-    Actor *ac = dynamic_cast<Actor*>(to_object(L, 3));
-    if( ! ac)
+    Actor *actor = dynamic_cast<Actor*>(to_object(L, 3));
+    if (!actor)
         throwLuaError(L, "object is no valid actor");
     if (IsInsideLevel(GridPos(round_down<int>(x), round_down<int>(y))))
-        AddActor(x, y, ac);
+        AddActor(x, y, actor);
     else
         throwLuaError(L, "position is outside of world");
     return 0;
@@ -716,17 +702,15 @@ en_send_message(lua_State *L)
     Value v;  // nil
     if (lua_gettop(L) >= 3)
         v = to_value(L, 3);
-    if (!msg)
-        throwLuaError(L,"Illegal message");
-    else if (obj) {
+    if (!msg) {
+        throwLuaError(L, "Illegal message");
+    } else if (obj) {
         try {
             std::string new_msg = lua::NewMessageName(L, obj, msg);
             result = SendMessage (obj, new_msg, v);
-        }
-        catch (const XLevelRuntime &e) {
-            throwLuaError (L, e.what());
-        }
-        catch (...) {
+        } catch (const XLevelRuntime& e) {
+            throwLuaError(L, e.what());
+        } catch (...) {
             throwLuaError (L, "uncaught exception");
         }
     }
@@ -741,10 +725,10 @@ int EmitSound (lua_State *L)
     double vol = 1.0;
 
     if (lua_isnumber(L, 3)) 
-        vol  = lua_tonumber(L, 3);
-    if (!soundname)
-        throwLuaError(L,"Illegal sound");
-    else if (obj) {
+        vol = lua_tonumber(L, 3);
+    if (!soundname) {
+        throwLuaError(L, "Illegal sound");
+    } else if (obj) {
         GridObject *gobj = dynamic_cast<GridObject*>(obj);
         if (gobj) {
             if (!gobj->sound_event (soundname, vol)) {
@@ -756,10 +740,9 @@ int EmitSound (lua_State *L)
                 sound::WriteSilenceString(soundname);
             }
         }
-    }
-    else
+    } else {
         throwLuaError(L, "EmitSound: invalid object");
-
+    }
     return 0;
 }
 
@@ -843,9 +826,8 @@ en_get_pos(lua_State *L)
 
     if (GridObject *gobj = dynamic_cast<GridObject*>(obj))
         p = gobj->get_pos();
-    else if (Actor *a = dynamic_cast<Actor*>(obj)) {
+    else if (Actor *a = dynamic_cast<Actor*>(obj))
         p = GridPos(a->getPos());
-    }
     else
         p = GridPos(-1, -1);
 
@@ -865,21 +847,21 @@ static int en_add_constant_force(lua_State *L) {
 static int
 en_add_rubber_band (lua_State *L)
 {
-    Actor  *a1       = dynamic_cast<Actor*> (to_object(L, 1));
-    Object *o2       = to_object(L, 2);
-    Actor  *a2       = dynamic_cast<Actor*>(o2);
-    Stone  *st       = dynamic_cast<Stone*>(o2);
+    Actor* a1 = dynamic_cast<Actor*>(to_object(L, 1));
+    Object* o2 = to_object(L, 2);
+    Actor* a2 = dynamic_cast<Actor*>(o2);
+    Stone* st = dynamic_cast<Stone*>(o2);
 
     if (!a1)
         throwLuaError(L, "AddRubberBand: First argument must be an actor\n");
 
     Object *obj = MakeObject("ot_rubberband");
     obj->setAttr("anchor1", a1);
-    if (a2)
+    if (a2) {
         obj->setAttr("anchor2", a2);
-    else if (st)
+    } else if (st) {
         obj->setAttr("anchor2", st);
-    else {
+    } else {
         obj->dispose();
         throwLuaError(L, "AddRubberBand: Second argument must be actor or stone\n");
     }
@@ -924,8 +906,8 @@ en_is_solved(lua_State *L)
 static int
 en_add_scramble(lua_State *L)
 {
-    int         x       = round_down<int>(lua_tonumber(L, 1));
-    int         y       = round_down<int>(lua_tonumber(L, 2));
+    int x = round_down<int>(lua_tonumber(L, 1));
+    int y = round_down<int>(lua_tonumber(L, 2));
     if (!lua_isstring(L, 3))
         throwLuaError(L, "AddScramble: Third argument must be one character of \"wsen\"");
 
@@ -954,14 +936,13 @@ en_add_signal (lua_State *L) {
     const char *targetstr = lua_tostring (L, 2);
     const char *msg = lua_tostring (L, 3);
 
-    using namespace enigma;
     GridLoc source, target;
 
-    if (sourcestr == 0 || !to_gridloc(sourcestr, source))
+    if (sourcestr == nullptr || !to_gridloc(sourcestr, source))
         throwLuaError (L, "AddSignal: invalid source descriptor");
-    if (targetstr == 0 || !to_gridloc(targetstr, target)) 
+    if (targetstr == nullptr || !to_gridloc(targetstr, target))
         throwLuaError (L, "AddSignal: invalid target descriptor");
-    if (msg == 0)
+    if (msg == nullptr)
         msg = "signal";
 
     AddSignal (source, target, msg);
@@ -1085,7 +1066,7 @@ static int addPositionsBase(lua_State *L, double factorArg2, bool scalarMultipli
         lua_pushnumber(L, x);
         lua_pushnumber(L, y);
     } else {
-        // add a position to a list of postions resulting a list of positions
+        // add a position to a list of positions
         PositionList pl;
         PositionList newpl;
         ecl::V2 offset;
@@ -1106,9 +1087,9 @@ static int addPositionsBase(lua_State *L, double factorArg2, bool scalarMultipli
             offset = toPosition(L, -1);
         }
         lua_pop(L, 1);
-        for (PositionList::iterator itr = pl.begin(); itr != pl.end(); ++itr) {
-             ecl::V2 newpos = offset + factorArg2 * itr->toVec();
-             newpl.push_back(newpos);
+        for (auto& position : pl) {
+             ecl::V2 newPos = offset + factorArg2 * position.toVec();
+             newpl.push_back(newPos);
         }
         return pushNewPolist(L, newpl);
     }
@@ -1292,10 +1273,9 @@ static int normPosition(lua_State *L) {
     return 1;
 }
 
-static int pushNewTile(lua_State *L, int numArgs, std::string key="") {
+static int pushNewTile(lua_State *L, int numArgs, const std::string& key ="") {
     // numArgs 1 or 2 of type (table|tile)
-    int *udata;
-    udata=(int *)lua_newuserdata(L,sizeof(int));   // user object
+    int* udata = (int*)lua_newuserdata(L, sizeof(int));   // user object
     *udata = 1;
     
     lua_newtable(L);  // individual metatable copy
@@ -1316,7 +1296,7 @@ static int pushNewTile(lua_State *L, int numArgs, std::string key="") {
         lua_pushvalue(L, -3);
         lua_rawseti(L, -2, 2);
     }
-    if (key != "") {
+    if (!key.empty()) {
         lua_pushstring(L, key.c_str());
         lua_rawseti(L, -2, 3);
     }
@@ -1368,24 +1348,24 @@ static int setAttributes(lua_State *L) {
     return 0;
 }
 
-static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
+static int getStoneItemFloor(lua_State *L, Object::ObjectType objectType) {
     // position|table|obj|(num,num)|group|polist
     if (is_world(L, 1))      // world method?
         lua_remove(L, 1);    // no need of context
     if (is_group(L, 1)) {
         ObjectList srcList = to_value(L, 1).toObjectList();
         ObjectList objects;
-        for (ObjectList::iterator itr = srcList.begin(); itr != srcList.end(); ++itr) {
-            GridPos  p;
-            if (GridObject *gobj = dynamic_cast<GridObject*>(*itr)) {
+        for (Object* object : srcList) {
+            GridPos p;
+            if (GridObject *gobj = dynamic_cast<GridObject*>(object)) {
                 p = gobj->getOwnerPos();
-            } else if (Actor *a = dynamic_cast<Actor*>(*itr)) {
+            } else if (Actor *a = dynamic_cast<Actor*>(object)) {
                 p = GridPos(a->getPos());
             } else {
                 continue;  // no valid position
             }
             Object *obj = nullptr;
-            switch (ot) {
+            switch (objectType) {
             case Object::FLOOR: obj = GetFloor(p); break;
             case Object::ITEM: obj = GetItem(p); break;
             case Object::STONE: obj = GetStone(p); break;
@@ -1400,10 +1380,10 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
     } else if (is_polist(L, 1)) {
         PositionList positions = toPositionList(L, 1);
         ObjectList objects;
-        for (PositionList::iterator itr = positions.begin(); itr != positions.end(); ++itr) {
-            GridPos p = itr->toGridPos();
+        for (Value& position : positions) {
+            GridPos p = position.toGridPos();
             Object *obj = nullptr;
-            switch (ot) {
+            switch (objectType) {
                 case Object::FLOOR :
                     obj = GetFloor(p); break;
                 case Object::ITEM :
@@ -1423,7 +1403,7 @@ static int getStoneItemFloor(lua_State *L, Object::ObjectType ot) {
         lua_rawgeti(L, -2, 2);
         int y = round_down<int>(lua_tonumber(L, -1));
         Object *obj = nullptr;
-        switch (ot) {
+        switch (objectType) {
             case Object::FLOOR :
                 obj = GetFloor(GridPos(x, y)); break;
             case Object::ITEM :
@@ -1455,23 +1435,23 @@ static int killObjectBase(lua_State *L) {
     if (obj) {   // ignore not existing object
         GridObject *gobj;
         switch (obj->getObjectType()) {
-            case Object::OTHER :
-                KillOther(dynamic_cast<Other *>(obj));
+            case Object::OTHER:
+                KillOther(dynamic_cast<Other*>(obj));
                 break;
-            case Object::FLOOR :
+            case Object::FLOOR:
                 gobj = dynamic_cast<GridObject*>(obj);
                 KillFloor(gobj->get_pos());
                 break;
-            case Object::STONE :
+            case Object::STONE:
                 gobj = dynamic_cast<GridObject*>(obj);
                 KillStone(gobj->get_pos());
                 break;
-            case Object::ITEM  :
+            case Object::ITEM:
                 gobj = dynamic_cast<GridObject*>(obj);
                 if (gobj->isDisplayable())
                     KillItem(gobj->get_pos());
                 break;
-            case Object::ACTOR :
+            case Object::ACTOR:
             default :
                 throwLuaError(L, "Kill of object type not allowed");
         }
@@ -1571,7 +1551,7 @@ static int objectIsKind(lua_State *L) {
 }
 
 static int objectMessageBase(lua_State *L) {
-    // (object, string , value)
+    // (object, string, value)
     Object     *obj = to_object(L, -3);
     if (!lua_isstring(L, -2)) {
         throwLuaError(L,"Illegal message - no string");
@@ -1781,10 +1761,10 @@ static int newPolist(lua_State *L) {
     PositionList positions;
     if (is_group(L, 1)) {
         ObjectList ol = toObjectList(L, 1);
-        for (ObjectList::iterator itr = ol.begin(); itr != ol.end(); ++itr) {
+        for (Object* obj : ol) {
             // eliminate invalid object references and add every object as value of its own
-            if (*itr != nullptr) {
-                positions.push_back(*itr);
+            if (obj != nullptr) {
+                positions.push_back(obj);
             }
         }
     } else if (is_table(L, 1)) {
@@ -2084,9 +2064,8 @@ static int dispatchPositionsWriteAccess(lua_State *L) {
 
 static int pushNewPositions(lua_State *L) {
     // positions is a singleton
-    
-    int *udata;
-    udata=(int *)lua_newuserdata(L,sizeof(int));   // positions user object
+
+    int* udata = (int*)lua_newuserdata(L, sizeof(int));   // positions user object
     *udata = 1;
     
     luaL_getmetatable(L, LUA_ID_POSITIONS);
@@ -2131,7 +2110,7 @@ MethodMap namedObjMethodeMap;
 
 
 static int dispatchNamedObjReadAccess(lua_State *L) {
-    // string with *,? wildcards are groups, rest is single object
+    // Strings that include "*?" wildcards refer to groups, all others to individual objects.
     if (!lua_isstring(L, 2)) {
         throwLuaError(L, "Named object access without giving a name");
         return 0;
@@ -2170,8 +2149,7 @@ static int dispatchNamedObjWriteAccess(lua_State *L) {
 
 static int pushNewNamedObj(lua_State *L) {
     // x at -2, y at -1
-    int *udata;
-    udata=(int *)lua_newuserdata(L,sizeof(int));   // position user object
+    int* udata = (int*)lua_newuserdata(L, sizeof(int));   // position user object
     *udata = 1;
     
     luaL_getmetatable(L, LUA_ID_NAMEOBJ);
@@ -2459,7 +2437,7 @@ static int evaluateKey(lua_State *L) {
     return 0;
 }
 
-static int setObjectByKey(lua_State *L, std::string key, int j, int i, bool onlyFloors = false) {
+static int setObjectByKey(lua_State *L, const std::string& key, int j, int i, bool onlyFloors = false) {
     lua_getfield(L, LUA_REGISTRYINDEX, LUA_ID_RESOLVER);
     lua_pushvalue(L, -1);
     lua_pushstring(L, key.c_str());
@@ -2545,7 +2523,7 @@ static int createWorld(lua_State *L) {
         return 0;
     }
     
-    // Is third argument a table? If so, check for an entry called
+    // Is the third argument a table? If so, check for an entry called
     // "defaultkey" and insert it into the stack at position 3.
     // This is consistent with libmap, as a metamethod will be
     // triggered, but can be used more generally as well.
@@ -2748,8 +2726,7 @@ static int dispatchWorldWriteAccess(lua_State *L) {
 
 
 static int pushNewWorld(lua_State *L) {
-    int *udata;
-    udata=(int *)lua_newuserdata(L,sizeof(int));   // position user object
+    int* udata = (int*)lua_newuserdata(L, sizeof(int));   // position user object
     *udata = 1;
     
     luaL_getmetatable(L, LUA_ID_WORLD);
@@ -2833,9 +2810,11 @@ static int shuffleOxyd(lua_State *L) {
         
         lua_getfield(L, i, "min");
         if (!lua_isnil(L, -1)) {
-            limit = (unsigned short) ecl::Clamp<int>(lua_tointeger(L, -1), 0, OxydStone::numColorsAvailable());
-            OxydStone::addShuffleRule(is_pair ? OxydStone::RULE_PAIR_MIN : OxydStone::RULE_SINGLE_MIN, 
-                    (unsigned short) limit, group1, group2);
+            limit = (unsigned short)ecl::Clamp<int>(
+                    lua_tointeger(L, -1), 0, OxydStone::numColorsAvailable());
+            OxydStone::addShuffleRule(
+                    is_pair ? OxydStone::RULE_PAIR_MIN : OxydStone::RULE_SINGLE_MIN,
+                    limit, group1, group2);
         }
         lua_pop(L, 1);
 
@@ -2852,12 +2831,13 @@ static int shuffleOxyd(lua_State *L) {
             if (lua_isboolean(L, -1) && lua_toboolean(L, -1)) {
                 ObjectList oxyds = group1.toObjectList();
                 Object *firstOxyd = nullptr;
-                for (ObjectList::iterator i = oxyds.begin(); i != oxyds.end(); ++i) {
-                    if (firstOxyd == nullptr)
-                        firstOxyd = *i;
-                    else {
-                        OxydStone::addShuffleRule(OxydStone::RULE_PAIR_MAX, 0, Value(firstOxyd), Value(*i));
-                        firstOxyd = *i;
+                for (Object* oxyd : oxyds) {
+                    if (firstOxyd == nullptr) {
+                        firstOxyd = oxyd;
+                    } else {
+                        OxydStone::addShuffleRule(
+                                OxydStone::RULE_PAIR_MAX, 0, Value(firstOxyd), Value(oxyd));
+                        firstOxyd = oxyd;
                     }
                 }
             }
@@ -2868,17 +2848,19 @@ static int shuffleOxyd(lua_State *L) {
                 ObjectList oxyds = group1.toObjectList();
                 Object *firstOxyd = nullptr;
                 Object *leftOxyd = nullptr;
-                for (ObjectList::iterator i = oxyds.begin(); i != oxyds.end(); ++i) {
+                for (Object* oxyd : oxyds) {
                     if (firstOxyd == nullptr) {
-                        firstOxyd = *i;
-                        leftOxyd = *i;
+                        firstOxyd = oxyd;
+                        leftOxyd = oxyd;
                     } else {
-                        OxydStone::addShuffleRule(OxydStone::RULE_PAIR_MAX, 0, Value(leftOxyd), Value(*i));
-                        leftOxyd = *i;
+                        OxydStone::addShuffleRule(
+                                OxydStone::RULE_PAIR_MAX, 0, Value(leftOxyd), Value(oxyd));
+                        leftOxyd = oxyd;
                     }
                 }
                 if (firstOxyd != nullptr && firstOxyd != leftOxyd)
-                    OxydStone::addShuffleRule(OxydStone::RULE_PAIR_MAX, 0, Value(firstOxyd), Value(leftOxyd));
+                    OxydStone::addShuffleRule(
+                            OxydStone::RULE_PAIR_MAX, 0, Value(firstOxyd), Value(leftOxyd));
             }
             lua_pop(L, 1);
         }
@@ -2909,7 +2891,7 @@ static int dispatchTileReadAccess(lua_State *L) {
     // tile, key
     if (lua_isstring(L, 2)) {
         std::string keyStr = lua_tostring(L, 2);
-        MethodMap::iterator iter = tileMethodeMap.find(keyStr);
+        auto iter = tileMethodeMap.find(keyStr);
         if (iter != tileMethodeMap.end()) {
             // call method
             lua_pushcfunction(L, iter->second);
@@ -3105,9 +3087,8 @@ static int dispatchTilesReadAccess(lua_State *L) {
 
 static int pushNewTiles(lua_State *L) {
     // tiles is a singleton
-    
-    int *udata;
-    udata=(int *)lua_newuserdata(L,sizeof(int));   // position user object
+
+    int* udata = (int*)lua_newuserdata(L, sizeof(int)); // position user object
     *udata = 1;
     
     luaL_getmetatable(L, LUA_ID_TILES);
@@ -3144,8 +3125,7 @@ static int dispatchGroupWriteAccess(lua_State *L) {
     int numObjects = lua_objlen(L, -1);
     for (int i = 1; i <= numObjects; ++i) {
         lua_rawgeti(L, -1, i);  // the object
-        Object *obj = to_object(L, -1);
-        if (obj)                // ignore not existing objects
+        if (Object* obj = to_object(L, -1))                // ignore not existing objects
             obj->setAttrChecked(name, to_value(L, 3));
         lua_pop(L, 1);          // the object        
     }
@@ -3169,9 +3149,8 @@ static int dispatchGroupReadAccess(lua_State *L) {
         else
             pushobject(L, nullptr);
     } else if(lua_isstring(L, 2)) {
-        std::string keyStr = lua_tostring(L, 2); 
-        MethodMap::iterator iter;
-        iter = groupMethodeMap.find(keyStr);
+        std::string keyStr = lua_tostring(L, 2);
+        auto iter = groupMethodeMap.find(keyStr);
         if (iter != groupMethodeMap.end()) {
             // call method
             lua_pushcfunction(L, iter->second);
@@ -3261,7 +3240,7 @@ static int subGroup(lua_State *L) {
     }
     ObjectList newList;
     int i = 0;
-    for (ObjectList::iterator itr = oldList.begin(); itr != oldList.end(); ++itr, i++) {
+    for (auto itr = oldList.begin(); itr != oldList.end() && i < end; ++itr, i++) {
         if (i >= start && i < end)
             newList.push_back(*itr);
     }
@@ -3275,19 +3254,13 @@ static int shuffleGroup(lua_State *L) {
         return 0;        
     }
     ObjectList oldSort = toObjectList(L, 1);
-    ObjectList newSort;
-    std::vector<Object *> shuffleVector;
-    for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr)
-        shuffleVector.push_back(*itr);
-    int members = shuffleVector.size();
-    for (int i = members - 1; i > 0; i--) {
+    auto shuffleVector = std::vector<Object *>(oldSort.begin(), oldSort.end());
+    int size = static_cast<int>(shuffleVector.size());
+    for (int i = size - 1; i > 0; i--) {
         int j = IntegerRand(0, i);
-        Object * obj = shuffleVector[j];
-        shuffleVector[j] = shuffleVector[i];
-        shuffleVector[i] = obj;
+        std::swap(shuffleVector[i], shuffleVector[j]);
     }
-    for (std::vector<Object *>::iterator itr = shuffleVector.begin(); itr != shuffleVector.end(); ++itr)
-        newSort.push_back(*itr);
+    ObjectList newSort(shuffleVector.begin(), shuffleVector.end());
     return pushNewGroup(L, newSort);
 }
 
@@ -3304,30 +3277,30 @@ static int sortGroup(lua_State *L) {
     ObjectList oldSort = toObjectList(L, 1);
     ObjectList newSort;
     if (command == "circular") {
-        std::map<double, Object *> sortMap;
         double cx = 0;
         double cy = 0;  // center
         int num = 0;
-        for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr) {
-            if (*itr != nullptr) {
-                ecl::V2 pos = Value(*itr).toVec();
+        for (Object* obj : oldSort) {
+            if (obj != nullptr) {
+                ecl::V2 pos = Value(obj).toVec();
                 cx += pos[0];
                 cy += pos[1];
                 num++;
             } 
         }
         if (num > 0) {
-            cx = cx/num;
-            cy = cy/num;
-            for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr) {
-                if (*itr != nullptr) {
-                    ecl::V2 pos = Value(*itr).toVec();
+            std::map<double, Object*> sortMap;
+            cx = cx / num;
+            cy = cy / num;
+            for (Object* obj : oldSort) {
+                if (obj != nullptr) {
+                    ecl::V2 pos = Value(obj).toVec();
                     double alpha = std::atan2(pos[1] - cy, pos[0] - cx); 
-                    sortMap[alpha] = *itr;
+                    sortMap[alpha] = obj;
                 }
             }
-            for (std::map<double, Object *>::iterator itr = sortMap.begin(); itr != sortMap.end(); ++itr) {
-                newSort.push_back(itr->second);
+            for (auto& itr : sortMap) {
+                newSort.push_back(itr.second);
             }
         }
     } else if (command == "linear") {
@@ -3344,20 +3317,20 @@ static int sortGroup(lua_State *L) {
             return pushNewGroup(L, oldSort);
         }
         dir.normalize();
-        for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr) {
-            double d = dir * Value(*itr).toVec();
-            sortMap.insert(std::make_pair(d, *itr));
+        for (Object* obj : oldSort) {
+            double d = dir * Value(obj).toVec();
+            sortMap.insert(std::make_pair(d, obj));
         }
-        for (std::multimap<double, Object *>::iterator itr = sortMap.begin(); itr != sortMap.end(); ++itr)
-            newSort.push_back(itr->second);
+        for (auto& itr : sortMap)
+            newSort.push_back(itr.second);
         
     } else {
         // default sort lexical by name
         std::map<std::string, Object *> sortMap;
-        for (ObjectList::iterator itr = oldSort.begin(); itr != oldSort.end(); ++itr)
-            sortMap[((*itr)->getAttr("name")).toString()] = *itr;
-        for (std::map<std::string, Object *>::iterator itr = sortMap.begin(); itr != sortMap.end(); ++itr)
-            newSort.push_back(itr->second);
+        for (Object* itr : oldSort)
+            sortMap[(itr->getAttr("name")).toString()] = itr;
+        for (auto& itr : sortMap)
+            newSort.push_back(itr.second);
     }
     return pushNewGroup(L, newSort);
 }
@@ -3381,16 +3354,16 @@ static int nearestGroup(lua_State *L) {
     double mindist = -1;
     Object *candidate = nullptr;
     
-    for (ObjectList::iterator itr = oldList.begin(); itr != oldList.end(); ++itr) {
+    for (Object* obj : oldList) {
         if (mindist < 0) {
-            candidate = *itr;
+            candidate = obj;
             mindist = center->squareDistance(candidate);
         } else {
-            double newdist = center->squareDistance(*itr);
+            double newdist = center->squareDistance(obj);
             
             // replace last candidate by new closer object, choose a unique candidate
-            if (mindist > newdist || ((mindist == newdist) && (*itr)->isSouthOrEastOf(candidate))) {
-                candidate = *itr;
+            if (mindist > newdist || ((mindist == newdist) && obj->isSouthOrEastOf(candidate))) {
+                candidate = obj;
                 mindist = newdist;
             }
         }
@@ -3444,9 +3417,9 @@ static int polistEquality(lua_State *L) {
     }
     PositionList pl1 = toPositionList(L, 1);
     PositionList pl2 = toPositionList(L, 2);
-    PositionList::iterator itr2 = pl2.begin();
-    for (PositionList::iterator itr1 = pl1.begin(); itr1 != pl1.end(); ++itr1) {
-         if (itr2 == pl2.end() || (itr1->toVec() != itr2->toVec())) {
+    auto itr2 = pl2.begin();
+    for (auto & itr1 : pl1) {
+         if (itr2 == pl2.end() || (itr1.toVec() != itr2->toVec())) {
              lua_pushboolean(L, false);
              return 1;
          }
@@ -3460,9 +3433,8 @@ MethodMap defaultMethodeMap;
 
 static int pushNewDefault(lua_State *L) {
     // tiles is a singleton
-    
-    int *udata;
-    udata=(int *)lua_newuserdata(L,sizeof(int));   // user object
+
+    int* udata = (int*)lua_newuserdata(L, sizeof(int));   // user object
     *udata = 1;  // dummy
     
     luaL_getmetatable(L, LUA_ID_DEFAULT);
@@ -3723,7 +3695,7 @@ int FindDataFile (lua_State *L)
     return 1;
 }
 
-void RegisterFuncs(lua_State *L, CFunction *funcs) 
+void RegisterFuncs(lua_State *L, CFunction *funcs)
 {
     lua_getglobal(L, "enigma");
     for (unsigned i=0; funcs[i].func; ++i) {
@@ -3749,7 +3721,7 @@ void RegisterFuncs2(lua_State *L, CFunction *funcs) {
     lua_setglobal(L, "en");
 }
 
-void RegisterObject(lua_State *L, std::string name) {
+void RegisterObject(lua_State *L, const std::string& name) {
     lua_pushvalue(L, -1);  // make a copy
     lua_setglobal(L, name.c_str());
     
@@ -3760,7 +3732,7 @@ void RegisterObject(lua_State *L, std::string name) {
     lua_pop(L, 2);
 }
 
-void RegisterLuaType(lua_State *L, std::string registryKey, CFunction *ops,
+void RegisterLuaType(lua_State *L, const std::string& registryKey, CFunction *ops,
         CFunction *methods, MethodMap &methodMap) {
 
     luaL_newmetatable(L, registryKey.c_str());
@@ -3780,33 +3752,32 @@ void RegisterLuaType(lua_State *L, std::string registryKey, CFunction *ops,
 }
 
 bool IsFunc(lua_State *L, const char *funcname) {
-    bool result;
-    
+
     lua_getglobal(L, funcname);
-    result = lua_isfunction(L, -1);
+    bool result = lua_isfunction(L, -1);
     lua_pop(L, 1);
     return result;
 }
 
-Error CallFunc(lua_State *L, const std::string funcpath, const Value& arg, Object *obj, bool expectFunction) {
-    int retval;
+Error CallFunc(lua_State* L, const std::string& funcpath, const Value& arg, Object* obj,
+        bool expectFunction) {
     const char *funcname = funcpath.c_str();
     
 //    Uint32 start_tick_time = SDL_GetTicks();   // meassure time for level loading
     if (funcpath.find('.')) {
         std::list<std::string> nodes;
         ecl::split_copy(funcpath, '.', std::back_inserter(nodes));
-        for (std::list<std::string>::iterator itr = nodes.begin(); itr != nodes.end();) {
+        for (auto itr = nodes.begin(); itr != nodes.end();) {
             if (itr == nodes.begin()) {
-                lua_getglobal(L, (*itr).c_str());
+                lua_getglobal(L, itr->c_str());
             } else {
-                lua_getfield(L, -1, (*itr).c_str());
+                lua_getfield(L, -1, itr->c_str());
                 lua_remove(L, -2);
             }
             ++itr;
             if (itr != nodes.end() && !lua_istable(L, -1)) {
                 if (expectFunction) {
-                    lua_pushstring(L, ecl::strf("Super domain of '%s' is not a table!", (*itr).c_str()).c_str());
+                    lua_pushstring(L, ecl::strf("Super domain of '%s' is not a table!", itr->c_str()).c_str());
                     lua_setglobal(L, "_LASTERROR");
                     return ERRRUN;
                 } else {
@@ -3822,7 +3793,7 @@ Error CallFunc(lua_State *L, const std::string funcpath, const Value& arg, Objec
     if (lua_isfunction(L, -1)) {
         push_value(L, arg);
         pushobject(L, obj);
-        retval = lua_pcall(L, 2, 0, 0);
+        int retval = lua_pcall(L, 2, 0, 0);
         if (retval != 0)  {  // error
             lua_setglobal(L, "_LASTERROR") ; //Set _LASTERROR to returned error message
         }
@@ -3896,7 +3867,7 @@ Error DoGeneralFile(lua_State *L, GameFS * fs, const string &filename)
     }
 }
 
-Error Dofile(lua_State *L, const string &filename) 
+Error DoFile(lua_State *L, const string &filename)
 {
     return lua::DoGeneralFile(L, app.resourceFS, filename);
 }
@@ -3926,11 +3897,10 @@ void CheckedDoFile (lua_State *L, GameFS * fs, std::string const& fname)
 }
 
 
-Error Dobuffer (lua_State *L, const ByteVec &luacode) {
-    int retval;
+Error DoBuffer (lua_State *L, const ByteVec &luacode) {
     const char *buffer = reinterpret_cast<const char *>(&luacode[0]);
 
-    retval=luaL_loadbuffer(L, buffer, luacode.size(), "buffer");
+    int retval = luaL_loadbuffer(L, buffer, luacode.size(), "buffer");
     if (retval!=0) { // error
         lua_setglobal (L, "_LASTERROR") ; //Set _LASTERROR to returned error message
     } else {
@@ -3954,23 +3924,20 @@ std::string LastError(lua_State *L) {
     }
 }
 
-
-Error DoSubfolderfile(lua_State *L, const string &basefolder, const string &filename) {
-    std::list <string> fnames = app.resourceFS->findSubfolderFiles(basefolder, filename);
+Error DoSubfolderFile(lua_State* L, const string& baseFolder, const string& filename) {
+    std::list<string> fnames = app.resourceFS->findSubfolderFiles(baseFolder, filename);
     int retval = 0;
-    while (fnames.size() > 0) {
+    for (const auto &fname : fnames) {
         int oldtop = lua_gettop(L);
-        string fname = fnames.front();
         retval = luaL_loadfile(L, fname.c_str());
-        if (retval!=0)  { // error
-            lua_setglobal (L, "_LASTERROR") ; //Set _LASTERROR to returned error message
+        if (retval != 0) {                  // error
+            lua_setglobal(L, "_LASTERROR"); // Set _LASTERROR to returned error message
         } else {
-            retval= lua_pcall(L, 0, 0, 0);
-            if (retval!=0) { // error
-                lua_setglobal (L, "_LASTERROR") ; //Set _LASTERROR to returned error message
+            retval = lua_pcall(L, 0, 0, 0);
+            if (retval != 0) {                  // error
+                lua_setglobal(L, "_LASTERROR"); // Set _LASTERROR to returned error message
             }
         }
-        fnames.pop_front();
         lua_settop(L, oldtop);
     }
     return _lua_err_code(retval);
@@ -3978,7 +3945,7 @@ Error DoSubfolderfile(lua_State *L, const string &basefolder, const string &file
 
 lua_State *GlobalState() 
 {
-    if (global_state == 0) {
+    if (global_state == nullptr) {
         lua_State *L = global_state = lua_open();
 
         luaL_openlibs(L);
@@ -3996,7 +3963,7 @@ void ShutdownGlobal()
 {
     assert (global_state);
     lua_close(global_state);
-    global_state = 0;
+    global_state = nullptr;
 }
 
 #ifdef _MSC_VER
@@ -4065,8 +4032,8 @@ lua_State *LevelState ()
 void ShutdownLevel() {
     if (level_state) {
         lua_close(level_state);
-        level_state = 0;
+        level_state = nullptr;
     }
 }
 
-}} // namespace enigma::lua
+} // namespace enigma::lua
