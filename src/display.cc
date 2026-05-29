@@ -381,9 +381,8 @@ void TextDisplay::tick(double dtime) {
         int newXOff = round_nearest<int>(xoff);
         changed = newXOff != oldXOff;
         if (pingpong) {
-            if (scrollSpeed > 0 && area.w + newXOff >= textSurface->width()) {
-                scrollSpeed = -scrollSpeed;
-            } else if (scrollSpeed < 0 && newXOff <= 0) {
+            if ((scrollSpeed > 0 && area.w + newXOff >= textSurface->width())
+                    || (scrollSpeed < 0 && newXOff <= 0)) {
                 scrollSpeed = -scrollSpeed;
             }
         } else if (xoff >= textSurface->width()) {
@@ -1682,15 +1681,15 @@ void GameDisplay::followCenter() {
         follower->center(referencePoint);
 }
 
-void GameDisplay::set_reference_point(const V2 &point) {
+void GameDisplay::setReferencePoint(const V2 &point) {
     referencePoint = point;
 }
 
-void GameDisplay::get_reference_point_coordinates(int *x, int *y) {
+void GameDisplay::getReferencePointCoordinates(int *x, int *y) {
     get_engine()->world_to_screen(referencePoint, x, y);
 }
 
-void GameDisplay::set_scroll_boundary(double boundary) {
+void GameDisplay::setScrollBoundary(double boundary) {
     if (follower)
         follower->setBorder(boundary, boundary);
 }
@@ -1772,8 +1771,8 @@ void GameDisplay::resizeGameArea(int width, int height) {
 
 /* -------------------- Global functions -------------------- */
 
-void Init(bool show_fps) {
-    if (show_fps)  // keep ShowFPS on false for screen resolution changes
+void Init(bool showFps) {
+    if (showFps)  // keep ShowFPS on false for screen resolution changes
         ShowFPS = true;
     InitModels();
 
@@ -1803,7 +1802,7 @@ void FocusReferencePoint() {
 }
 
 void SetReferencePoint(const ecl::V2 &point) {
-    gamedpy->set_reference_point(point);
+    gamedpy->setReferencePoint(point);
 }
 
 void SetFollowMode(FollowMode m) {
@@ -1815,11 +1814,11 @@ void UpdateFollowMode() {
 }
 
 void SetScrollBoundary(double boundary) {
-    gamedpy->set_scroll_boundary(boundary);
+    gamedpy->setScrollBoundary(boundary);
 }
 
 void GetReferencePointCoordinates(int *x, int *y) {
-    gamedpy->get_reference_point_coordinates(x, y);
+    gamedpy->getReferencePointCoordinates(x, y);
 }
 
 Model* SetModel(const GridLoc &l, std::unique_ptr<Model> m) {
@@ -1879,8 +1878,8 @@ LineHandle AddRubber(const V2& start, const V2& end, unsigned short red,
     return gamedpy->add_line(start, end, red, green, blue, isThick);
 }
 
-void SetTextSpeed(int newspeed) {
-    int speed = ecl::Clamp<int>(newspeed, MIN_TextSpeed, MAX_TextSpeed);
+void SetTextSpeed(int newSpeed) {
+    int speed = ecl::Clamp<int>(newSpeed, MIN_TextSpeed, MAX_TextSpeed);
     app.state->setProperty("TextSpeed", speed);
 }
 

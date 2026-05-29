@@ -217,7 +217,7 @@ enum DisplayFlags {
 
 void ToggleFlag(DisplayFlags flag);
 
-void Init(bool show_fps = false);
+void Init(bool showFps = false);
 void Shutdown();
 
 void NewWorld(int w, int h);
@@ -225,11 +225,11 @@ void ResizeGameArea(int w, int h);
 const ecl::Rect &GetGameArea();
 
 void DrawAll(ecl::GC &gc);
-void RedrawAll(ecl::Screen *sfc);
-void Redraw(ecl::Screen *sfc);
+void RedrawAll(ecl::Screen *screen);
+void Redraw(ecl::Screen *screen);
 void Tick(double dtime);
 
-void SetTextSpeed(int newspeed);
+void SetTextSpeed(int newSpeed);
 int GetTextSpeed();
 
 } // namespace enigma::display

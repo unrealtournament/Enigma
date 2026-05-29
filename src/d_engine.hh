@@ -380,11 +380,11 @@ public:
     // Move the screen so that the current reference point is centered.
     void followCenter();
 
-    void set_reference_point(const ecl::V2 &point);
-    void set_scroll_boundary(double d);
+    void setReferencePoint(const ecl::V2 &point);
+    void setScrollBoundary(double d);
 
     // current screen coordinates of reference point
-    void get_reference_point_coordinates(int *x, int *y);
+    void getReferencePointCoordinates(int *x, int *y);
 
     /* ---------- Screen updates ---------- */
     void redraw(ecl::Screen *scr);
@@ -397,7 +397,7 @@ private:
 
     /* ---------- Variables ---------- */
     Uint32 lastFrameTime;
-    bool redrawEverything = false;
+    bool redrawEverything{false};
     std::unique_ptr<StatusBarImpl> statusBar;
 
     ecl::V2 referencePoint;
