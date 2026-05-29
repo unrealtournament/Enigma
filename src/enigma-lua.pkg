@@ -29,17 +29,11 @@ $#include "ecl_font.hh"
 $#include "lev/PersistentIndex.hh"
 
 $using namespace enigma;
-$using ecl::Surface;
-$using ecl::Font;
 $using std::string;
 
 module enigma
 {
     enum Direction {NODIR, NORTH, EAST, SOUTH, WEST};
-
-    Surface *GetImage(const char *name);
-    Surface *GetImage(const char *name, const char *extension);
-    Font    *GetFont(const char *name);
 
     const char *date(const char *format); // format see 'man strftime'
 
@@ -52,29 +46,8 @@ $using namespace server;
 $using namespace lev;
 module enigma
 {
-    extern int    TwoPlayerGame;
-    extern int    SingleComputerGame;
-    extern int    ConserveLevel;
-    extern int    AllowTogglePlayer;
-    extern int    ShowMoves;
-    extern double Brittleness;
-    extern double SlopeForce;
-    extern double FlatForce;
-    extern double FrictionFactor;
-    extern double ElectricForce;
-    extern double BumperForce;
-    extern double MagnetForce;
-    extern double MagnetRange;
-    extern double WaterSinkSpeed;
-    extern double SwampSinkSpeed;
-    extern double WormholeForce;
-    extern double WormholeRange;
-    extern double HoleForce;
-    extern bool   CreatingPreview;
-
     void AddLevelPack (const char *init_file, const char *name);
     void AddZippedLevelPack (const char *zipfile);
-    void SetCompatibility(const char *version);
 }
 
 /* -------------------- world.cc, objects.cc -------------------- */
@@ -84,15 +57,8 @@ $using namespace enigma;
 module world
 {
     class Object;
-    class Floor : public Object {};
-    class Item : public Object {};
-    class Stone : public Object {};
 
     Object *MakeObject(const char *kind);
-    Floor *MakeFloor(const char *kind);
-    Item *MakeItem(const char *kind);
-    Stone *MakeStone(const char *kind);
-
     Object *GetNamedObject(const char *name);
 
     void Resize(int w, int h);

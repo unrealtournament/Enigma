@@ -26,63 +26,12 @@ module ecl
         double operator[] (int idx);
     };
 
-    typedef Uint32 PackedColor;
 
-    class GS {
-        GS (const Rect &clipr);
-        ~GS();
-
-        Rect cliprect;
-        PackedColor pcolor;
-    };
-
-    class Drawable {
-    public:
-	virtual ~Drawable() {}
-
-        virtual PackedColor map_color(int r, int g, int b) = 0;
-        virtual PackedColor map_color(int r, int g, int b, int a) = 0;
-
-	virtual void blit (const GS &gs, int x, int y, Surface* s) = 0;
-	virtual void blit (const GS &gs, int x, int y, Surface* s, const Rect& r) = 0;
-
-	virtual Uint32 get_pixel (int x, int y) = 0;
-
-        //! Set a single pixel
-	virtual void set_pixel  (const GS &gs, int x, int y) = 0;
-
-        //! Set multiple pixels at once
-	virtual void set_pixels (const GS &gs, int n, const int *x, const int *y);
-
-        //! Draw a horizontal line
-	virtual void hline (const GS &gs, int x, int y, int w);
-
-        //! Draw a vertical line
-	virtual void vline (const GS &gs, int x, int y, int h);
-
-        //! Draw an arbitrary line
-        virtual void line  (const GS &gs, int x1, int y1, int x2, int y2);
-
-        //! Draw a filled box.
-	virtual void box   (const GS &gs, int x, int y, int w, int h);
-
-        //! Return size of drawable: Rect (0,0,width, height)
-        virtual Rect size() const = 0;
-    };
-
-
-    class Surface : public Drawable {
+    class Surface {
         ~Surface();
 
         int width();
         int height();
-    };
-
-    class Screen {
-        Surface *get_surface();
-	void update_all();
-	void update_rect(const Rect& r);
-	void flush_updates();
     };
 
     class Font {
